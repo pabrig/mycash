@@ -4,10 +4,13 @@ PWA de **finanzas personales** para controlar ingresos, gastos y disponible mens
 
 ## Modelo
 
-- **Un solo usuario** — todo en tu teléfono, sin login
-- **Gastos**: personal o compartido (solo etiqueta, sin reparto)
+- **Modo local** — sin login, datos en el teléfono (localStorage)
+- **Modo nube** (opcional) — Supabase: magic link, sync personal y gastos compartidos en pareja
+- **Gastos compartidos**: solo egresos; el monto completo resta del disponible de cada miembro (sin reparto)
+- **Un hogar por usuario** — vinculación por código de invitación
 - **Disponible** = ingresos − gastos personales − gastos compartidos
-- **Dólar oficial**: automático vía [DolarApi](https://dolarapi.com) (sin pantalla de cotización)
+- **Modo bolsillos** (opcional): **Todo junto** o **Dos bolsillos** (Cotidiano ARS + Ahorro USD)
+- **Dólar oficial**: automático vía [DolarApi](https://dolarapi.com); tipo de cambio **por usuario**
 
 ## Funcionalidades
 
@@ -15,6 +18,8 @@ PWA de **finanzas personales** para controlar ingresos, gastos y disponible mens
 - **Resumen mes/año**: toggle con acumulados y promedios mensuales
 - **Visualización ARS/USD** con dólar oficial del mes
 - **Lista del mes** con filtros (ingresos, personal, compartido)
+- **Pestaña Compartido** — gastos del hogar con autor (nube)
+- **Cuenta** — bolsillos, invitar / unirse con código, cerrar sesión
 - **Offline**: datos en localStorage + service worker básico
 
 ## Desarrollo
@@ -63,6 +68,16 @@ npm run dev:fresh
 
 Si `process.arch` dice `x64`, instalá Node arm64 con `nvm install 22.23.1` y repetí los pasos.
 
+### Supabase (sync y compartido, opcional)
+
+1. Creá un proyecto en [Supabase](https://supabase.com)
+2. En SQL Editor, ejecutá `supabase/migrations/001_initial.sql`, `002_wallets.sql`, `003_movements_update.sql` y `004_shared_enabled.sql`
+3. Copiá `.env.example` → `.env.local` y completá URL + anon key
+4. En Authentication → URL Configuration, agregá `http://localhost:3000/auth/callback` (y tu dominio en prod)
+5. Reiniciá `npm run dev`
+
+Sin `.env.local` la app funciona igual en modo local.
+
 ## Tests
 
 ```bash
@@ -78,6 +93,5 @@ npm run build
 
 ## Roadmap
 
-- **Fase 2**: Supabase — login y datos compartidos
 - **Fase 3**: sync offline robusto
 - **Fase 4**: import CSV desde Excel

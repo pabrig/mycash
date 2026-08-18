@@ -7,6 +7,7 @@ import { DisponibleHero } from "@/components/DisponibleHero";
 import { BalanceBar } from "@/components/BalanceBar";
 import { AnnualOverview } from "@/components/AnnualOverview";
 import { MovementList } from "@/components/MovementList";
+import { CloudBanner } from "@/components/CloudBanner";
 import { PeriodToggle } from "@/components/PeriodToggle";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import type { SummaryScope } from "@/lib/types";
@@ -20,6 +21,7 @@ export default function HomePage() {
   return (
     <div className="space-y-5 pb-4">
       <AppHeader />
+      <CloudBanner />
       <PeriodToggle scope={scope} onChange={setScope} />
       <DisponibleHero scope={scope} />
       {scope === "year" ? (

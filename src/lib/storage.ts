@@ -1,9 +1,11 @@
-import type { DisplayCurrency, MonthlyRate, Movement } from "./types";
+import type { DisplayCurrency, MonthlyRate, Movement, WalletMode } from "./types";
 import { getDefaultRate } from "./currency";
 
 const MOVEMENTS_KEY = "mycash_movements";
 const RATES_KEY = "mycash_rates";
 const DISPLAY_KEY = "mycash_display";
+const WALLET_MODE_KEY = "mycash_wallet_mode";
+const SHARED_ENABLED_KEY = "mycash_shared_enabled";
 
 const LEGACY_KEYS = [
   ["pagapp_movements", MOVEMENTS_KEY],
@@ -89,4 +91,25 @@ export function loadDisplayCurrency(): DisplayCurrency {
 
 export function saveDisplayCurrency(currency: DisplayCurrency): void {
   localStorage.setItem(DISPLAY_KEY, currency);
+}
+
+export function loadWalletMode(): WalletMode {
+  if (typeof window === "undefined") return "unified";
+  migrateLegacyStorage();
+  const raw = localStorage.getItem(WALLET_MODE_KEY);
+  return raw === "split" ? "split" : "unified";
+}
+
+export function saveWalletMode(mode: WalletMode): void {
+  localStorage.setItem(WALLET_MODE_KEY, mode);
+}
+
+export function loadSharedEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  migrateLegacyStorage();
+  return localStorage.getItem(SHARED_ENABLED_KEY) === "true";
+}
+
+export function saveSharedEnabled(enabled: boolean): void {
+  localStorage.setItem(SHARED_ENABLED_KEY, enabled ? "true" : "false");
 }

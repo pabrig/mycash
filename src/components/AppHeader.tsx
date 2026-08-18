@@ -3,9 +3,10 @@
 import { useFinance } from "@/context/FinanceContext";
 import { formatMonth } from "@/lib/format";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import Link from "next/link";
 
 export function AppHeader() {
-  const { year, month, setPeriod } = useFinance();
+  const { year, month, setPeriod, walletMode } = useFinance();
 
   function shift(delta: number) {
     let m = month + delta;
@@ -50,7 +51,15 @@ export function AppHeader() {
           </div>
         </div>
 
-        <CurrencyToggle />
+        <div className="flex flex-col items-end gap-2">
+          {walletMode === "unified" && <CurrencyToggle />}
+          <Link
+            href="/cuenta"
+            className="rounded-lg bg-white px-2.5 py-1 text-xs text-zinc-500 shadow-sm active:scale-95 dark:bg-zinc-900"
+          >
+            Cuenta
+          </Link>
+        </div>
       </div>
     </header>
   );
