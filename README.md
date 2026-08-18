@@ -49,6 +49,20 @@ location.reload();
 
 En desarrollo el SW no se registra; en producción solo cachea manifest e íconos.
 
+### Error `lightningcss.darwin-x64.node` / `next/font`
+
+Node está en **x64 (Rosetta)** o `node_modules` se instaló con otra arquitectura.
+
+```bash
+node -p process.arch   # debe decir arm64 en Apple Silicon
+nvm use
+rm -rf node_modules .next
+npm install            # usar npm, no pnpm
+npm run dev:fresh
+```
+
+Si `process.arch` dice `x64`, instalá Node arm64 con `nvm install 22.23.1` y repetí los pasos.
+
 ## Tests
 
 ```bash

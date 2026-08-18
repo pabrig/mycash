@@ -7,6 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "predev": "node scripts/check-native.mjs",
+    "prebuild": "node scripts/check-native.mjs",
     "dev": "next dev --webpack",
     "dev:fresh": "node scripts/dev-fresh.mjs",
     "build": "next build",
@@ -30,5 +32,10 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.2.4"
+  },
+  "optionalDependencies": {
+    "lightningcss-darwin-arm64": "1.32.0",
+    "lightningcss-darwin-x64": "1.32.0",
+    "lightningcss-linux-x64-gnu": "1.32.0"
   }
 }
