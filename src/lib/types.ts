@@ -10,6 +10,41 @@ export type ExpenseKind = "fixed" | "variable";
 
 export type IncomeKind = "passive" | "active";
 
+/** Bolsa mental: cotidiano (ARS) vs ahorro USD. Id interno "vida" = Cotidiano. */
+export type Wallet = "vida" | "ahorro";
+
+export type WalletMode = "unified" | "split";
+
+export type ConversionDirection = "to_usd" | "to_ars";
+
+export interface WalletBucketSummary {
+  wallet: Wallet;
+  currency: Currency;
+  income: number;
+  expenses: number;
+  disponible: number;
+}
+
+export interface SplitMonthlySummary {
+  vida: WalletBucketSummary;
+  ahorro: WalletBucketSummary;
+  /** Total aproximado en ARS (vida + ahorro al TC del mes) */
+  equivalentTotalArs: number;
+}
+
+export interface SplitAnnualSummary {
+  year: number;
+  vida: WalletBucketSummary;
+  ahorro: WalletBucketSummary;
+  equivalentTotalArs: number;
+  movementCount: number;
+  activeMonths: number;
+  averages: {
+    vida: Pick<WalletBucketSummary, "income" | "expenses" | "disponible">;
+    ahorro: Pick<WalletBucketSummary, "income" | "expenses" | "disponible">;
+  };
+}
+
 export interface Movement {
   id: string;
   type: MovementType;
@@ -22,7 +57,28 @@ export interface Movement {
   category?: string;
   incomeKind?: IncomeKind;
   source?: string;
+  /** Override de bolsa (modo bolsillos); si falta, se infiere */
+  wallet?: Wallet;
   createdAt: string;
+  /** Usuario que cargó el movimiento (compartidos) */
+  createdByUserId?: string;
+  createdByName?: string;
+}
+
+export interface Profile {
+  id: string;
+  displayName: string;
+}
+
+export interface Household {
+  id: string;
+  name: string;
+}
+
+export interface HouseholdMember {
+  userId: string;
+  displayName: string;
+  role: "owner" | "member";
 }
 
 export interface MonthlyRate {

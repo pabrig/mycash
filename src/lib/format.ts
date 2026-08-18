@@ -1,19 +1,30 @@
 import { MONTH_NAMES, type DisplayCurrency } from "./types";
 
+/** Separador de miles determinista (evita mismatch SSR/client con Intl). */
+function formatIntegerPart(amount: number, thousandSep: "." | ","): string {
+  const n = Math.abs(Math.round(amount));
+  return n
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, thousandSep);
+}
+
 export function formatMoney(amount: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const rounded = Math.round(amount);
+  const sign = rounded < 0 ? "-" : "";
+  return `${sign}$${formatIntegerPart(rounded, ".")}`;
 }
 
 export function formatUsd(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const rounded = Math.round(amount);
+  const sign = rounded < 0 ? "-" : "";
+  return `${sign}USD ${formatIntegerPart(rounded, ",")}`;
+}
+
+/** Monto USD compacto (sin prefijo) para filas densas */
+export function formatUsdShort(amount: number): string {
+  const rounded = Math.round(amount);
+  const sign = rounded < 0 ? "-" : "";
+  return `${sign}${formatIntegerPart(rounded, ",")}`;
 }
 
 /** Convierte monto en ARS al formato de visualización elegido */
@@ -38,6 +49,7 @@ export function arsToDisplay(
 }
 
 export function formatMonth(year: number, month: number): string {
+  if (month < 1 || month > 12) return "";
   return `${MONTH_NAMES[month - 1]} ${year}`;
 }
 
@@ -55,6 +67,7 @@ export function currentPeriod(): { year: number; month: number } {
 }
 
 export function isCurrentPeriod(year: number, month: number): boolean {
+  if (year === 0 || month === 0) return true;
   const now = currentPeriod();
   return now.year === year && now.month === month;
 }

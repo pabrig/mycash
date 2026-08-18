@@ -12,7 +12,9 @@ import {
   type ExpenseKind,
   type ExpenseScope,
   type IncomeKind,
+  type Movement,
   type MovementType,
+  type Wallet,
 } from "@/lib/types";
 
 const CURRENCIES: Currency[] = ["ARS", "USD"];
@@ -30,76 +32,180 @@ const CATEGORY_ICONS: Record<string, string> = {
   otros: "•••",
 };
 
-export function MovementForm() {
+type WalletChoice = "auto" | Wallet;
+
+function buildPayload({
+  mode,
+  type,
+  date,
+  amount,
+  currency,
+  description,
+  scope,
+  kind,
+  category,
+  incomeKind,
+  source,
+  walletChoice,
+}: {
+  mode: "full" | "shared";
+  type: MovementType;
+  date: string;
+  amount: number;
+  currency: Currency;
+  description: string;
+  scope: ExpenseScope;
+  kind: ExpenseKind;
+  category: string;
+  incomeKind: IncomeKind;
+  source: string;
+  walletChoice: WalletChoice;
+}): Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName"> {
+  const wallet =
+    walletChoice === "auto" ? undefined : walletChoice;
+
+  if (mode === "shared" || (type === "expense" && scope === "shared")) {
+    return {
+      type: "expense",
+      date,
+      amount,
+      currency,
+      description,
+      scope: "shared",
+      kind,
+      category,
+      ...(wallet ? { wallet } : {}),
+    };
+  }
+
+  if (type === "expense") {
+    return {
+      type: "expense",
+      date,
+      amount,
+      currency,
+      description,
+      scope,
+      kind,
+      category,
+      ...(wallet ? { wallet } : {}),
+    };
+  }
+
+  return {
+    type: "income",
+    date,
+    amount,
+    currency,
+    description,
+    incomeKind,
+    source,
+    ...(wallet ? { wallet } : {}),
+  };
+}
+
+export function MovementForm({
+  mode = "full",
+  redirectTo = "/",
+  initial,
+}: {
+  mode?: "full" | "shared";
+  redirectTo?: string;
+  /** Si viene, el form edita en lugar de crear */
+  initial?: Movement;
+}) {
   const router = useRouter();
-  const { addMovement } = useFinance();
+  const { addMovement, updateMovement, walletMode, sharedEnabled } = useFinance();
+  const isEdit = Boolean(initial);
 
-  const [type, setType] = useState<MovementType>("expense");
-  const [date, setDate] = useState(todayIso());
-  const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState<Currency>("ARS");
-  const [description, setDescription] = useState("");
-  const [scope, setScope] = useState<ExpenseScope>("personal");
-  const [kind, setKind] = useState<ExpenseKind>("variable");
-  const [category, setCategory] = useState("otros");
-  const [incomeKind, setIncomeKind] = useState<IncomeKind>("active");
-  const [source, setSource] = useState("otros");
-  const [showMore, setShowMore] = useState(false);
+  const [type, setType] = useState<MovementType>(
+    initial?.type ?? "expense",
+  );
+  const [date, setDate] = useState(initial?.date ?? todayIso());
+  const [amount, setAmount] = useState(
+    initial ? String(initial.amount) : "",
+  );
+  const [currency, setCurrency] = useState<Currency>(
+    initial?.currency ?? "ARS",
+  );
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [scope, setScope] = useState<ExpenseScope>(
+    mode === "shared"
+      ? "shared"
+      : (initial?.scope ?? "personal"),
+  );
+  const [kind, setKind] = useState<ExpenseKind>(
+    initial?.kind ?? "variable",
+  );
+  const [category, setCategory] = useState(initial?.category ?? "otros");
+  const [incomeKind, setIncomeKind] = useState<IncomeKind>(
+    initial?.incomeKind ?? "active",
+  );
+  const [source, setSource] = useState(initial?.source ?? "otros");
+  const [walletChoice, setWalletChoice] = useState<WalletChoice>(
+    initial?.wallet ?? "auto",
+  );
+  const [showMore, setShowMore] = useState(Boolean(initial));
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parseFloat(amount.replace(",", "."));
     if (!parsed || parsed <= 0 || !description.trim()) return;
 
-    if (type === "expense") {
-      addMovement({
-        type: "expense",
-        date,
-        amount: parsed,
-        currency,
-        description: description.trim(),
-        scope,
-        kind,
-        category,
-      });
-    } else {
-      addMovement({
-        type: "income",
-        date,
-        amount: parsed,
-        currency,
-        description: description.trim(),
-        incomeKind,
-        source,
-      });
-    }
+    const payload = buildPayload({
+      mode,
+      type,
+      date,
+      amount: parsed,
+      currency,
+      description: description.trim(),
+      scope,
+      kind,
+      category,
+      incomeKind,
+      source,
+      walletChoice,
+    });
 
-    router.push("/");
+    setSubmitting(true);
+    try {
+      if (initial) {
+        await updateMovement(initial.id, payload);
+      } else {
+        await addMovement(payload);
+      }
+      router.push(redirectTo);
+    } finally {
+      setSubmitting(false);
+    }
   }
+
+  const isSharedMode = mode === "shared";
 
   return (
     <form onSubmit={handleSubmit} className="animate-slide-up space-y-6">
-      {/* Tipo */}
-      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
-        {(["expense", "income"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setType(t)}
-            className={`rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 ${
-              type === t
-                ? t === "expense"
-                  ? "bg-white text-red-600 shadow-sm dark:bg-zinc-900"
-                  : "bg-white text-emerald-600 shadow-sm dark:bg-zinc-900"
-                : "text-zinc-500"
-            }`}
-          >
-            {t === "expense" ? "↓ Gasto" : "↑ Ingreso"}
-          </button>
-        ))}
-      </div>
+      {!isSharedMode && (
+        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
+          {(["expense", "income"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setType(t)}
+              className={`rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 ${
+                type === t
+                  ? t === "expense"
+                    ? "bg-white text-red-600 shadow-sm dark:bg-zinc-900"
+                    : "bg-white text-emerald-600 shadow-sm dark:bg-zinc-900"
+                  : "text-zinc-500"
+              }`}
+            >
+              {t === "expense" ? "↓ Gasto" : "↑ Ingreso"}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Monto grande */}
       <div className="card p-5 text-center">
         <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">
           Monto
@@ -109,7 +215,7 @@ export function MovementForm() {
             type="text"
             inputMode="decimal"
             required
-            autoFocus
+            autoFocus={!isEdit}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
@@ -130,7 +236,6 @@ export function MovementForm() {
         </div>
       </div>
 
-      {/* Descripción */}
       <div>
         <input
           type="text"
@@ -142,44 +247,42 @@ export function MovementForm() {
         />
       </div>
 
-      {/* Gasto: alcance + categorías rápidas */}
-      {type === "expense" && (
-        <>
-          <div className="flex gap-2">
-            {(["personal", "shared"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setScope(s)}
-                className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all active:scale-95 ${
-                  scope === s
-                    ? s === "shared"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
-                }`}
-              >
-                {s === "personal" ? "Personal" : "Compartido"}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {EXPENSE_CATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCategory(c)}
-                className={`chip ${category === c ? "chip-active" : "chip-inactive"}`}
-              >
-                {CATEGORY_ICONS[c]} {c}
-              </button>
-            ))}
-          </div>
-        </>
+      {type === "expense" && !isSharedMode && sharedEnabled && (
+        <div className="flex gap-2">
+          {(["personal", "shared"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setScope(s)}
+              className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all active:scale-95 ${
+                scope === s
+                  ? s === "shared"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
+              }`}
+            >
+              {s === "personal" ? "Personal" : "Compartido"}
+            </button>
+          ))}
+        </div>
       )}
 
-      {/* Ingreso: pasivo/activo rápido */}
+      {(type === "expense" || isSharedMode) && (
+        <div className="flex flex-wrap gap-2">
+          {EXPENSE_CATEGORIES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              className={`chip ${category === c ? "chip-active" : "chip-inactive"}`}
+            >
+              {CATEGORY_ICONS[c]} {c}
+            </button>
+          ))}
+        </div>
+      )}
+
       {type === "income" && (
         <div className="flex gap-2">
           {(["active", "passive"] as const).map((k) => (
@@ -197,7 +300,6 @@ export function MovementForm() {
         </div>
       )}
 
-      {/* Más opciones colapsables */}
       <button
         type="button"
         onClick={() => setShowMore(!showMore)}
@@ -219,7 +321,7 @@ export function MovementForm() {
             />
           </div>
 
-          {type === "expense" && (
+          {(type === "expense" || isSharedMode) && (
             <div className="flex gap-2">
               {(["fixed", "variable"] as const).map((k) => (
                 <button
@@ -250,15 +352,45 @@ export function MovementForm() {
               </select>
             </div>
           )}
+
+          {walletMode === "split" && (
+            <div>
+              <label className="mb-1 block text-xs text-zinc-500">
+                ¿A qué bolsillo va?
+              </label>
+              <div className="flex gap-2">
+                {(
+                  [
+                    { id: "auto" as const, label: "Automático" },
+                    { id: "vida" as const, label: "Cotidiano" },
+                    { id: "ahorro" as const, label: "Ahorro USD" },
+                  ] as const
+                ).map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setWalletChoice(id)}
+                    className={`flex-1 rounded-xl py-2.5 text-xs font-medium ${walletChoice === id ? "chip-active" : "chip-inactive"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      <button type="submit" className="btn-primary w-full">
-        Guardar
+      <button type="submit" disabled={submitting} className="btn-primary w-full">
+        {submitting
+          ? "Guardando…"
+          : isEdit
+            ? "Guardar cambios"
+            : "Guardar"}
       </button>
 
       <Link
-        href="/"
+        href={redirectTo}
         className="block w-full py-2 text-center text-sm text-zinc-500"
       >
         Cancelar

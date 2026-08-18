@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDisplay } from "./format";
+import { formatDisplay, formatMoney, formatUsd } from "./format";
 import { computeAnnualSummary, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth } from "./summary";
 import type { MonthlyRate, Movement } from "./types";
 
@@ -72,7 +72,20 @@ const movements: Movement[] = [
 
 describe("formatDisplay", () => {
   it("converts ARS to USD for display", () => {
-    expect(formatDisplay(1200, "USD", 1200)).toBe("$1");
+    expect(formatDisplay(1200, "USD", 1200)).toBe("USD 1");
+  });
+});
+
+describe("formatMoney", () => {
+  it("formats deterministically for SSR and client", () => {
+    expect(formatMoney(1200)).toBe("$1.200");
+    expect(formatMoney(-500000)).toBe("-$500.000");
+  });
+});
+
+describe("formatUsd", () => {
+  it("prefixes amounts with USD", () => {
+    expect(formatUsd(1983)).toBe("USD 1,983");
   });
 });
 

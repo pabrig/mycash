@@ -5,9 +5,12 @@ import { useFinance } from "@/context/FinanceContext";
 import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 
 export function BalanceBar() {
-  const { summary } = useFinance();
+  const { summary, walletMode, sharedEnabled } = useFinance();
   const fmt = useDisplayAmount();
   const [open, setOpen] = useState(false);
+
+  // En modo dos bolsillos el hero ya muestra Cotidiano; no hace falta este bloque
+  if (walletMode === "split") return null;
 
   const total = summary.totalIncome + summary.totalExpenses;
   const incomePct = total > 0 ? (summary.totalIncome / total) * 100 : 50;
@@ -38,10 +41,10 @@ export function BalanceBar() {
 
       <div className="mt-2 flex justify-between text-xs">
         <span className="font-medium text-emerald-600">
-          Ingresos {fmt(summary.totalIncome)}
+          ↑ Ingresos {fmt(summary.totalIncome)}
         </span>
         <span className="font-medium text-red-500">
-          Gastos {fmt(summary.totalExpenses)}
+          ↓ Gastos {fmt(summary.totalExpenses)}
         </span>
       </div>
 
@@ -51,17 +54,19 @@ export function BalanceBar() {
             <Detail label="Ingresos pasivos" value={summary.passiveIncome} fmt={fmt} tone="income" />
             <Detail label="Ingresos activos" value={summary.activeIncome} fmt={fmt} tone="income" />
             <Detail label="Gastos personales" value={summary.personalExpenses} fmt={fmt} tone="expense" />
-            <Detail label="Gastos compartidos" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
+            {sharedEnabled && (
+              <Detail label="Gastos compartidos" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
+            )}
             <Detail label="Pers. fijos" value={summary.personalFixed} fmt={fmt} />
             <Detail label="Pers. variables" value={summary.personalVariable} fmt={fmt} />
           </dl>
 
           <div className="flex justify-between rounded-xl bg-emerald-50 px-3 py-2 text-sm dark:bg-emerald-950/30">
-            <span className="text-emerald-700 dark:text-emerald-400">Ingresos</span>
+            <span className="text-emerald-700 dark:text-emerald-400">↑ Ingresos</span>
             <span className="font-semibold text-emerald-600">{fmt(summary.totalIncome)}</span>
           </div>
           <div className="flex justify-between rounded-xl bg-red-50 px-3 py-2 text-sm dark:bg-red-950/30">
-            <span className="text-red-700 dark:text-red-400">Gastos</span>
+            <span className="text-red-700 dark:text-red-400">↓ Gastos</span>
             <span className="font-semibold text-red-500">{fmt(summary.totalExpenses)}</span>
           </div>
         </div>
