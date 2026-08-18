@@ -1,0 +1,19 @@
+{
+  "name": "Myca$h — Finanzas personales",
+  "short_name": "Myca$h",
+  "description": "Controlá ingresos, gastos y tu disponible. Finanzas personales simples.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#059669",
+  "orientation": "portrait",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

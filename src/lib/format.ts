@@ -1,0 +1,113 @@
+import { MONTH_NAMES, type DisplayCurrency } from "./types";
+
+export function formatMoney(amount: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function formatUsd(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+/** Convierte monto en ARS al formato de visualización elegido */
+export function formatDisplay(
+  amountArs: number,
+  display: DisplayCurrency,
+  usdToArs: number,
+): string {
+  if (display === "ARS") return formatMoney(amountArs);
+  if (usdToArs <= 0) return formatUsd(0);
+  return formatUsd(amountArs / usdToArs);
+}
+
+export function arsToDisplay(
+  amountArs: number,
+  display: DisplayCurrency,
+  usdToArs: number,
+): number {
+  if (display === "ARS") return amountArs;
+  if (usdToArs <= 0) return 0;
+  return amountArs / usdToArs;
+}
+
+export function formatMonth(year: number, month: number): string {
+  return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+
+export function todayIso(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function currentPeriod(): { year: number; month: number } {
+  const d = new Date();
+  return { year: d.getFullYear(), month: d.getMonth() + 1 };
+}
+
+export function isCurrentPeriod(year: number, month: number): boolean {
+  const now = currentPeriod();
+  return now.year === year && now.month === month;
+}
+
+export function formatRateUpdatedAt(iso: string | undefined): string {
+  if (!iso) return "";
+  try {
+    return new Intl.DateTimeFormat("es-AR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date(iso));
+  } catch {
+    return "";
+  }
+}
+
+export function buildAnnualBrief(
+  year: number,
+  summary: {
+    passiveIncome: number;
+    activeIncome: number;
+    personalExpenses: number;
+    sharedExpenses: number;
+    totalIncome: number;
+    totalExpenses: number;
+    disponible: number;
+    movementCount: number;
+    activeMonths: number;
+    averages: {
+      totalIncome: number;
+      totalExpenses: number;
+      disponible: number;
+    };
+  },
+  fmt: (amountArs: number) => string,
+): string {
+  if (summary.movementCount === 0) {
+    return `Sin movimientos registrados en ${year}.`;
+  }
+
+  const parts: string[] = [];
+  const monthLabel =
+    summary.activeMonths === 1 ? "1 mes" : `${summary.activeMonths} meses`;
+
+  parts.push(
+    `Ingresos ${fmt(summary.totalIncome)} (${fmt(summary.averages.totalIncome)}/mes): ${fmt(summary.passiveIncome)} pasivos y ${fmt(summary.activeIncome)} activos.`,
+  );
+  parts.push(
+    `Egresos ${fmt(summary.totalExpenses)} (${fmt(summary.averages.totalExpenses)}/mes): ${fmt(summary.personalExpenses)} personales y ${fmt(summary.sharedExpenses)} compartidos.`,
+  );
+  parts.push(
+    `Disponible anual ${fmt(summary.disponible)} · prom. mensual ${fmt(summary.averages.disponible)} (${monthLabel}).`,
+  );
+
+  return parts.join(" ");
+}
