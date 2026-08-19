@@ -72,9 +72,9 @@ function HeaderSkeleton() {
   return (
     <>
       <div className="flex items-center justify-between gap-3 md:hidden">
-        <div className="space-y-2">
-          <Skeleton className="h-2.5 w-14 rounded-full" />
-          <Skeleton className="h-8 w-40 rounded-full" />
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-8 w-8 shrink-0 rounded-[7px]" />
+          <Skeleton className="h-7 w-36 rounded-full" />
         </div>
         <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
       </div>

@@ -1,5 +1,12 @@
-const CACHE = "mycash-v1";
-const STATIC_ASSETS = ["/manifest.json", "/icon.svg"];
+const CACHE = "mycash-v3";
+const STATIC_ASSETS = [
+  "/manifest.json",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
+  "/favicon-32.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
