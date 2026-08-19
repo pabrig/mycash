@@ -9,6 +9,7 @@ import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 import { toArs } from "@/lib/currency";
 import { filterByMonth } from "@/lib/summary";
 import { DetailSheet } from "@/components/ui/DetailSheet";
+import { canManageMovement } from "@/lib/movement-access";
 import type { Movement } from "@/lib/types";
 
 function formatDayLabel(date: string): string {
@@ -383,11 +384,11 @@ export function SharedMovementList() {
           <SharedDetail
             movement={selected}
             arsAmount={toArs(selected.amount, selected.currency, rate)}
-            canManage={
-              !cloudEnabled ||
-              !selected.createdByUserId ||
-              selected.createdByUserId === user?.id
-            }
+            canManage={canManageMovement(
+              selected,
+              cloudEnabled,
+              user?.id,
+            )}
             onClose={() => setSelectedId(null)}
             onDelete={async () => {
               await deleteMovement(selected.id);
