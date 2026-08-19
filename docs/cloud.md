@@ -169,6 +169,7 @@ Marcá antes de cargar datos reales:
 | Sync finanzas | `src/context/FinanceContext.tsx` |
 | Callback magic link | `src/app/auth/callback/route.ts` |
 | SQL | `supabase/migrations/` |
+| Despliegue público | [deploy.md](./deploy.md) |
 
 ---
 
