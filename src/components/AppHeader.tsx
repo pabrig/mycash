@@ -11,6 +11,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconMyCash,
+  IconSplit,
   IconUser,
 } from "@/components/ui/Icons";
 
@@ -45,6 +46,13 @@ export function AppHeader() {
 
         <div className="flex shrink-0 items-center gap-2">
           {walletMode === "unified" && <CurrencyToggle />}
+          <Link
+            href="/dividir"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"
+            aria-label="Dividir cuenta"
+          >
+            <IconSplit className="h-5 w-5" />
+          </Link>
           <Link
             href="/cuenta"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"

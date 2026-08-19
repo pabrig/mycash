@@ -108,6 +108,16 @@ export function IconShared({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function IconSplit({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="6.5" r="2" />
+      <circle cx="12" cy="17.5" r="2" />
+      <path d="M6.5 17.5 17.5 6.5" />
+    </svg>
+  );
+}
+
 export function IconClose({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>

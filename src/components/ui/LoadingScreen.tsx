@@ -17,6 +17,7 @@ export function variantFromPath(pathname: string): LoadingVariant {
   }
   if (pathname.startsWith("/compartido")) return "shared";
   if (pathname.startsWith("/cuenta")) return "account";
+  if (pathname.startsWith("/dividir")) return "account";
   if (pathname.startsWith("/login") || pathname.startsWith("/join")) {
     return "auth";
   }
@@ -76,7 +77,10 @@ function HeaderSkeleton() {
           <Skeleton className="h-8 w-8 shrink-0 rounded-[7px]" />
           <Skeleton className="h-7 w-36 rounded-full" />
         </div>
-        <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+        <div className="flex shrink-0 items-center gap-2">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+        </div>
       </div>
       <div className="hidden flex-col items-center gap-2 md:flex">
         <Skeleton className="h-3 w-16 rounded-full" />
