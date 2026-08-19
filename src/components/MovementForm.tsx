@@ -108,11 +108,18 @@ export function MovementForm({
   mode = "full",
   redirectTo = "/",
   initial,
+  prefill,
 }: {
   mode?: "full" | "shared";
   redirectTo?: string;
   /** Si viene, el form edita en lugar de crear */
   initial?: Movement;
+  /** Prefill de alta (p.ej. parte de una cuenta dividida) */
+  prefill?: {
+    amount?: string;
+    description?: string;
+    category?: string;
+  };
 }) {
   const router = useRouter();
   const { addMovement, updateMovement, walletMode, sharedEnabled, usdEnabled } =
@@ -124,12 +131,14 @@ export function MovementForm({
   );
   const [date, setDate] = useState(initial?.date ?? todayIso());
   const [amount, setAmount] = useState(
-    initial ? String(initial.amount) : "",
+    initial ? String(initial.amount) : (prefill?.amount ?? ""),
   );
   const [currency, setCurrency] = useState<Currency>(
     initial?.currency ?? "ARS",
   );
-  const [description, setDescription] = useState(initial?.description ?? "");
+  const [description, setDescription] = useState(
+    initial?.description ?? prefill?.description ?? "",
+  );
   const [scope, setScope] = useState<ExpenseScope>(
     mode === "shared"
       ? "shared"
@@ -138,7 +147,9 @@ export function MovementForm({
   const [kind, setKind] = useState<ExpenseKind>(
     initial?.kind ?? "variable",
   );
-  const [category, setCategory] = useState(initial?.category ?? "otros");
+  const [category, setCategory] = useState(
+    initial?.category ?? prefill?.category ?? "otros",
+  );
   const [incomeKind, setIncomeKind] = useState<IncomeKind>(
     initial?.incomeKind ?? "active",
   );

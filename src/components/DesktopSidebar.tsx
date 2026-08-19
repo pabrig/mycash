@@ -9,6 +9,7 @@ import {
   IconHome,
   IconPlus,
   IconMyCash,
+  IconSplit,
   IconUser,
   IconUsers,
 } from "@/components/ui/Icons";
@@ -20,6 +21,7 @@ export function DesktopSidebar() {
   const homeActive = pathname === "/" || pathname === "/mes";
   const sharedActive = pathname.startsWith("/compartido");
   const cuentaActive = pathname.startsWith("/cuenta");
+  const dividirActive = pathname.startsWith("/dividir");
   const nuevoHref = pathname.startsWith("/compartido")
     ? "/compartido/nuevo"
     : "/nuevo";
@@ -46,6 +48,7 @@ export function DesktopSidebar() {
             icon="shared"
           />
         )}
+        <SideLink href="/dividir" label="Dividir" active={dividirActive} icon="split" />
         <SideLink href="/cuenta" label="Cuenta" active={cuentaActive} icon="cuenta" />
       </nav>
 
@@ -107,10 +110,16 @@ function SideLink({
   href: string;
   label: string;
   active: boolean;
-  icon: "home" | "shared" | "cuenta";
+  icon: "home" | "shared" | "cuenta" | "split";
 }) {
   const Icon =
-    icon === "home" ? IconHome : icon === "shared" ? IconUsers : IconUser;
+    icon === "home"
+      ? IconHome
+      : icon === "shared"
+        ? IconUsers
+        : icon === "split"
+          ? IconSplit
+          : IconUser;
 
   return (
     <Link

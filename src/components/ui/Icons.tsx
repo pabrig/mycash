@@ -4,7 +4,7 @@ type IconProps = { className?: string };
 
 const BRAND_TEAL = "#0d9488";
 
-/** Letra M (variante A) — header y sidebar, no el ícono de instalación. */
+/** Letra M — mismo teal que el notch / theme-color. */
 export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg
@@ -104,6 +104,16 @@ export function IconShared({ className = "h-4 w-4" }: IconProps) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="12" cy="12" r="3" />
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
+    </svg>
+  );
+}
+
+export function IconSplit({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="6.5" r="2" />
+      <circle cx="12" cy="17.5" r="2" />
+      <path d="M6.5 17.5 17.5 6.5" />
     </svg>
   );
 }
