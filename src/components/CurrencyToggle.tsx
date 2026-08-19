@@ -3,7 +3,9 @@
 import { useFinance } from "@/context/FinanceContext";
 
 export function CurrencyToggle() {
-  const { displayCurrency, setDisplayCurrency } = useFinance();
+  const { displayCurrency, setDisplayCurrency, usdEnabled } = useFinance();
+
+  if (!usdEnabled) return null;
 
   return (
     <div className="flex rounded-full bg-zinc-100 p-0.5 dark:bg-zinc-800">

@@ -10,7 +10,7 @@ const HIDE_NAV_PREFIXES = ["/nuevo", "/compartido/nuevo", "/editar", "/login", "
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { sharedEnabled } = useFinance();
+  const { sharedEnabled, usdEnabled } = useFinance();
   const hideNav = HIDE_NAV_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (hideNav) return null;
@@ -21,7 +21,7 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 pb-[env(safe-area-inset-bottom)]">
       <div className="relative mx-auto max-w-lg border-t border-zinc-200/80 bg-white/90 backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/90">
-        <RateFooter />
+        {usdEnabled && <RateFooter />}
         <Fab />
         {sharedEnabled ? (
           <ul className="grid grid-cols-3 items-end px-6 pt-3 pb-2">

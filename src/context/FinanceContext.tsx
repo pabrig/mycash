@@ -33,10 +33,12 @@ import {
   migrateLocalMovements,
   saveDisplayCurrencyRemote,
   saveSharedEnabledRemote,
+  saveUsdEnabledRemote,
   saveWalletModeRemote,
   updateMovementById,
   upsertRate,
   fetchSharedEnabled,
+  fetchUsdEnabled,
 } from "@/lib/supabase/data";
 import type {
   AnnualSummary,
@@ -64,6 +66,8 @@ interface FinanceContextValue {
   setWalletMode: (mode: WalletMode) => void;
   sharedEnabled: boolean;
   setSharedEnabled: (enabled: boolean) => void;
+  usdEnabled: boolean;
+  setUsdEnabled: (enabled: boolean) => void;
   setPeriod: (year: number, month: number) => void;
   addMovement: (
     movement: Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName">,
@@ -101,6 +105,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     useState<DisplayCurrency>("ARS");
   const [walletMode, setWalletModeState] = useState<WalletMode>("unified");
   const [sharedEnabled, setSharedEnabledState] = useState(false);
+  const [usdEnabled, setUsdEnabledState] = useState(true);
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
 
   const cloudEnabled = configured && isAuthenticated;
@@ -118,6 +123,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setDisplayCurrencyState(storage.loadDisplayCurrency());
     setWalletModeState(storage.loadWalletMode());
     setSharedEnabledState(storage.loadSharedEnabled());
+    setUsdEnabledState(storage.loadUsdEnabled());
   }, []);
 
   const loadCloud = useCallback(async () => {
@@ -131,12 +137,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       remoteDisplay,
       remoteWalletMode,
       remoteShared,
+      remoteUsd,
     ] = await Promise.all([
       fetchAllMovementsForUser(supabase),
       fetchRates(supabase, user.id),
       fetchDisplayCurrency(supabase, user.id),
       fetchWalletMode(supabase, user.id),
       fetchSharedEnabled(supabase, user.id),
+      fetchUsdEnabled(supabase, user.id),
     ]);
 
     setMovements(remoteMovements);
@@ -144,6 +152,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setDisplayCurrencyState(remoteDisplay);
     setWalletModeState(remoteWalletMode);
     setSharedEnabledState(remoteShared);
+    setUsdEnabledState(remoteUsd);
   }, [supabase, user]);
 
   const refreshData = useCallback(async () => {
@@ -186,7 +195,19 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const { year, month } = period;
 
-  const setDisplayCurrency = useCallback(
+  const setSharedEnabled = useCallback(
+    async (enabled: boolean) => {
+      setSharedEnabledState(enabled);
+      if (cloudEnabled && supabase && user) {
+        await saveSharedEnabledRemote(supabase, user.id, enabled);
+      } else {
+        storage.saveSharedEnabled(enabled);
+      }
+    },
+    [cloudEnabled, supabase, user],
+  );
+
+  const persistDisplayCurrency = useCallback(
     async (currency: DisplayCurrency) => {
       setDisplayCurrencyState(currency);
       if (cloudEnabled && supabase && user) {
@@ -198,7 +219,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [cloudEnabled, supabase, user],
   );
 
-  const setWalletMode = useCallback(
+  const persistWalletMode = useCallback(
     async (mode: WalletMode) => {
       setWalletModeState(mode);
       if (cloudEnabled && supabase && user) {
@@ -210,16 +231,36 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [cloudEnabled, supabase, user],
   );
 
-  const setSharedEnabled = useCallback(
+  const setDisplayCurrency = useCallback(
+    async (currency: DisplayCurrency) => {
+      if (currency === "USD" && !usdEnabled) return;
+      await persistDisplayCurrency(currency);
+    },
+    [usdEnabled, persistDisplayCurrency],
+  );
+
+  const setWalletMode = useCallback(
+    async (mode: WalletMode) => {
+      if (mode === "split" && !usdEnabled) return;
+      await persistWalletMode(mode);
+    },
+    [usdEnabled, persistWalletMode],
+  );
+
+  const setUsdEnabled = useCallback(
     async (enabled: boolean) => {
-      setSharedEnabledState(enabled);
+      setUsdEnabledState(enabled);
       if (cloudEnabled && supabase && user) {
-        await saveSharedEnabledRemote(supabase, user.id, enabled);
+        await saveUsdEnabledRemote(supabase, user.id, enabled);
       } else {
-        storage.saveSharedEnabled(enabled);
+        storage.saveUsdEnabled(enabled);
+      }
+      if (!enabled) {
+        await persistDisplayCurrency("ARS");
+        await persistWalletMode("unified");
       }
     },
-    [cloudEnabled, supabase, user],
+    [cloudEnabled, supabase, user, persistDisplayCurrency, persistWalletMode],
   );
 
   const setPeriod = useCallback((y: number, m: number) => {
@@ -448,6 +489,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [movements, year, rates],
   );
 
+  const effectiveWalletMode: WalletMode =
+    usdEnabled && walletMode === "split" ? "split" : "unified";
+  const effectiveDisplayCurrency: DisplayCurrency =
+    usdEnabled && displayCurrency === "USD" ? "USD" : "ARS";
+
   const value = useMemo<FinanceContextValue>(
     () => ({
       ready,
@@ -457,12 +503,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       rates,
       year,
       month,
-      displayCurrency,
+      displayCurrency: effectiveDisplayCurrency,
       setDisplayCurrency,
-      walletMode,
+      walletMode: effectiveWalletMode,
       setWalletMode,
       sharedEnabled,
       setSharedEnabled,
+      usdEnabled,
+      setUsdEnabled,
       setPeriod,
       addMovement,
       updateMovement,
@@ -485,12 +533,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       rates,
       year,
       month,
-      displayCurrency,
+      effectiveDisplayCurrency,
       setDisplayCurrency,
-      walletMode,
+      effectiveWalletMode,
       setWalletMode,
       sharedEnabled,
       setSharedEnabled,
+      usdEnabled,
+      setUsdEnabled,
       setPeriod,
       addMovement,
       updateMovement,

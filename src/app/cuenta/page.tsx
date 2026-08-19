@@ -5,6 +5,52 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 
+function UsdSettings() {
+  const { usdEnabled, setUsdEnabled } = useFinance();
+
+  return (
+    <section className="card space-y-3 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold">Dólares (USD)</p>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+            Activá si cargás movimientos en USD, mirás montos en dólares o usás
+            el bolsillo Ahorro. Si solo manejás pesos, dejalo apagado.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={usdEnabled}
+          onClick={() => void setUsdEnabled(!usdEnabled)}
+          className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
+            usdEnabled
+              ? "bg-emerald-500"
+              : "bg-zinc-200 dark:bg-zinc-700"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+              usdEnabled ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+      {usdEnabled ? (
+        <p className="text-xs leading-relaxed text-zinc-400">
+          Aparecen el toggle ARS/USD, la cotización oficial, cargar en dólares y
+          la opción Dos bolsillos (Cotidiano + Ahorro USD).
+        </p>
+      ) : (
+        <p className="text-xs leading-relaxed text-zinc-400">
+          Todo queda en ARS. Los movimientos viejos en USD siguen contando
+          convertidos al oficial; no podés cargar nuevos en dólares.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function SharedSettings() {
   const { sharedEnabled, setSharedEnabled } = useFinance();
 
@@ -47,7 +93,9 @@ function SharedSettings() {
 }
 
 function WalletSettings() {
-  const { walletMode, setWalletMode, sharedEnabled } = useFinance();
+  const { walletMode, setWalletMode, sharedEnabled, usdEnabled } = useFinance();
+
+  if (!usdEnabled) return null;
 
   return (
     <section className="card space-y-4 p-4">
@@ -191,6 +239,7 @@ export default function CuentaPage() {
         <h1 className="text-lg font-bold">Cuenta</h1>
       </div>
 
+      <UsdSettings />
       <WalletSettings />
       <SharedSettings />
 
