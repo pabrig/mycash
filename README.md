@@ -71,13 +71,19 @@ Si `process.arch` dice `x64`, instalá Node arm64 con `nvm install 22.23.1` y re
 
 ### Supabase (sync y compartido, opcional)
 
+Guía completa (glosario, qué ve tu pareja, checklist prod, RLS): **[docs/cloud.md](docs/cloud.md)**.
+
+Resumen rápido:
+
 1. Creá un proyecto en [Supabase](https://supabase.com)
-2. En SQL Editor, ejecutá `supabase/migrations/001_initial.sql`, `002_wallets.sql`, `003_movements_update.sql`, `004_shared_enabled.sql` y `005_usd_enabled.sql`
-3. Copiá `.env.example` → `.env.local` y completá URL + anon key
-4. En Authentication → URL Configuration, agregá `http://localhost:3000/auth/callback` (y tu dominio en prod)
+2. En SQL Editor, ejecutá en orden `supabase/migrations/001_initial.sql` … `007_lifecycle_invites.sql`
+3. Copiá `.env.example` → `.env.local` (solo URL + **anon** key — nunca `service_role`)
+4. Authentication → URL Configuration: `http://localhost:3000/auth/callback` (+ dominio prod)
 5. Reiniciá `npm run dev`
 
 Sin `.env.local` la app funciona igual en modo local.
+
+Auditoría de aislamiento con 2 usuarios: **[docs/rls-checklist.md](docs/rls-checklist.md)**.
 
 ## Tests
 

@@ -361,11 +361,14 @@ export async function saveDisplayCurrencyRemote(
   if (error) throw error;
 }
 
+/** 12 chars ~ 62 bits; alphabet sin I/O/0/1 para leer en voz/chat. */
 function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
   let code = "";
-  for (let i = 0; i < 8; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 12; i++) {
+    code += chars[bytes[i]! % chars.length];
   }
   return code;
 }
@@ -375,6 +378,17 @@ export async function createHouseholdInvite(
   householdId: string,
   userId: string,
 ): Promise<string> {
+  const { count } = await supabase
+    .from("household_invites")
+    .select("*", { count: "exact", head: true })
+    .eq("household_id", householdId)
+    .is("used_by", null)
+    .gt("expires_at", new Date().toISOString());
+
+  if ((count ?? 0) >= 5) {
+    throw new Error("Máximo 5 invitaciones pendientes. Revocá alguna primero.");
+  }
+
   const code = generateInviteCode();
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
@@ -390,6 +404,42 @@ export async function createHouseholdInvite(
   return code;
 }
 
+export async function listPendingInvites(
+  supabase: SupabaseClient,
+  householdId: string,
+): Promise<
+  { id: string; code: string; expiresAt: string; createdAt: string }[]
+> {
+  const { data, error } = await supabase
+    .from("household_invites")
+    .select("id, code, expires_at, created_at")
+    .eq("household_id", householdId)
+    .is("used_by", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    code: row.code as string,
+    expiresAt: row.expires_at as string,
+    createdAt: row.created_at as string,
+  }));
+}
+
+export async function revokeHouseholdInvite(
+  supabase: SupabaseClient,
+  inviteId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("household_invites")
+    .delete()
+    .eq("id", inviteId);
+
+  if (error) throw error;
+}
+
 export async function acceptHouseholdInvite(
   supabase: SupabaseClient,
   code: string,
@@ -400,6 +450,25 @@ export async function acceptHouseholdInvite(
   if (error) throw error;
 }
 
+export async function leaveHousehold(
+  supabase: SupabaseClient,
+): Promise<void> {
+  const { error } = await supabase.rpc("leave_household");
+  if (error) throw error;
+}
+
+export async function deleteOwnAccount(
+  supabase: SupabaseClient,
+): Promise<void> {
+  const { error } = await supabase.rpc("delete_own_account");
+  if (error) throw error;
+}
+
+/**
+ * Primera sync: sube solo movimientos personales locales.
+ * No sube `shared` (sin household válido / no inventar gastos de pareja).
+ * Si ya hay personales en nube, no vuelve a migrar (cloud gana).
+ */
 export async function migrateLocalMovements(
   supabase: SupabaseClient,
   userId: string,
