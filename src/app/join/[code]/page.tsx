@@ -35,7 +35,7 @@ export default function JoinPage() {
     return (
       <div className="card space-y-4 p-6 text-center text-sm text-zinc-500">
         Supabase no configurado.
-        <Link href="/" className="block text-emerald-600">
+        <Link href="/" className="block text-teal-600">
           Volver
         </Link>
       </div>
@@ -54,7 +54,7 @@ export default function JoinPage() {
           <h1 className="text-lg font-bold">Unirse al grupo</h1>
           <p className="text-sm text-zinc-500">
             Código:{" "}
-            <span className="font-mono font-semibold text-emerald-600">{code}</span>
+            <span className="font-mono font-semibold text-teal-600">{code}</span>
           </p>
           <p className="text-sm text-zinc-500">
             Iniciá sesión para vincular tu cuenta.
@@ -74,7 +74,7 @@ export default function JoinPage() {
     return (
       <div className="card space-y-4 p-6 text-center">
         <p className="font-medium text-red-500">{error}</p>
-        <Link href="/cuenta" className="text-sm text-emerald-600">
+        <Link href="/cuenta" className="text-sm text-teal-600">
           Ir a Cuenta
         </Link>
       </div>

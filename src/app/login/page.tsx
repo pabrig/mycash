@@ -61,7 +61,7 @@ function LoginForm() {
           <p className="text-sm text-zinc-500">
             Te enviamos un link a <strong>{email}</strong>
           </p>
-          <Link href="/" className="text-sm text-emerald-600">
+          <Link href="/" className="text-sm text-teal-600">
             Volver al inicio
           </Link>
         </div>
