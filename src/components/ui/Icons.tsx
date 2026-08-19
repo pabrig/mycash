@@ -2,9 +2,9 @@
 
 type IconProps = { className?: string };
 
-const BRAND_DARK = "#121214";
+const BRAND_TEAL = "#0d9488";
 
-/** Letra M sobre el mismo tile oscuro que el acceso directo. */
+/** Letra M — mismo teal que el notch / theme-color. */
 export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg
@@ -13,7 +13,7 @@ export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <rect width="512" height="512" rx="115" fill={BRAND_DARK} />
+      <rect width="512" height="512" rx="115" fill={BRAND_TEAL} />
       <path
         fill="#ffffff"
         d="M106 396H174V240L230 332H282L338 240V396H406V116H322L256 236L190 116H106Z"
