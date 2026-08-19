@@ -357,7 +357,7 @@ export default function CuentaPage() {
             <p className="text-xs text-zinc-400">Usuario</p>
             <p className="font-medium">{profile?.displayName ?? "Usuario"}</p>
             <p className="text-sm text-zinc-500">{user?.email}</p>
-            <p className="text-xs text-emerald-600">
+            <p className="text-xs text-teal-600">
               {cloudEnabled ? "Sync en la nube activo" : "Sincronizando…"}
             </p>
           </section>
@@ -404,7 +404,7 @@ export default function CuentaPage() {
                 </button>
                 {inviteCode && (
                   <div className="rounded-xl bg-zinc-50 p-3 text-center dark:bg-zinc-800/50">
-                    <p className="text-xl font-bold tracking-widest text-emerald-600 sm:text-2xl">
+                    <p className="text-xl font-bold tracking-widest text-teal-600 sm:text-2xl">
                       {inviteCode}
                     </p>
                     {inviteLink && (
@@ -464,7 +464,7 @@ export default function CuentaPage() {
             </>
           )}
 
-          {message && <p className="text-sm text-emerald-600">{message}</p>}
+          {message && <p className="text-sm text-teal-600">{message}</p>}
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           <section className="bento space-y-3 p-4">

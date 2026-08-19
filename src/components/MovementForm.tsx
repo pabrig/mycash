@@ -208,7 +208,7 @@ export function MovementForm({
                 type === t
                   ? t === "expense"
                     ? "bg-white text-red-600 shadow-sm dark:bg-zinc-900"
-                    : "bg-white text-emerald-600 shadow-sm dark:bg-zinc-900"
+                    : "bg-white text-teal-600 shadow-sm dark:bg-zinc-900"
                   : "text-zinc-500"
               }`}
             >

@@ -110,7 +110,7 @@ function MovementRow({
               dense ? "h-9 w-9" : "h-11 w-11"
             } ${
               isIncome
-                ? "bg-emerald-500/10 text-emerald-600"
+                ? "bg-teal-500/10 text-teal-600"
                 : isShared
                   ? "bg-teal-500/10 text-teal-600"
                   : "bg-rose-500/10 text-rose-500"

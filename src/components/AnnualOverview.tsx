@@ -386,7 +386,7 @@ function IncomeMixCard({
           aria-hidden
         >
           <div
-            className="bg-emerald-500 transition-all"
+            className="bg-teal-600 transition-all"
             style={{ width: `${passiveShare}%` }}
           />
           <div
@@ -450,12 +450,12 @@ function MonthBucketCell({
   return (
     <span className="text-right">
       <span
-        className={`block tabular-nums ${bold ? "font-bold" : "font-semibold"} text-sm ${positive ? "text-emerald-600" : "text-red-500"}`}
+        className={`block tabular-nums ${bold ? "font-bold" : "font-semibold"} text-sm ${positive ? "text-teal-600 dark:text-teal-400" : "text-red-500"}`}
       >
         {format(disponible)}
       </span>
       <span className="mt-0.5 block text-[10px] tabular-nums text-zinc-400">
-        <span className="text-emerald-600/80">↑{flow(income)}</span>
+        <span className="text-teal-600/80 dark:text-teal-400/80">↑{flow(income)}</span>
         {" · "}
         <span className="text-red-500/80">↓{flow(expenses)}</span>
       </span>
@@ -480,10 +480,10 @@ function AvgPill({
   const colors =
     tone === "balance"
       ? value >= 0
-        ? "text-emerald-600"
+        ? "text-teal-600 dark:text-teal-400"
         : "text-red-500"
       : tone === "income"
-        ? "text-emerald-600"
+        ? "text-teal-600 dark:text-teal-400"
         : tone === "expense"
           ? "text-red-500"
           : "text-zinc-800 dark:text-zinc-100";

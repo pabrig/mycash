@@ -29,7 +29,7 @@ export function BalanceBar() {
 
       <div className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
         <div
-          className="rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+          className="rounded-full bg-teal-600 transition-all duration-700 ease-out"
           style={{ width: `${incomePct}%` }}
         />
         <div
