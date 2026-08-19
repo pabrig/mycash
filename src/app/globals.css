@@ -7,7 +7,7 @@
   --card-muted: #f7f7f8;
   --primary: #0d9488;
   --primary-dark: #0f766e;
-  --income: #059669;
+  --income: #0d9488;
   --expense: #e11d48;
   --shared: #0d9488;
   --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.04);
@@ -158,7 +158,7 @@ textarea {
 }
 
 .amount-positive {
-  @apply text-emerald-600 dark:text-emerald-400;
+  @apply text-teal-600 dark:text-teal-400;
 }
 
 .amount-negative {

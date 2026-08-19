@@ -4,20 +4,39 @@ type IconProps = { className?: string };
 
 const BRAND_TEAL = "#0d9488";
 
-/** Letra M — mismo teal que el notch / theme-color. */
+/** Billetera + flecha de tendencia. Sin marco; el teal va en la curva. */
 export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg
       className={className}
-      viewBox="0 0 512 512"
+      viewBox="0 0 24 24"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <rect width="512" height="512" rx="115" fill={BRAND_TEAL} />
       <path
-        fill="#ffffff"
-        d="M106 396H174V240L230 332H282L338 240V396H406V116H322L256 236L190 116H106Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
       />
+      <path
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"
+      />
+      <circle cx="16.5" cy="14" r="1.05" fill={BRAND_TEAL} />
+      <path
+        stroke={BRAND_TEAL}
+        strokeWidth="1.85"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.4 16.6 9.4 12.9 12 14.7 17.6 8.2"
+      />
+      <path fill={BRAND_TEAL} d="M14.7 9.8 18.4 7.3 15.8 11.4Z" />
     </svg>
   );
 }

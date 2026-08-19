@@ -1,4 +1,4 @@
-const CACHE = "mycash-v4";
+const CACHE = "mycash-v6";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icon.svg",
