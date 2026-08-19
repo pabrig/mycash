@@ -13,12 +13,14 @@ export function CloudBanner() {
   return (
     <Link
       href="/login"
-      className="card block p-3 text-sm text-zinc-600 transition-colors active:bg-zinc-50 dark:text-zinc-300 dark:active:bg-zinc-800/50"
+      className="bento block w-full animate-fade-in text-sm text-zinc-500 transition active:opacity-80 md:mx-auto md:max-w-md"
     >
-      <span className="font-medium text-emerald-600">Iniciá sesión</span> para
+      <span className="font-semibold text-zinc-900 dark:text-white">
+        Iniciá sesión
+      </span>{" "}
       {sharedEnabled
-        ? " sync en la nube y gastos compartidos con tu pareja →"
-        : " sincronizar tus movimientos en la nube →"}
+        ? "para sync y gastos compartidos →"
+        : "para sincronizar en la nube →"}
     </Link>
   );
 }

@@ -23,42 +23,50 @@ export default function CompartidoPage() {
   }
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="flex flex-col gap-4 pb-4 md:gap-6">
       <AppHeader />
 
-      <div>
-        <h2 className="text-lg font-bold">Compartido</h2>
-        {configured && isAuthenticated ? (
-          <p className="text-sm text-zinc-500">
-            {household?.name ?? "Grupo"}
-            {members.length > 0 &&
-              ` · ${members.map((m) => m.displayName).join(", ")}`}
-          </p>
-        ) : (
-          <p className="text-sm text-zinc-500">
-            Gastos del hogar — cada uno ve el monto completo en su disponible
-          </p>
-        )}
+      <div className="animate-fade-in flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+            Compartido
+          </h2>
+          {configured && isAuthenticated ? (
+            <p className="meta mt-1">
+              {household?.name ?? "Grupo"}
+              {members.length > 0 &&
+                ` · ${members.map((m) => m.displayName).join(", ")}`}
+            </p>
+          ) : (
+            <p className="meta mt-1">
+              Gastos del hogar — monto completo en el disponible de cada uno
+            </p>
+          )}
+        </div>
       </div>
 
       {configured && !isAuthenticated && (
         <Link
           href="/login?next=/compartido"
-          className="card block p-4 text-sm text-zinc-600 dark:text-zinc-300"
+          className="bento block text-sm text-zinc-500 md:max-w-md"
         >
-          <span className="font-medium text-emerald-600">Iniciá sesión</span>{" "}
-          para sync compartido con tu pareja →
+          <span className="font-semibold text-zinc-900 dark:text-white">
+            Iniciá sesión
+          </span>{" "}
+          para sync compartido →
         </Link>
       )}
 
       {configured && isAuthenticated && members.length < 2 && (
         <Link
           href="/cuenta"
-          className="card block p-4 text-sm text-zinc-600 dark:text-zinc-300"
+          className="bento block text-sm text-zinc-500 md:max-w-md"
         >
           Invitá a tu pareja desde{" "}
-          <span className="font-medium text-emerald-600">Cuenta</span> para ver
-          sus cargas acá →
+          <span className="font-semibold text-zinc-900 dark:text-white">
+            Cuenta
+          </span>{" "}
+          →
         </Link>
       )}
 

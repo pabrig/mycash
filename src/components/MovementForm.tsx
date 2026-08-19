@@ -115,7 +115,8 @@ export function MovementForm({
   initial?: Movement;
 }) {
   const router = useRouter();
-  const { addMovement, updateMovement, walletMode, sharedEnabled } = useFinance();
+  const { addMovement, updateMovement, walletMode, sharedEnabled, usdEnabled } =
+    useFinance();
   const isEdit = Boolean(initial);
 
   const [type, setType] = useState<MovementType>(
@@ -158,14 +159,14 @@ export function MovementForm({
       type,
       date,
       amount: parsed,
-      currency,
+      currency: usdEnabled ? currency : "ARS",
       description: description.trim(),
       scope,
       kind,
       category,
       incomeKind,
       source,
-      walletChoice,
+      walletChoice: usdEnabled ? walletChoice : "auto",
     });
 
     setSubmitting(true);
@@ -222,18 +223,20 @@ export function MovementForm({
             className="w-full max-w-[200px] border-none bg-transparent text-center text-4xl font-bold tabular-nums outline-none"
           />
         </div>
-        <div className="mt-4 flex justify-center gap-2">
-          {CURRENCIES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCurrency(c)}
-              className={`chip ${currency === c ? "chip-active" : "chip-inactive"}`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
+        {usdEnabled && (
+          <div className="mt-4 flex justify-center gap-2">
+            {CURRENCIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCurrency(c)}
+                className={`chip ${currency === c ? "chip-active" : "chip-inactive"}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

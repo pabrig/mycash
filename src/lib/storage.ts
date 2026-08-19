@@ -6,6 +6,7 @@ const RATES_KEY = "mycash_rates";
 const DISPLAY_KEY = "mycash_display";
 const WALLET_MODE_KEY = "mycash_wallet_mode";
 const SHARED_ENABLED_KEY = "mycash_shared_enabled";
+const USD_ENABLED_KEY = "mycash_usd_enabled";
 
 const LEGACY_KEYS = [
   ["pagapp_movements", MOVEMENTS_KEY],
@@ -112,4 +113,17 @@ export function loadSharedEnabled(): boolean {
 
 export function saveSharedEnabled(enabled: boolean): void {
   localStorage.setItem(SHARED_ENABLED_KEY, enabled ? "true" : "false");
+}
+
+/** Default true: no romper UX de quien ya usa USD / bolsillos. */
+export function loadUsdEnabled(): boolean {
+  if (typeof window === "undefined") return true;
+  migrateLegacyStorage();
+  const raw = localStorage.getItem(USD_ENABLED_KEY);
+  if (raw === null) return true;
+  return raw === "true";
+}
+
+export function saveUsdEnabled(enabled: boolean): void {
+  localStorage.setItem(USD_ENABLED_KEY, enabled ? "true" : "false");
 }
