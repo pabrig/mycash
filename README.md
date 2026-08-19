@@ -83,7 +83,7 @@ Resumen rápido:
 
 Sin `.env.local` la app funciona igual en modo local.
 
-Auditoría de aislamiento con 2 usuarios: **[docs/rls-checklist.md](docs/rls-checklist.md)**.
+Auditoría de aislamiento con 2 usuarios: **[docs/rls-checklist.md](docs/rls-checklist.md)** · script SQL: **[docs/rls-audit.sql](docs/rls-audit.sql)**.
 
 ## Tests
 

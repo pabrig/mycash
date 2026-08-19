@@ -13,9 +13,14 @@ import {
   IconArrowUp,
   IconShared,
 } from "@/components/ui/Icons";
+import {
+  canManageMovement,
+  matchesMovementFilter,
+  type MovementListFilter,
+} from "@/lib/movement-access";
 import type { Movement } from "@/lib/types";
 
-type Filter = "all" | "income" | "personal" | "shared";
+type Filter = MovementListFilter;
 
 const ALL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
@@ -29,19 +34,6 @@ const PERSONAL_FILTERS: { id: Filter; label: string }[] = [
   { id: "income", label: "Ingresos" },
   { id: "personal", label: "Gastos" },
 ];
-
-function matchesFilter(movement: Movement, filter: Filter): boolean {
-  switch (filter) {
-    case "all":
-      return true;
-    case "income":
-      return movement.type === "income";
-    case "personal":
-      return movement.type === "expense" && movement.scope !== "shared";
-    case "shared":
-      return movement.type === "expense" && movement.scope === "shared";
-  }
-}
 
 function formatDayLabel(date: string): string {
   const d = new Date(date + "T12:00:00");
@@ -75,18 +67,6 @@ function groupByDate(movements: Movement[]): Map<string, Movement[]> {
     groups.set(m.date, list);
   }
   return groups;
-}
-
-function canManageMovement(
-  movement: Movement,
-  cloudEnabled: boolean,
-  userId: string | undefined,
-): boolean {
-  if (!cloudEnabled) return true;
-  if (movement.scope === "shared") {
-    return !movement.createdByUserId || movement.createdByUserId === userId;
-  }
-  return true;
 }
 
 function scopeLabel(movement: Movement): string {
@@ -305,7 +285,7 @@ export function MovementList({
   const dense = variant === "feed";
 
   const filtered = monthMovements
-    .filter((m) => matchesFilter(m, activeFilter))
+    .filter((m) => matchesMovementFilter(m, activeFilter))
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const selected = filtered.find((m) => m.id === selectedId) ?? null;

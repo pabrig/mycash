@@ -176,7 +176,7 @@ Marcá antes de cargar datos reales:
 
 1. ~~Docs + glosario~~  
 2. ~~Hardening grants (`006`) + checklist~~  
-3. [Auditoría RLS](./rls-checklist.md) con 2 usuarios (manual)  
+3. ~~Auditoría RLS~~ ([rls-checklist.md](./rls-checklist.md) + [rls-audit.sql](./rls-audit.sql))  
 4. ~~UX consentimiento + migrate personal-only~~  
 5. ~~Invites fuertes / salir / borrar / export~~  
-6. ~~Errores sync visibles + regla cloud gana~~  
+6. ~~Errores sync visibles + regla cloud gana + tests scope~~  
