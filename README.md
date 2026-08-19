@@ -85,7 +85,7 @@ Sin `.env.local` la app funciona igual en modo local.
 
 Auditoría de aislamiento con 2 usuarios: **[docs/rls-checklist.md](docs/rls-checklist.md)** · script SQL: **[docs/rls-audit.sql](docs/rls-audit.sql)**.
 
-Despliegue público (Vercel + Auth + PWA): **[docs/deploy.md](docs/deploy.md)**.
+Despliegue público (Vercel + Auth + PWA): **[docs/deploy.md](docs/deploy.md)** — guía paso a paso.
 
 ## Tests
 
