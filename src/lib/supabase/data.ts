@@ -309,6 +309,33 @@ export async function saveSharedEnabledRemote(
   if (error) throw error;
 }
 
+/** Default true si la columna no existe aún / null. */
+export async function fetchUsdEnabled(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_settings")
+    .select("usd_enabled")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (data?.usd_enabled === false) return false;
+  return true;
+}
+
+export async function saveUsdEnabledRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("user_settings").upsert({
+    user_id: userId,
+    usd_enabled: enabled,
+  });
+  if (error) throw error;
+}
+
 export async function fetchDisplayCurrency(
   supabase: SupabaseClient,
   userId: string,

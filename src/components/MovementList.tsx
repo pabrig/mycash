@@ -7,6 +7,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { toArs } from "@/lib/currency";
 import { useDisplayAmount } from "@/hooks/useDisplayAmount";
+import { DetailSheet } from "@/components/ui/DetailSheet";
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconShared,
+} from "@/components/ui/Icons";
 import type { Movement } from "@/lib/types";
 
 type Filter = "all" | "income" | "personal" | "shared";
@@ -52,6 +58,15 @@ function formatDayLabel(date: string): string {
   });
 }
 
+function formatFullDate(date: string): string {
+  return new Date(date + "T12:00:00").toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function groupByDate(movements: Movement[]): Map<string, Movement[]> {
   const groups = new Map<string, Movement[]>();
   for (const m of movements) {
@@ -74,111 +89,210 @@ function canManageMovement(
   return true;
 }
 
+function scopeLabel(movement: Movement): string {
+  if (movement.scope === "shared") {
+    return movement.createdByName
+      ? `${movement.createdByName} · Compartido`
+      : "Compartido";
+  }
+  return movement.type === "income" ? "Ingreso" : "Personal";
+}
+
 function MovementRow({
   movement,
   arsAmount,
-  canManage,
   selected,
   onSelect,
-  onDelete,
+  dense,
 }: {
   movement: Movement;
   arsAmount: number;
-  canManage: boolean;
   selected: boolean;
   onSelect: () => void;
-  onDelete: () => Promise<void>;
+  dense?: boolean;
 }) {
-  const router = useRouter();
   const fmt = useDisplayAmount();
   const isIncome = movement.type === "income";
   const isShared = movement.scope === "shared";
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    if (!confirm(`¿Eliminar "${movement.description}"?`)) return;
-    setDeleting(true);
-    try {
-      await onDelete();
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   return (
-    <li className="py-1">
+    <li>
       <button
         type="button"
         onClick={onSelect}
-        className="flex w-full items-center gap-3 py-2 text-left active:opacity-80"
+        className={`flex w-full items-center gap-3 rounded-2xl px-3 text-left transition md:grid md:grid-cols-[minmax(0,1fr)_7rem_6rem_auto] md:items-center ${
+          dense ? "py-2.5" : "py-3"
+        } ${selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"}`}
       >
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-            isIncome
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-              : isShared
-                ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
-                : "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
-          }`}
-        >
-          {isIncome ? "↑" : isShared ? "◉" : "↓"}
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div
+            className={`flex shrink-0 items-center justify-center rounded-2xl ${
+              dense ? "h-9 w-9" : "h-11 w-11"
+            } ${
+              isIncome
+                ? "bg-emerald-500/10 text-emerald-600"
+                : isShared
+                  ? "bg-teal-500/10 text-teal-600"
+                  : "bg-rose-500/10 text-rose-500"
+            }`}
+          >
+            {isIncome ? (
+              <IconArrowUp className="h-4 w-4" />
+            ) : isShared ? (
+              <IconShared className="h-4 w-4" />
+            ) : (
+              <IconArrowDown className="h-4 w-4" />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold tracking-tight">
+              {movement.description}
+            </p>
+            <p className="meta mt-0.5 truncate text-xs md:hidden">
+              {scopeLabel(movement)}
+              {movement.category && ` · ${movement.category}`}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{movement.description}</p>
-          <p className="text-xs text-zinc-500">
-            {isShared
-              ? movement.createdByName
-                ? `${movement.createdByName} · Compartido`
-                : "Compartido"
-              : isIncome
-                ? "Ingreso"
-                : "Personal"}
-            {movement.category && ` · ${movement.category}`}
-          </p>
-        </div>
-        <div className="text-right">
+
+        <p className="meta hidden text-xs md:block">
+          {formatDayLabel(movement.date)}
+        </p>
+        <p className="meta hidden truncate text-xs capitalize md:block">
+          {movement.category ?? movement.source ?? "—"}
+        </p>
+
+        <div className="shrink-0 text-right">
           <p
-            className={`font-semibold tabular-nums ${
-              isIncome ? "text-emerald-600" : "text-zinc-800 dark:text-zinc-100"
+            className={`font-bold tabular-nums tracking-tight ${
+              isIncome ? "amount-positive" : "text-zinc-900 dark:text-white"
             }`}
           >
             {isIncome ? "+" : "−"}
             {fmt(arsAmount)}
           </p>
           {movement.currency !== "ARS" && (
-            <p className="text-[10px] text-zinc-400">
+            <p className="mt-0.5 text-[10px] text-zinc-400">
               {movement.amount} {movement.currency}
             </p>
           )}
         </div>
       </button>
+    </li>
+  );
+}
 
-      {selected && canManage && (
-        <div className="mb-2 flex gap-2 pl-[3.25rem]">
+function MovementDetail({
+  movement,
+  arsAmount,
+  canManage,
+  onDelete,
+  onClose,
+}: {
+  movement: Movement;
+  arsAmount: number;
+  canManage: boolean;
+  onDelete: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const fmt = useDisplayAmount();
+  const [deleting, setDeleting] = useState(false);
+  const isIncome = movement.type === "income";
+
+  async function handleDelete() {
+    if (!confirm(`¿Eliminar "${movement.description}"?`)) return;
+    setDeleting(true);
+    try {
+      await onDelete();
+      onClose();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6 pb-4">
+      <div>
+        <p className="text-sm font-medium text-zinc-400">
+          {isIncome ? "Ingreso" : "Gasto"}
+          {movement.scope === "shared" ? " · Compartido" : ""}
+        </p>
+        <p
+          className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${
+            isIncome ? "amount-positive" : "text-zinc-900 dark:text-white"
+          }`}
+        >
+          {isIncome ? "+" : "−"}
+          {fmt(arsAmount)}
+        </p>
+        {movement.currency !== "ARS" && (
+          <p className="meta mt-1">
+            {movement.amount} {movement.currency}
+          </p>
+        )}
+      </div>
+
+      <dl className="space-y-3 text-sm">
+        <div className="flex justify-between gap-4">
+          <dt className="text-zinc-400">Descripción</dt>
+          <dd className="max-w-[60%] text-right font-semibold">
+            {movement.description}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4">
+          <dt className="text-zinc-400">Fecha</dt>
+          <dd className="text-right font-medium capitalize">
+            {formatFullDate(movement.date)}
+          </dd>
+        </div>
+        {(movement.category || movement.source) && (
+          <div className="flex justify-between gap-4">
+            <dt className="text-zinc-400">
+              {movement.type === "income" ? "Fuente" : "Categoría"}
+            </dt>
+            <dd className="text-right font-medium capitalize">
+              {movement.category ?? movement.source}
+            </dd>
+          </div>
+        )}
+        {movement.createdByName && (
+          <div className="flex justify-between gap-4">
+            <dt className="text-zinc-400">Cargado por</dt>
+            <dd className="text-right font-medium">{movement.createdByName}</dd>
+          </div>
+        )}
+      </dl>
+
+      {canManage && (
+        <div className="flex gap-2 pt-2">
           <button
             type="button"
             onClick={() => router.push(`/editar/${movement.id}`)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-zinc-100 py-2 text-sm font-medium text-zinc-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-200"
+            className="flex flex-1 items-center justify-center rounded-2xl bg-[var(--card-muted)] py-3.5 text-sm font-semibold"
           >
-            <span aria-hidden>✎</span>
             Editar
           </button>
           <button
             type="button"
             onClick={() => void handleDelete()}
             disabled={deleting}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-sm font-medium text-red-600 active:scale-[0.98] disabled:opacity-40 dark:bg-red-950/40"
+            className="flex flex-1 items-center justify-center rounded-2xl bg-rose-500/10 py-3.5 text-sm font-semibold text-rose-600 disabled:opacity-40"
           >
-            <span aria-hidden>×</span>
             {deleting ? "…" : "Eliminar"}
           </button>
         </div>
       )}
-    </li>
+    </div>
   );
 }
 
-export function MovementList() {
+export function MovementList({
+  variant = "default",
+}: {
+  /** feed: columna sticky desktop con tipografía más densa */
+  variant?: "default" | "feed";
+}) {
   const { user } = useAuth();
   const { monthMovements, rate, deleteMovement, cloudEnabled, sharedEnabled } =
     useFinance();
@@ -188,20 +302,20 @@ export function MovementList() {
   const filters = sharedEnabled ? ALL_FILTERS : PERSONAL_FILTERS;
   const activeFilter =
     !sharedEnabled && filter === "shared" ? "all" : filter;
+  const dense = variant === "feed";
 
   const filtered = monthMovements
     .filter((m) => matchesFilter(m, activeFilter))
     .sort((a, b) => b.date.localeCompare(a.date));
 
+  const selected = filtered.find((m) => m.id === selectedId) ?? null;
+
   if (monthMovements.length === 0) {
     return (
-      <section className="card animate-slide-up p-8 text-center">
-        <p className="text-4xl">📝</p>
-        <p className="mt-3 font-medium">Sin movimientos</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Tocá + para cargar tu primer ticket
-        </p>
-        <Link href="/nuevo" className="btn-primary mt-5 inline-block px-6">
+      <section className="bento animate-slide-up-delay-2 py-12 text-center">
+        <p className="text-sm font-semibold text-zinc-400">Sin movimientos</p>
+        <p className="meta mt-1">Tocá + para cargar el primero</p>
+        <Link href="/nuevo" className="btn-primary mt-6 inline-block px-8 text-sm">
           Cargar movimiento
         </Link>
       </section>
@@ -211,15 +325,15 @@ export function MovementList() {
   const groups = groupByDate(filtered);
 
   return (
-    <section className="animate-slide-up">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-          Movimientos
+    <section className={dense ? "animate-fade-in" : "animate-slide-up-delay-2"}>
+      <div className="mb-4 flex items-end justify-between">
+        <h2 className={`font-bold tracking-tight ${dense ? "text-base" : "text-lg"}`}>
+          {dense ? "Últimos movimientos" : "Movimientos"}
         </h2>
-        <span className="text-xs text-zinc-400">{filtered.length} items</span>
+        <span className="text-xs font-medium text-zinc-400">{filtered.length}</span>
       </div>
 
-      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 flex gap-1 overflow-x-auto pb-0.5">
         {filters.map(({ id, label }) => (
           <button
             key={id}
@@ -232,32 +346,34 @@ export function MovementList() {
         ))}
       </div>
 
+      {/* Header columnas desktop */}
+      <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
+        <span>Descripción</span>
+        <span>Fecha</span>
+        <span>Categoría</span>
+        <span className="text-right">Monto</span>
+      </div>
+
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-zinc-500">
+        <p className="py-10 text-center text-sm text-zinc-400">
           Nada con este filtro
         </p>
       ) : (
-        <div className="card divide-y divide-zinc-100 px-4 dark:divide-zinc-800">
+        <div className="bento space-y-5 !px-2 !py-3">
           {[...groups.entries()].map(([date, items]) => (
             <div key={date}>
-              <p className="sticky top-0 bg-white/95 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-400 backdrop-blur dark:bg-zinc-900/95">
+              <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase md:hidden">
                 {formatDayLabel(date)}
               </p>
-              <ul>
+              <ul className="space-y-0.5">
                 {items.map((m) => (
                   <MovementRow
                     key={m.id}
                     movement={m}
                     arsAmount={toArs(m.amount, m.currency, rate)}
-                    canManage={canManageMovement(m, cloudEnabled, user?.id)}
                     selected={selectedId === m.id}
-                    onSelect={() =>
-                      setSelectedId((prev) => (prev === m.id ? null : m.id))
-                    }
-                    onDelete={async () => {
-                      await deleteMovement(m.id);
-                      setSelectedId(null);
-                    }}
+                    dense={dense}
+                    onSelect={() => setSelectedId(m.id)}
                   />
                 ))}
               </ul>
@@ -265,6 +381,24 @@ export function MovementList() {
           ))}
         </div>
       )}
+
+      <DetailSheet
+        open={Boolean(selected)}
+        onClose={() => setSelectedId(null)}
+        title="Detalle"
+      >
+        {selected && (
+          <MovementDetail
+            movement={selected}
+            arsAmount={toArs(selected.amount, selected.currency, rate)}
+            canManage={canManageMovement(selected, cloudEnabled, user?.id)}
+            onClose={() => setSelectedId(null)}
+            onDelete={async () => {
+              await deleteMovement(selected.id);
+            }}
+          />
+        )}
+      </DetailSheet>
     </section>
   );
 }

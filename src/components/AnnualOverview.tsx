@@ -100,14 +100,14 @@ export function AnnualOverview({
 
         <IncomeMixCard averages={annualSummary.averages} fmt={fmt} />
 
-        <div className="card overflow-hidden">
-          <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 border-b border-zinc-100 px-3 py-2 text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+        <div className="bento overflow-hidden !p-0">
+          <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
             <span>Mes</span>
             <span className="text-right">Cotidiano</span>
             <span className="text-right">Ahorro</span>
           </div>
 
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="space-y-0.5 px-1.5 pb-2">
             {splitBreakdown.map((snap) => {
               const isCurrent =
                 snap.year === now.year &&
@@ -126,20 +126,18 @@ export function AnnualOverview({
                       setPeriod(year, snap.month);
                       onOpenMonth(snap.month);
                     }}
-                    className={`grid w-full grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 px-3 py-3 text-left transition-colors active:bg-zinc-50 dark:active:bg-zinc-800/50 ${
+                    className={`grid w-full grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 rounded-2xl px-2.5 py-3 text-left transition ${
                       isSelected
-                        ? "bg-emerald-50/80 dark:bg-emerald-950/20"
-                        : isCurrent
-                          ? "bg-zinc-50/50 dark:bg-zinc-800/30"
-                          : ""
+                        ? "bg-[var(--card-muted)]"
+                        : "active:bg-[var(--card-muted)]"
                     }`}
                   >
                     <span
-                      className={`self-center text-sm ${hasActivity ? "font-medium" : "text-zinc-400"} ${isSelected ? "text-emerald-700 dark:text-emerald-400" : ""}`}
+                      className={`self-center text-sm ${hasActivity ? "font-semibold" : "text-zinc-400"}`}
                     >
                       {MONTH_NAMES[snap.month - 1].slice(0, 3)}
                       {isCurrent && (
-                        <span className="ml-1 text-[10px] font-normal text-emerald-600">
+                        <span className="ml-1 text-[10px] font-medium text-teal-600">
                           hoy
                         </span>
                       )}
@@ -174,8 +172,8 @@ export function AnnualOverview({
             })}
           </ul>
 
-          <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 border-t border-zinc-200 bg-zinc-50 px-3 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
-            <span className="self-center font-semibold text-zinc-600 dark:text-zinc-300">
+          <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 bg-[var(--card-muted)] px-4 py-3.5 text-sm">
+            <span className="self-center font-semibold text-zinc-500">
               Prom.
             </span>
             <MonthBucketCell
@@ -227,15 +225,15 @@ export function AnnualOverview({
 
       <IncomeMixCard averages={averages} fmt={fmt} />
 
-      <div className="card overflow-hidden">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 border-b border-zinc-100 px-4 py-2 text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+      <div className="bento overflow-hidden !p-0">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
           <span>Mes</span>
-          <span className="text-right text-emerald-600">Ingresos</span>
-          <span className="text-right text-red-500">Egresos</span>
+          <span className="text-right amount-positive">Ingresos</span>
+          <span className="text-right amount-negative">Egresos</span>
           <span className="text-right">Disp.</span>
         </div>
 
-        <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="space-y-0.5 px-1.5 pb-2">
           {breakdown.map((snap) => {
             const isCurrent =
               snap.year === now.year &&
@@ -253,20 +251,20 @@ export function AnnualOverview({
                     setPeriod(year, snap.month);
                     onOpenMonth(snap.month);
                   }}
-                  className={`grid w-full grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-3 text-left transition-colors active:bg-zinc-50 dark:active:bg-zinc-800/50 ${
+                  className={`grid w-full grid-cols-[1fr_auto_auto_auto] gap-x-3 rounded-2xl px-3 py-3 text-left transition ${
                     isSelected
-                      ? "bg-emerald-50/80 dark:bg-emerald-950/20"
+                      ? "bg-[var(--card-muted)]"
                       : isCurrent
-                        ? "bg-zinc-50/50 dark:bg-zinc-800/30"
-                        : ""
+                        ? "bg-zinc-50/80 dark:bg-zinc-900/40"
+                        : "active:bg-[var(--card-muted)]"
                   }`}
                 >
                   <span
-                    className={`text-sm ${hasActivity ? "font-medium" : "text-zinc-400"} ${isSelected ? "text-emerald-700 dark:text-emerald-400" : ""}`}
+                    className={`text-sm ${hasActivity ? "font-semibold" : "text-zinc-400"}`}
                   >
                     {MONTH_NAMES[snap.month - 1].slice(0, 3)}
                     {isCurrent && (
-                      <span className="ml-1.5 text-[10px] font-normal text-emerald-600">
+                      <span className="ml-1.5 text-[10px] font-medium text-teal-600">
                         actual
                       </span>
                     )}
@@ -274,14 +272,14 @@ export function AnnualOverview({
 
                   {hasActivity ? (
                     <>
-                      <span className="text-right text-sm tabular-nums text-emerald-600">
+                      <span className="text-right text-sm tabular-nums amount-positive">
                         {fmt(snap.summary.totalIncome)}
                       </span>
-                      <span className="text-right text-sm tabular-nums text-red-500">
+                      <span className="text-right text-sm tabular-nums amount-negative">
                         {fmt(snap.summary.totalExpenses)}
                       </span>
                       <span
-                        className={`text-right text-sm font-semibold tabular-nums ${positive ? "text-emerald-600" : "text-red-500"}`}
+                        className={`text-right text-sm font-bold tabular-nums ${positive ? "amount-positive" : "amount-negative"}`}
                       >
                         {fmt(snap.summary.disponible)}
                       </span>
@@ -297,18 +295,18 @@ export function AnnualOverview({
           })}
         </ul>
 
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 border-t border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
-          <span className="font-semibold text-zinc-600 dark:text-zinc-300">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 bg-[var(--card-muted)] px-4 py-3.5 text-sm">
+          <span className="font-semibold text-zinc-500">
             Promedio
           </span>
-          <span className="text-right font-semibold tabular-nums text-emerald-600">
+          <span className="text-right font-bold tabular-nums amount-positive">
             {fmt(averages.totalIncome)}
           </span>
-          <span className="text-right font-semibold tabular-nums text-red-500">
+          <span className="text-right font-bold tabular-nums amount-negative">
             {fmt(averages.totalExpenses)}
           </span>
           <span
-            className={`text-right font-bold tabular-nums ${averages.disponible >= 0 ? "text-emerald-600" : "text-red-500"}`}
+            className={`text-right font-extrabold tabular-nums ${averages.disponible >= 0 ? "amount-positive" : "amount-negative"}`}
           >
             {fmt(averages.disponible)}
           </span>
@@ -343,39 +341,39 @@ function IncomeMixCard({
     totalExpenses > 0 ? (passiveIncome / totalExpenses) * 100 : null;
 
   return (
-    <div className="card space-y-3 p-4">
+    <div className="bento space-y-3">
       <div>
-        <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        <p className="text-sm font-semibold tracking-tight">
           Ingresos · promedio mensual
         </p>
-        <p className="mt-0.5 text-xs text-zinc-400">
-          Pasivos vs activos para ver de dónde viene tu plata
+        <p className="meta mt-0.5 text-xs">
+          Pasivos vs activos
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-emerald-50/80 px-3 py-2.5 dark:bg-emerald-950/30">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-emerald-700/70 dark:text-emerald-400/70">
+        <div className="rounded-2xl bg-[var(--card-muted)] px-3 py-2.5">
+          <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
             Pasivos
           </p>
-          <p className="mt-0.5 text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+          <p className="mt-0.5 text-sm font-bold tabular-nums amount-positive">
             {fmt(passiveIncome)}
           </p>
           {hasIncome && (
-            <p className="mt-0.5 text-[10px] tabular-nums text-emerald-600/70">
+            <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">
               {passiveShare.toFixed(0)}% del total
             </p>
           )}
         </div>
-        <div className="rounded-xl bg-sky-50/80 px-3 py-2.5 dark:bg-sky-950/30">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-sky-700/70 dark:text-sky-400/70">
+        <div className="rounded-2xl bg-[var(--card-muted)] px-3 py-2.5">
+          <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
             Activos
           </p>
-          <p className="mt-0.5 text-sm font-bold tabular-nums text-sky-700 dark:text-sky-400">
+          <p className="mt-0.5 text-sm font-bold tabular-nums text-zinc-800 dark:text-zinc-100">
             {fmt(activeIncome)}
           </p>
           {hasIncome && (
-            <p className="mt-0.5 text-[10px] tabular-nums text-sky-600/70">
+            <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">
               {activeShare.toFixed(0)}% del total
             </p>
           )}
@@ -384,7 +382,7 @@ function IncomeMixCard({
 
       {hasIncome && (
         <div
-          className="flex h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+          className="flex h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
           aria-hidden
         >
           <div
@@ -392,7 +390,7 @@ function IncomeMixCard({
             style={{ width: `${passiveShare}%` }}
           />
           <div
-            className="bg-sky-400 transition-all"
+            className="bg-zinc-400 transition-all"
             style={{ width: `${activeShare}%` }}
           />
         </div>
@@ -400,10 +398,10 @@ function IncomeMixCard({
 
       <dl className="space-y-2 text-sm">
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-zinc-500">Diferencia pasivos − activos</dt>
+          <dt className="text-zinc-400">Diferencia pasivos − activos</dt>
           <dd
-            className={`font-semibold tabular-nums ${
-              gap >= 0 ? "text-emerald-600" : "text-zinc-700 dark:text-zinc-200"
+            className={`font-bold tabular-nums ${
+              gap >= 0 ? "amount-positive" : "text-zinc-800 dark:text-zinc-100"
             }`}
           >
             {gap >= 0 ? "+" : "−"}
@@ -412,8 +410,8 @@ function IncomeMixCard({
         </div>
         {coverage !== null && (
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-zinc-500">Pasivos vs egresos</dt>
-            <dd className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+            <dt className="text-zinc-400">Pasivos vs egresos</dt>
+            <dd className="font-bold tabular-nums">
               {coverage.toFixed(0)}%
             </dd>
           </div>
@@ -491,11 +489,11 @@ function AvgPill({
           : "text-zinc-800 dark:text-zinc-100";
 
   return (
-    <div className="card px-3 py-2.5 text-center">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+    <div className="bento px-3 py-3 text-center">
+      <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
         {label}
       </p>
-      <p className={`mt-0.5 text-sm font-bold tabular-nums ${colors}`}>
+      <p className={`mt-1 text-sm font-bold tabular-nums ${colors}`}>
         {format(value)}
       </p>
     </div>
