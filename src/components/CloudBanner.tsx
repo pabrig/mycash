@@ -13,7 +13,7 @@ export function CloudBanner() {
   return (
     <Link
       href="/login"
-      className="bento block animate-fade-in text-sm text-zinc-500 transition active:opacity-80"
+      className="bento block w-full animate-fade-in text-sm text-zinc-500 transition active:opacity-80 md:mx-auto md:max-w-md"
     >
       <span className="font-semibold text-zinc-900 dark:text-white">
         Iniciá sesión

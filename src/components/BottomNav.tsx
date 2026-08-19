@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { Fab } from "@/components/Fab";
 import { useFinance } from "@/context/FinanceContext";
 import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
+import { IconHome, IconUsers } from "@/components/ui/Icons";
 
 const HIDE_NAV_PREFIXES = ["/nuevo", "/compartido/nuevo", "/editar", "/login", "/join"];
 
+/** Solo mobile — oculto desde md (lo reemplaza DesktopSidebar). */
 export function BottomNav() {
   const pathname = usePathname();
   const { sharedEnabled, usdEnabled } = useFinance();
@@ -19,7 +21,7 @@ export function BottomNav() {
   const sharedActive = pathname.startsWith("/compartido");
 
   return (
-    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
       <div className="pointer-events-auto relative mx-auto max-w-lg px-4">
         {usdEnabled && <RatePill />}
         <div className="relative mt-2 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
@@ -102,6 +104,7 @@ function NavLink({
   icon: "home" | "shared";
 }) {
   const color = active ? "text-zinc-900 dark:text-white" : "text-zinc-400";
+  const Icon = icon === "home" ? IconHome : IconUsers;
 
   return (
     <Link
@@ -110,15 +113,7 @@ function NavLink({
         active ? "text-zinc-900 dark:text-white" : "text-zinc-400"
       }`}
     >
-      {icon === "home" ? (
-        <svg className={`h-6 w-6 ${color}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" />
-        </svg>
-      ) : (
-        <svg className={`h-6 w-6 ${color}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      )}
+      <Icon className={`h-6 w-6 ${color}`} />
       <span>{label}</span>
     </Link>
   );

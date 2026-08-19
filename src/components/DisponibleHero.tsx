@@ -5,6 +5,7 @@ import { useFinance } from "@/context/FinanceContext";
 import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 import { formatMoney, formatUsd, todayIso } from "@/lib/format";
 import type { SummaryScope } from "@/lib/types";
+import { IconChevronDown } from "@/components/ui/Icons";
 
 export function DisponibleHero({ scope }: { scope: SummaryScope }) {
   const { walletMode, summary, annualSummary, sharedEnabled } = useFinance();
@@ -46,7 +47,7 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
               : "Disponible del mes"}
           </p>
           <p
-            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums ${
+            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
@@ -64,12 +65,9 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
             className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition active:opacity-70"
           >
             {detailsOpen ? "Ocultar desglose" : "Ver desglose"}
-            <span
-              className={`inline-block transition-transform ${detailsOpen ? "rotate-180" : ""}`}
-              aria-hidden
-            >
-              ▾
-            </span>
+            <IconChevronDown
+              className={`h-4 w-4 transition-transform ${detailsOpen ? "rotate-180" : ""}`}
+            />
           </button>
         </div>
 
@@ -174,12 +172,9 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
             </p>
             <p className="meta text-xs">≈ {formatMoney(ahorroArs)}</p>
           </div>
-          <span
-            className={`text-zinc-400 transition-transform ${ahorroOpen ? "rotate-180" : ""}`}
-            aria-hidden
-          >
-            ▾
-          </span>
+          <IconChevronDown
+            className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform ${ahorroOpen ? "rotate-180" : ""}`}
+          />
         </button>
 
         {ahorroOpen && (

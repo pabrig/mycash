@@ -23,28 +23,32 @@ export default function CompartidoPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
+    <div className="flex flex-col gap-4 pb-4 md:gap-6">
       <AppHeader />
 
-      <div className="animate-fade-in">
-        <h2 className="text-2xl font-extrabold tracking-tight">Compartido</h2>
-        {configured && isAuthenticated ? (
-          <p className="meta mt-1">
-            {household?.name ?? "Grupo"}
-            {members.length > 0 &&
-              ` · ${members.map((m) => m.displayName).join(", ")}`}
-          </p>
-        ) : (
-          <p className="meta mt-1">
-            Gastos del hogar — monto completo en el disponible de cada uno
-          </p>
-        )}
+      <div className="animate-fade-in flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+            Compartido
+          </h2>
+          {configured && isAuthenticated ? (
+            <p className="meta mt-1">
+              {household?.name ?? "Grupo"}
+              {members.length > 0 &&
+                ` · ${members.map((m) => m.displayName).join(", ")}`}
+            </p>
+          ) : (
+            <p className="meta mt-1">
+              Gastos del hogar — monto completo en el disponible de cada uno
+            </p>
+          )}
+        </div>
       </div>
 
       {configured && !isAuthenticated && (
         <Link
           href="/login?next=/compartido"
-          className="bento block text-sm text-zinc-500"
+          className="bento block text-sm text-zinc-500 md:max-w-md"
         >
           <span className="font-semibold text-zinc-900 dark:text-white">
             Iniciá sesión
@@ -54,7 +58,10 @@ export default function CompartidoPage() {
       )}
 
       {configured && isAuthenticated && members.length < 2 && (
-        <Link href="/cuenta" className="bento block text-sm text-zinc-500">
+        <Link
+          href="/cuenta"
+          className="bento block text-sm text-zinc-500 md:max-w-md"
+        >
           Invitá a tu pareja desde{" "}
           <span className="font-semibold text-zinc-900 dark:text-white">
             Cuenta

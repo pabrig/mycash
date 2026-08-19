@@ -215,15 +215,15 @@ export default function CuentaPage() {
   const inviteLink = inviteCode ? `${siteUrl}/join/${inviteCode}` : null;
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="mx-auto w-full max-w-lg space-y-5 pb-4 md:max-w-2xl md:pt-2">
       <div className="flex items-center gap-3">
         <Link
           href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm dark:bg-zinc-900"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--card)] text-lg active:scale-95 md:hidden"
         >
           ‹
         </Link>
-        <h1 className="text-lg font-bold">Cuenta</h1>
+        <h1 className="text-lg font-bold md:text-2xl">Cuenta</h1>
       </div>
 
       <UsdSettings />

@@ -17,9 +17,9 @@ export default function EditarPage() {
 
   if (!movement) {
     return (
-      <div className="card space-y-4 p-6 text-center">
+      <div className="bento mx-auto max-w-lg space-y-4 p-6 text-center">
         <p className="font-medium">Movimiento no encontrado</p>
-        <Link href="/" className="text-sm text-emerald-600">
+        <Link href="/" className="text-sm font-semibold text-zinc-900 dark:text-white">
           Volver al inicio
         </Link>
       </div>
@@ -30,16 +30,16 @@ export default function EditarPage() {
   const redirectTo = isShared ? "/compartido" : "/";
 
   return (
-    <div className="pb-4">
+    <div className="mx-auto w-full max-w-lg pb-4 md:max-w-xl md:pt-2">
       <div className="mb-5 flex items-center gap-3">
         <Link
           href={redirectTo}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm active:scale-95 dark:bg-zinc-900"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--card)] text-lg active:scale-95"
           aria-label="Volver"
         >
           ‹
         </Link>
-        <h1 className="text-lg font-bold">
+        <h1 className="text-lg font-bold md:text-xl">
           {isShared ? "Editar compartido" : "Editar movimiento"}
         </h1>
       </div>

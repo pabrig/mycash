@@ -19,22 +19,40 @@ export default function HomePage() {
   if (!ready) return <LoadingScreen />;
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
+    <div className="flex flex-col gap-4 pb-4 md:gap-6">
       <AppHeader />
-      <CloudBanner />
-      <PeriodToggle scope={scope} onChange={setScope} />
 
-      <div className="grid gap-3">
-        <DisponibleHero scope={scope} />
-        {scope === "year" ? (
-          <AnnualOverview onOpenMonth={() => setScope("month")} />
-        ) : (
-          <>
-            <BalanceBar />
-            <MovementList />
-          </>
-        )}
+      <div className="flex flex-col items-stretch gap-3 md:items-center">
+        <CloudBanner />
+        <div className="w-full md:mx-auto md:max-w-xs">
+          <PeriodToggle scope={scope} onChange={setScope} />
+        </div>
       </div>
+
+      {scope === "year" ? (
+        <div className="mx-auto grid w-full max-w-5xl gap-4 md:gap-6">
+          <DisponibleHero scope={scope} />
+          <AnnualOverview onOpenMonth={() => setScope("month")} />
+        </div>
+      ) : (
+        <div className="mx-auto grid w-full grid-cols-1 items-start gap-4 md:grid-cols-12 md:gap-6">
+          {/* Macro */}
+          <div className="flex flex-col gap-4 md:col-span-7 lg:col-span-8">
+            <DisponibleHero scope={scope} />
+            <BalanceBar />
+            <div className="md:hidden">
+              <MovementList />
+            </div>
+          </div>
+
+          {/* Feed sticky — desde md */}
+          <aside className="hidden md:col-span-5 md:block lg:col-span-4">
+            <div className="md:sticky md:top-8 md:max-h-[calc(100vh-4rem)] md:overflow-y-auto md:overscroll-contain">
+              <MovementList variant="feed" />
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
