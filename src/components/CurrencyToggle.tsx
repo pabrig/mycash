@@ -8,16 +8,16 @@ export function CurrencyToggle() {
   if (!usdEnabled) return null;
 
   return (
-    <div className="flex rounded-full bg-zinc-100 p-0.5 dark:bg-zinc-800">
+    <div className="flex rounded-full bg-[var(--card-muted)] p-1">
       {(["ARS", "USD"] as const).map((c) => (
         <button
           key={c}
           type="button"
           onClick={() => setDisplayCurrency(c)}
-          className={`rounded-full px-3 py-1 text-xs font-semibold transition-all active:scale-95 ${
+          className={`rounded-full px-3 py-1.5 text-xs font-bold tracking-wide transition-all active:scale-95 ${
             displayCurrency === c
-              ? "bg-white text-emerald-700 shadow-sm dark:bg-zinc-900 dark:text-emerald-400"
-              : "text-zinc-500"
+              ? "bg-[var(--card)] text-zinc-900 shadow-sm dark:text-white"
+              : "text-zinc-400"
           }`}
         >
           {c}

@@ -1,36 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f4f5;
-  --foreground: #18181b;
+  --background: #f2f2f3;
+  --foreground: #09090b;
   --card: #ffffff;
-  --primary: #059669;
-  --primary-dark: #047857;
-  --income: #10b981;
-  --expense: #ef4444;
-  --shared: #6366f1;
+  --card-muted: #f7f7f8;
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --income: #059669;
+  --expense: #e11d48;
+  --shared: #0d9488;
+  --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.04);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #09090b;
+    --background: #050506;
     --foreground: #fafafa;
-    --card: #18181b;
+    --card: #121214;
+    --card-muted: #1a1a1d;
+    --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.35);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.01em;
 }
 
 input,
@@ -43,16 +48,12 @@ textarea {
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.animate-slide-up {
-  animation: slide-up 0.25s ease-out;
 }
 
 @keyframes fade-in {
@@ -64,12 +65,41 @@ textarea {
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up-delay-1 {
+  animation: slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.animate-slide-up-delay-2 {
+  animation: slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.animate-slide-up-delay-3 {
+  animation: slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+/* Surface: flat / soft — sin bordes rígidos */
 .card {
-  @apply rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900;
+  @apply rounded-3xl bg-[var(--card)];
+  box-shadow: var(--surface-elevated);
+}
+
+.bento {
+  @apply rounded-3xl bg-[var(--card)] p-5;
+  box-shadow: var(--surface-elevated);
 }
 
 .chip {
@@ -77,17 +107,58 @@ textarea {
 }
 
 .chip-active {
-  @apply bg-emerald-600 text-white shadow-sm;
+  @apply bg-zinc-900 text-white dark:bg-white dark:text-zinc-900;
 }
 
 .chip-inactive {
-  @apply bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300;
+  @apply bg-transparent text-zinc-500 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60;
 }
 
 .btn-primary {
-  @apply rounded-2xl bg-emerald-600 py-3.5 font-semibold text-white shadow-sm transition-all active:scale-[0.98] hover:bg-emerald-700 disabled:opacity-50;
+  @apply rounded-2xl bg-zinc-900 py-3.5 font-semibold text-white transition-all active:scale-[0.98] hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100;
 }
 
 .input-field {
-  @apply w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900;
+  @apply w-full rounded-2xl bg-[var(--card-muted)] px-4 py-3.5 text-base outline-none transition ring-0 focus:ring-2 focus:ring-teal-500/30 dark:bg-zinc-900;
+}
+
+.skeleton {
+  @apply relative overflow-hidden rounded-2xl bg-zinc-200/80 dark:bg-zinc-800/80;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.35),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skeleton::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.06),
+      transparent
+    );
+  }
+}
+
+.amount-positive {
+  @apply text-emerald-600 dark:text-emerald-400;
+}
+
+.amount-negative {
+  @apply text-rose-600 dark:text-rose-400;
+}
+
+.meta {
+  @apply text-sm text-zinc-400;
 }

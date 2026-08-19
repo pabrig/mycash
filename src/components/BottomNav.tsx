@@ -19,58 +19,48 @@ export function BottomNav() {
   const sharedActive = pathname.startsWith("/compartido");
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 pb-[env(safe-area-inset-bottom)]">
-      <div className="relative mx-auto max-w-lg border-t border-zinc-200/80 bg-white/90 backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/90">
-        {usdEnabled && <RateFooter />}
-        <Fab />
-        {sharedEnabled ? (
-          <ul className="grid grid-cols-3 items-end px-6 pt-3 pb-2">
-            <li>
-              <NavLink href="/" label="Inicio" active={homeActive} icon="home" />
-            </li>
-            <li aria-hidden />
-            <li>
-              <NavLink
-                href="/compartido"
-                label="Compartido"
-                active={sharedActive}
-                icon="shared"
-              />
-            </li>
-          </ul>
-        ) : (
-          <ul className="flex items-end justify-center px-6 pt-3 pb-2">
-            <li>
-              <NavLink href="/" label="Inicio" active={homeActive} icon="home" />
-            </li>
-          </ul>
-        )}
+    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto relative mx-auto max-w-lg px-4">
+        {usdEnabled && <RatePill />}
+        <div className="relative mt-2 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
+          <Fab />
+          {sharedEnabled ? (
+            <ul className="grid grid-cols-3 items-end px-4 pt-3 pb-2.5">
+              <li>
+                <NavLink href="/" label="Inicio" active={homeActive} icon="home" />
+              </li>
+              <li aria-hidden className="h-12" />
+              <li>
+                <NavLink
+                  href="/compartido"
+                  label="Compartido"
+                  active={sharedActive}
+                  icon="shared"
+                />
+              </li>
+            </ul>
+          ) : (
+            <ul className="flex items-end justify-center px-4 pt-3 pb-2.5">
+              <li>
+                <NavLink href="/" label="Inicio" active={homeActive} icon="home" />
+              </li>
+            </ul>
+          )}
+        </div>
       </div>
     </nav>
   );
 }
 
-function RateFooter() {
+function RatePill() {
   const { rate, year, month, ready } = useFinance();
   const isCurrent = isCurrentPeriod(year, month);
   const updatedLabel = formatRateUpdatedAt(rate.updatedAt);
 
-  if (!ready) {
-    return (
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-2 text-[11px] dark:border-zinc-800">
-        <div className="min-w-0">
-          <p className="font-medium text-zinc-600 dark:text-zinc-300">USD oficial</p>
-          <p className="text-zinc-400">…</p>
-        </div>
-        <p className="shrink-0 text-sm font-semibold tabular-nums text-emerald-600">—</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-2 text-[11px] dark:border-zinc-800">
+    <div className="mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl bg-[var(--card)]/90 px-4 py-2.5 text-[11px] shadow-[var(--surface-elevated)] backdrop-blur-md">
       <div className="min-w-0">
-        <p className="font-medium text-zinc-600 dark:text-zinc-300">
+        <p className="font-semibold text-zinc-500">
           USD oficial
           {!isCurrent && (
             <span className="font-normal text-zinc-400">
@@ -79,18 +69,22 @@ function RateFooter() {
             </span>
           )}
         </p>
-        {updatedLabel ? (
-          <p className="truncate text-zinc-400" suppressHydrationWarning>
-            Actualizado {updatedLabel}
-          </p>
+        {ready ? (
+          updatedLabel ? (
+            <p className="truncate text-zinc-400" suppressHydrationWarning>
+              {updatedLabel}
+            </p>
+          ) : (
+            <p className="text-zinc-400">
+              {isCurrent ? "Sin actualizar" : "TC del mes"}
+            </p>
+          )
         ) : (
-          <p className="text-zinc-400">
-            {isCurrent ? "Sin actualizar aún" : "Tipo de cambio del mes"}
-          </p>
+          <p className="text-zinc-400">…</p>
         )}
       </div>
-      <p className="shrink-0 text-sm font-semibold tabular-nums text-emerald-600">
-        {formatMoney(rate.usdToArs)}
+      <p className="shrink-0 text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
+        {ready ? formatMoney(rate.usdToArs) : "—"}
       </p>
     </div>
   );
@@ -107,13 +101,13 @@ function NavLink({
   active: boolean;
   icon: "home" | "shared";
 }) {
-  const color = active ? "text-emerald-600" : "text-zinc-400";
+  const color = active ? "text-zinc-900 dark:text-white" : "text-zinc-400";
 
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center gap-0.5 py-2 text-xs ${
-        active ? "font-semibold text-emerald-600" : "text-zinc-500"
+      className={`flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-semibold ${
+        active ? "text-zinc-900 dark:text-white" : "text-zinc-400"
       }`}
     >
       {icon === "home" ? (

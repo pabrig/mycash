@@ -15,16 +15,16 @@ export function PeriodToggle({
   onChange: (scope: SummaryScope) => void;
 }) {
   return (
-    <div className="flex rounded-full bg-zinc-100 p-0.5 dark:bg-zinc-800">
+    <div className="flex rounded-full bg-[var(--card-muted)] p-1">
       {OPTIONS.map(({ id, label }) => (
         <button
           key={id}
           type="button"
           onClick={() => onChange(id)}
-          className={`flex-1 rounded-full px-4 py-1.5 text-xs font-semibold transition-all active:scale-95 ${
+          className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-all active:scale-95 ${
             scope === id
-              ? "bg-white text-emerald-700 shadow-sm dark:bg-zinc-900 dark:text-emerald-400"
-              : "text-zinc-500"
+              ? "bg-[var(--card)] text-zinc-900 shadow-sm dark:text-white"
+              : "text-zinc-400"
           }`}
         >
           {label}

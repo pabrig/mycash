@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
 import { formatMonth } from "@/lib/format";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
-import Link from "next/link";
 
 export function AppHeader() {
   const { year, month, setPeriod, walletMode } = useFinance();
@@ -22,28 +22,28 @@ export function AppHeader() {
   }
 
   return (
-    <header className="mb-5">
+    <header className="mb-6 animate-fade-in">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold tracking-[0.14em] text-zinc-400 uppercase">
             Myca$h
           </p>
-          <div className="mt-0.5 flex items-center gap-1">
+          <div className="mt-1 flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => shift(-1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm active:scale-95 dark:bg-zinc-900"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition active:scale-95 active:bg-zinc-200/60 dark:active:bg-zinc-800"
               aria-label="Mes anterior"
             >
               ‹
             </button>
-            <h1 className="min-w-[8rem] text-center text-lg font-bold">
+            <h1 className="min-w-[9rem] text-center text-xl font-bold tracking-tight">
               {formatMonth(year, month)}
             </h1>
             <button
               type="button"
               onClick={() => shift(1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm active:scale-95 dark:bg-zinc-900"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition active:scale-95 active:bg-zinc-200/60 dark:active:bg-zinc-800"
               aria-label="Mes siguiente"
             >
               ›
@@ -51,13 +51,14 @@ export function AppHeader() {
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {walletMode === "unified" && <CurrencyToggle />}
           <Link
             href="/cuenta"
-            className="rounded-lg bg-white px-2.5 py-1 text-xs text-zinc-500 shadow-sm active:scale-95 dark:bg-zinc-900"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)] text-sm font-semibold text-zinc-500 transition active:scale-95"
+            aria-label="Cuenta"
           >
-            Cuenta
+            ◉
           </Link>
         </div>
       </div>

@@ -106,26 +106,30 @@ function MovementRow({
   }
 
   return (
-    <li className="py-1">
+    <li>
       <button
         type="button"
         onClick={onSelect}
-        className="flex w-full items-center gap-3 py-2 text-left active:opacity-80"
+        className={`flex w-full items-center gap-3.5 rounded-2xl px-3 py-3 text-left transition ${
+          selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"
+        }`}
       >
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
             isIncome
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+              ? "bg-emerald-500/10 text-emerald-600"
               : isShared
-                ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
-                : "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
+                ? "bg-teal-500/10 text-teal-600"
+                : "bg-rose-500/10 text-rose-500"
           }`}
         >
-          {isIncome ? "↑" : isShared ? "◉" : "↓"}
+          {isIncome ? "↑" : isShared ? "◎" : "↓"}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{movement.description}</p>
-          <p className="text-xs text-zinc-500">
+          <p className="truncate font-semibold tracking-tight">
+            {movement.description}
+          </p>
+          <p className="meta mt-0.5 text-xs">
             {isShared
               ? movement.createdByName
                 ? `${movement.createdByName} · Compartido`
@@ -138,15 +142,15 @@ function MovementRow({
         </div>
         <div className="text-right">
           <p
-            className={`font-semibold tabular-nums ${
-              isIncome ? "text-emerald-600" : "text-zinc-800 dark:text-zinc-100"
+            className={`font-bold tabular-nums tracking-tight ${
+              isIncome ? "amount-positive" : "text-zinc-900 dark:text-white"
             }`}
           >
             {isIncome ? "+" : "−"}
             {fmt(arsAmount)}
           </p>
           {movement.currency !== "ARS" && (
-            <p className="text-[10px] text-zinc-400">
+            <p className="mt-0.5 text-[10px] text-zinc-400">
               {movement.amount} {movement.currency}
             </p>
           )}
@@ -154,22 +158,20 @@ function MovementRow({
       </button>
 
       {selected && canManage && (
-        <div className="mb-2 flex gap-2 pl-[3.25rem]">
+        <div className="mb-1 flex gap-2 px-3 pb-2 pl-[3.75rem]">
           <button
             type="button"
             onClick={() => router.push(`/editar/${movement.id}`)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-zinc-100 py-2 text-sm font-medium text-zinc-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-200"
+            className="flex flex-1 items-center justify-center rounded-xl bg-[var(--card-muted)] py-2.5 text-sm font-semibold text-zinc-700 active:scale-[0.98] dark:text-zinc-200"
           >
-            <span aria-hidden>✎</span>
             Editar
           </button>
           <button
             type="button"
             onClick={() => void handleDelete()}
             disabled={deleting}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-sm font-medium text-red-600 active:scale-[0.98] disabled:opacity-40 dark:bg-red-950/40"
+            className="flex flex-1 items-center justify-center rounded-xl bg-rose-500/10 py-2.5 text-sm font-semibold text-rose-600 active:scale-[0.98] disabled:opacity-40"
           >
-            <span aria-hidden>×</span>
             {deleting ? "…" : "Eliminar"}
           </button>
         </div>
@@ -195,13 +197,10 @@ export function MovementList() {
 
   if (monthMovements.length === 0) {
     return (
-      <section className="card animate-slide-up p-8 text-center">
-        <p className="text-4xl">📝</p>
-        <p className="mt-3 font-medium">Sin movimientos</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Tocá + para cargar tu primer ticket
-        </p>
-        <Link href="/nuevo" className="btn-primary mt-5 inline-block px-6">
+      <section className="bento animate-slide-up-delay-2 py-12 text-center">
+        <p className="text-sm font-semibold text-zinc-400">Sin movimientos</p>
+        <p className="meta mt-1">Tocá + para cargar el primero</p>
+        <Link href="/nuevo" className="btn-primary mt-6 inline-block px-8 text-sm">
           Cargar movimiento
         </Link>
       </section>
@@ -211,15 +210,15 @@ export function MovementList() {
   const groups = groupByDate(filtered);
 
   return (
-    <section className="animate-slide-up">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-          Movimientos
-        </h2>
-        <span className="text-xs text-zinc-400">{filtered.length} items</span>
+    <section className="animate-slide-up-delay-2">
+      <div className="mb-4 flex items-end justify-between">
+        <h2 className="text-lg font-bold tracking-tight">Movimientos</h2>
+        <span className="text-xs font-medium text-zinc-400">
+          {filtered.length}
+        </span>
       </div>
 
-      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 flex gap-1 overflow-x-auto pb-0.5">
         {filters.map(({ id, label }) => (
           <button
             key={id}
@@ -233,17 +232,17 @@ export function MovementList() {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-zinc-500">
+        <p className="py-10 text-center text-sm text-zinc-400">
           Nada con este filtro
         </p>
       ) : (
-        <div className="card divide-y divide-zinc-100 px-4 dark:divide-zinc-800">
+        <div className="bento space-y-5 !px-2 !py-3">
           {[...groups.entries()].map(([date, items]) => (
             <div key={date}>
-              <p className="sticky top-0 bg-white/95 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-400 backdrop-blur dark:bg-zinc-900/95">
+              <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
                 {formatDayLabel(date)}
               </p>
-              <ul>
+              <ul className="space-y-0.5">
                 {items.map((m) => (
                   <MovementRow
                     key={m.id}

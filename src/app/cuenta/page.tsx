@@ -9,11 +9,11 @@ function UsdSettings() {
   const { usdEnabled, setUsdEnabled } = useFinance();
 
   return (
-    <section className="card space-y-3 p-4">
+    <section className="bento space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold">Dólares (USD)</p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+          <p className="text-sm font-semibold tracking-tight">Dólares (USD)</p>
+          <p className="meta mt-1 text-xs leading-relaxed">
             Activá si cargás movimientos en USD, mirás montos en dólares o usás
             el bolsillo Ahorro. Si solo manejás pesos, dejalo apagado.
           </p>
@@ -25,12 +25,12 @@ function UsdSettings() {
           onClick={() => void setUsdEnabled(!usdEnabled)}
           className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
             usdEnabled
-              ? "bg-emerald-500"
+              ? "bg-zinc-900 dark:bg-white"
               : "bg-zinc-200 dark:bg-zinc-700"
           }`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
               usdEnabled ? "translate-x-5" : "translate-x-0"
             }`}
           />
@@ -55,11 +55,11 @@ function SharedSettings() {
   const { sharedEnabled, setSharedEnabled } = useFinance();
 
   return (
-    <section className="card space-y-3 p-4">
+    <section className="bento space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold">Gastos compartidos</p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+          <p className="text-sm font-semibold tracking-tight">Gastos compartidos</p>
+          <p className="meta mt-1 text-xs leading-relaxed">
             Activá si querés cargar gastos del hogar con otra persona. Si solo
             llevás tus finanzas, dejalo apagado.
           </p>
@@ -71,12 +71,12 @@ function SharedSettings() {
           onClick={() => void setSharedEnabled(!sharedEnabled)}
           className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
             sharedEnabled
-              ? "bg-emerald-500"
+              ? "bg-zinc-900 dark:bg-white"
               : "bg-zinc-200 dark:bg-zinc-700"
           }`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
               sharedEnabled ? "translate-x-5" : "translate-x-0"
             }`}
           />
@@ -98,10 +98,10 @@ function WalletSettings() {
   if (!usdEnabled) return null;
 
   return (
-    <section className="card space-y-4 p-4">
+    <section className="bento space-y-4">
       <div>
-        <p className="text-sm font-semibold">¿Cómo querés ver tu plata?</p>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="text-sm font-semibold tracking-tight">¿Cómo querés ver tu plata?</p>
+        <p className="meta mt-1 text-xs">
           Elegí si preferís un solo disponible o separar lo del día a día de lo
           que guardás.
         </p>
@@ -111,23 +111,20 @@ function WalletSettings() {
         <button
           type="button"
           onClick={() => void setWalletMode("unified")}
-          className={`w-full rounded-2xl border p-3.5 text-left transition-all active:scale-[0.99] ${
+          className={`w-full rounded-2xl p-3.5 text-left transition-all active:scale-[0.99] ${
             walletMode === "unified"
-              ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 dark:border-emerald-400 dark:bg-emerald-950/40 dark:ring-emerald-400"
-              : "border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/40"
+              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+              : "bg-[var(--card-muted)]"
           }`}
         >
+          <p className="text-sm font-semibold">Todo junto</p>
           <p
-            className={`flex items-center gap-2 text-sm font-semibold ${
+            className={`mt-0.5 text-xs leading-relaxed ${
               walletMode === "unified"
-                ? "text-emerald-700 dark:text-emerald-400"
-                : "text-zinc-800 dark:text-zinc-100"
+                ? "text-white/70 dark:text-zinc-600"
+                : "text-zinc-400"
             }`}
           >
-            <span aria-hidden>◎</span>
-            Todo junto
-          </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
             Un solo disponible. Ideal si convertís todo y querés ver el total de
             un vistazo.
           </p>
@@ -136,31 +133,21 @@ function WalletSettings() {
         <button
           type="button"
           onClick={() => void setWalletMode("split")}
-          className={`w-full rounded-2xl border p-3.5 text-left transition-all active:scale-[0.99] ${
+          className={`w-full rounded-2xl p-3.5 text-left transition-all active:scale-[0.99] ${
             walletMode === "split"
-              ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 dark:border-emerald-400 dark:bg-emerald-950/40 dark:ring-emerald-400"
-              : "border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/40"
+              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+              : "bg-[var(--card-muted)]"
           }`}
         >
+          <p className="text-sm font-semibold">Dos bolsillos</p>
           <p
-            className={`flex items-center gap-2 text-sm font-semibold ${
+            className={`mt-0.5 text-xs leading-relaxed ${
               walletMode === "split"
-                ? "text-emerald-700 dark:text-emerald-400"
-                : "text-zinc-800 dark:text-zinc-100"
+                ? "text-white/70 dark:text-zinc-600"
+                : "text-zinc-400"
             }`}
           >
-            <span aria-hidden>◫</span>
-            Dos bolsillos
-          </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">
-              Cotidiano
-            </span>{" "}
-            en ARS para el mes ·{" "}
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">
-              Ahorro USD
-            </span>{" "}
-            para lo que no tocás.
+            Cotidiano en ARS · Ahorro USD para lo que no tocás.
           </p>
         </button>
       </div>
@@ -244,13 +231,13 @@ export default function CuentaPage() {
       <SharedSettings />
 
       {!configured && (
-        <div className="card p-4 text-sm text-zinc-500">
+        <div className="bento p-4 text-sm text-zinc-500">
           Sync en la nube no configurado — la app funciona en modo local.
         </div>
       )}
 
       {configured && !isAuthenticated && (
-        <div className="card space-y-4 p-6 text-center">
+        <div className="bento space-y-4 p-6 text-center">
           <p className="font-medium">
             {sharedEnabled
               ? "Iniciá sesión para sync y gastos compartidos"
@@ -264,7 +251,7 @@ export default function CuentaPage() {
 
       {configured && isAuthenticated && (
         <>
-          <section className="card space-y-2 p-4">
+          <section className="bento space-y-2 p-4">
             <p className="text-xs text-zinc-400">Usuario</p>
             <p className="font-medium">{profile?.displayName ?? "Usuario"}</p>
             <p className="text-sm text-zinc-500">{user?.email}</p>
@@ -275,7 +262,7 @@ export default function CuentaPage() {
 
           {sharedEnabled && (
             <>
-              <section className="card space-y-3 p-4">
+              <section className="bento space-y-3 p-4">
                 <p className="text-sm font-semibold">Grupo compartido</p>
                 <p className="text-lg">{household?.name ?? "—"}</p>
                 <ul className="space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
@@ -290,7 +277,7 @@ export default function CuentaPage() {
                 </ul>
               </section>
 
-              <section className="card space-y-3 p-4">
+              <section className="bento space-y-3 p-4">
                 <p className="text-sm font-semibold">Invitar a vincular</p>
                 <p className="text-xs text-zinc-500">
                   Generá un código para que tu pareja una su cuenta al mismo grupo.
@@ -317,7 +304,7 @@ export default function CuentaPage() {
                 )}
               </section>
 
-              <section className="card space-y-3 p-4">
+              <section className="bento space-y-3 p-4">
                 <p className="text-sm font-semibold">Unirme con código</p>
                 <form onSubmit={handleJoin} className="flex gap-2">
                   <input

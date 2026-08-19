@@ -19,19 +19,22 @@ export default function HomePage() {
   if (!ready) return <LoadingScreen />;
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="flex flex-col gap-4 pb-4">
       <AppHeader />
       <CloudBanner />
       <PeriodToggle scope={scope} onChange={setScope} />
-      <DisponibleHero scope={scope} />
-      {scope === "year" ? (
-        <AnnualOverview onOpenMonth={() => setScope("month")} />
-      ) : (
-        <>
-          <BalanceBar />
-          <MovementList />
-        </>
-      )}
+
+      <div className="grid gap-3">
+        <DisponibleHero scope={scope} />
+        {scope === "year" ? (
+          <AnnualOverview onOpenMonth={() => setScope("month")} />
+        ) : (
+          <>
+            <BalanceBar />
+            <MovementList />
+          </>
+        )}
+      </div>
     </div>
   );
 }
