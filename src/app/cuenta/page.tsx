@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 function UsdSettings() {
   const { usdEnabled, setUsdEnabled } = useFinance();
@@ -193,6 +194,7 @@ function formatExpiry(iso: string): string {
 export default function CuentaPage() {
   const {
     configured,
+    loading,
     isAuthenticated,
     user,
     profile,
@@ -206,7 +208,7 @@ export default function CuentaPage() {
     leaveCurrentHousehold,
     deleteAccount,
   } = useAuth();
-  const { cloudEnabled, sharedEnabled, movements, rates } = useFinance();
+  const { cloudEnabled, sharedEnabled, movements, rates, ready } = useFinance();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
@@ -215,6 +217,10 @@ export default function CuentaPage() {
   const [busy, setBusy] = useState(false);
 
   const inSharedGroup = members.length > 1;
+
+  if (!ready || (configured && loading)) {
+    return <LoadingScreen variant="account" />;
+  }
 
   async function handleCreateInvite() {
     setBusy(true);

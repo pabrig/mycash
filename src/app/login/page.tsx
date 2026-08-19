@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -93,7 +94,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<p className="py-8 text-center text-sm text-zinc-500">Cargando…</p>}>
+    <Suspense fallback={<LoadingScreen variant="auth" />}>
       <LoginForm />
     </Suspense>
   );

@@ -19,7 +19,7 @@ export default function CompartidoPage() {
   }, [ready, sharedEnabled, router]);
 
   if (!ready || (configured && loading) || !sharedEnabled) {
-    return <LoadingScreen />;
+    return <LoadingScreen variant="shared" />;
   }
 
   return (

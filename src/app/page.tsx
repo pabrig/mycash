@@ -16,7 +16,7 @@ export default function HomePage() {
   const { ready } = useFinance();
   const [scope, setScope] = useState<SummaryScope>("month");
 
-  if (!ready) return <LoadingScreen />;
+  if (!ready) return <LoadingScreen variant="dashboard" />;
 
   return (
     <div className="flex flex-col gap-4 pb-4 md:gap-6">

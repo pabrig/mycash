@@ -1,60 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
-import { formatMonth } from "@/lib/format";
+import { formatMonth, shiftPeriod } from "@/lib/format";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { PeriodSheet } from "@/components/PeriodSheet";
 import {
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
+  IconMyCash,
   IconUser,
 } from "@/components/ui/Icons";
 
 export function AppHeader() {
   const { year, month, setPeriod, walletMode } = useFinance();
+  const [periodOpen, setPeriodOpen] = useState(false);
 
   function shift(delta: number) {
-    let m = month + delta;
-    let y = year;
-    if (m < 1) {
-      m = 12;
-      y -= 1;
-    } else if (m > 12) {
-      m = 1;
-      y += 1;
-    }
-    setPeriod(y, m);
+    const next = shiftPeriod(year, month, delta);
+    setPeriod(next.year, next.month);
   }
 
   return (
     <header className="mb-4 animate-fade-in md:mb-2">
       {/* Mobile */}
       <div className="flex items-center justify-between gap-3 md:hidden">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-            Myca$h
-          </p>
-          <div className="mt-1 flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={() => shift(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition active:scale-95 active:bg-zinc-200/60 dark:active:bg-zinc-800"
-              aria-label="Mes anterior"
-            >
-              <IconChevronLeft className="h-5 w-5" />
-            </button>
-            <h1 className="min-w-[9rem] text-center text-xl font-bold tracking-tight">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <IconMyCash className="h-8 w-8 shrink-0" />
+          <button
+            type="button"
+            onClick={() => setPeriodOpen(true)}
+            className="flex min-w-0 items-center gap-1 rounded-full py-1 pr-1.5 transition active:scale-[0.98] active:bg-zinc-200/60 dark:active:bg-zinc-800"
+            aria-haspopup="dialog"
+            aria-label={`Periodo ${formatMonth(year, month)}. Cambiar mes`}
+          >
+            <h1 className="truncate text-xl font-bold tracking-tight">
               {formatMonth(year, month)}
             </h1>
-            <button
-              type="button"
-              onClick={() => shift(1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition active:scale-95 active:bg-zinc-200/60 dark:active:bg-zinc-800"
-              aria-label="Mes siguiente"
-            >
-              <IconChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+            <IconChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
+          </button>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -69,7 +55,9 @@ export function AppHeader() {
         </div>
       </div>
 
-      {/* Desktop — periodo centrado en el área de contenido */}
+      <PeriodSheet open={periodOpen} onClose={() => setPeriodOpen(false)} />
+
+      {/* Desktop — stepper centrado */}
       <div className="hidden md:flex md:flex-col md:items-center md:gap-1">
         <p className="text-xs font-medium text-zinc-400">Periodo</p>
         <div className="flex items-center gap-2">
