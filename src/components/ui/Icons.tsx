@@ -2,9 +2,9 @@
 
 type IconProps = { className?: string };
 
-const BRAND_TEAL = "#0d9488";
+const BRAND_DARK = "#121214";
 
-/** Letra M (variante A) — header y sidebar, no el ícono de instalación. */
+/** Letra M sobre el mismo tile oscuro que el acceso directo. */
 export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
   return (
     <svg
@@ -13,7 +13,7 @@ export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <rect width="512" height="512" rx="115" fill={BRAND_TEAL} />
+      <rect width="512" height="512" rx="115" fill={BRAND_DARK} />
       <path
         fill="#ffffff"
         d="M106 396H174V240L230 332H282L338 240V396H406V116H322L256 236L190 116H106Z"
