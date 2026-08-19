@@ -11,7 +11,7 @@ export default function EditarPage() {
   const { ready, getMovementById } = useFinance();
   const id = params.id;
 
-  if (!ready) return <LoadingScreen />;
+  if (!ready) return <LoadingScreen variant="form" />;
 
   const movement = getMovementById(id);
 

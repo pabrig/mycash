@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { MovementForm } from "@/components/MovementForm";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { useFinance } from "@/context/FinanceContext";
 
 export default function NuevoPage() {
+  const { ready } = useFinance();
+
+  if (!ready) return <LoadingScreen variant="form" />;
+
   return (
     <div className="mx-auto w-full max-w-lg pb-4 md:max-w-xl md:pt-2">
       <div className="mb-5 flex items-center gap-3">

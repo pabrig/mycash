@@ -42,7 +42,9 @@ export default function JoinPage() {
     );
   }
 
-  if (loading || status === "joining") return <LoadingScreen />;
+  if (loading || status === "joining") {
+    return <LoadingScreen variant="auth" />;
+  }
 
   if (!isAuthenticated) {
     return (
@@ -79,5 +81,5 @@ export default function JoinPage() {
     );
   }
 
-  return <LoadingScreen />;
+  return <LoadingScreen variant="auth" />;
 }

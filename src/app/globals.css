@@ -151,6 +151,12 @@ textarea {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
 .amount-positive {
   @apply text-emerald-600 dark:text-emerald-400;
 }
