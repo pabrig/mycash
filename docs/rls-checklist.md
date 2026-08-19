@@ -2,7 +2,7 @@
 
 Objetivo: verificar que **A no ve lo personal de B**, y que **solo lo shared del mismo hogar** es visible entre ambos.
 
-Hacé esto **después** de aplicar migraciones `001`→`006`.
+Hacé esto **después** de aplicar migraciones `001`→`007`.
 
 ## Preparación
 
@@ -12,11 +12,11 @@ Hacé esto **después** de aplicar migraciones `001`→`006`.
 4. En Cuenta de **ambos**: activar **Gastos compartidos**.
 5. A genera código → B se une (o al revés).
 
-Opcional: SQL Editor con dos JWTs es más avanzado; con la UI alcanza para esta fase íntima.
+Opcional: corré primero el script estructural [`rls-audit.sql`](./rls-audit.sql) en SQL Editor (RLS on, policies, grants).
 
 ---
 
-## Escenarios mínimos
+## Escenarios mínimos (UI — 2 browsers)
 
 ### 1. Personal aislado
 
@@ -54,7 +54,8 @@ Opcional: SQL Editor con dos JWTs es más avanzado; con la UI alcanza para esta 
 | Paso | Esperado |
 |------|----------|
 | A edita/borra **su** shared | OK |
-| B intenta editar el shared de A (si la UI lo permite) | Debe fallar o no mostrar acciones |
+| B abre detalle del shared de A | **Sin** botones Editar/Eliminar |
+| B no puede borrar el personal de A | OK |
 | Rates / settings de A | Solo A los cambia |
 
 ### 6. Rates y settings
@@ -64,14 +65,35 @@ Opcional: SQL Editor con dos JWTs es más avanzado; con la UI alcanza para esta 
 | A usa display USD / bolsillos | No cambia la UI de B |
 | Cotización de A | Independiente de B |
 
+### 7. Invites (post-007)
+
+| Paso | Esperado |
+|------|----------|
+| A genera código (12 chars) | Aparece en pendientes |
+| A revoca el código | B no puede unirse con ese código |
+| Tras B unirse | Otros invites abiertos del hogar desaparecen |
+
+### 8. Salir del hogar
+
+| Paso | Esperado |
+|------|----------|
+| B sale del grupo | B deja de ver shared del hogar de A |
+| A sigue viendo los shared del hogar | OK |
+| B tiene hogar solo de nuevo | Puede invitar a otra persona |
+
 ---
 
-## Verificación rápida en SQL (opcional)
+## Verificación estructural (SQL)
 
-En SQL Editor (como `postgres` / service role) **no** simula al usuario.  
-Para probar como usuario necesitás el JWT o usar la app.
+Ejecutá [`rls-audit.sql`](./rls-audit.sql) y confirmá:
 
-Chequeo de que RLS está prendido:
+1. `rls_enabled = true` en las 7 tablas.
+2. Policies de `movements` incluyen SELECT / INSERT / UPDATE / DELETE.
+3. `household_invites` tiene policy de DELETE (revocar).
+4. RPCs `accept_household_invite`, `leave_household`, `delete_own_account`, `my_household_id`: **sin** EXECUTE para `anon` / `PUBLIC`.
+5. FKs de `movements.user_id` / `created_by` → `profiles` con `ON DELETE CASCADE`.
+
+Chequeo rápido RLS:
 
 ```sql
 select relname, relrowsecurity
@@ -83,24 +105,12 @@ where relname in (
 order by relname;
 ```
 
-Todas las filas deben tener `relrowsecurity = true`.
-
-Grants del RPC de invite:
-
-```sql
-select grantee, privilege_type
-from information_schema.routine_privileges
-where routine_name = 'accept_household_invite';
-```
-
-`anon` / `PUBLIC` **no** deberían tener EXECUTE; sí `authenticated` (y roles internos de Postgres).
-
 ---
 
 ## Si algo falla
 
 1. No “arregles” ocultando en la UI: arreglá la **policy** o el **RPC**.
-2. Nueva migración `007_….sql` — no edites a ciegas `001` en un proyecto ya aplicado.
+2. Nueva migración `008_….sql` — no edites a ciegas `001` en un proyecto ya aplicado.
 3. Anotá el escenario que falló y el mensaje de error de Supabase.
 
 ---
@@ -114,6 +124,8 @@ Cuando todos los escenarios pasan:
 - [ ] Ingresos ajenos ocultos  
 - [ ] Delete/update respetan autor  
 - [ ] Settings/rates propios  
-- [ ] RLS enabled + grants RPC OK  
+- [ ] Invites: revocar + invalidar extras  
+- [ ] Salir del hogar  
+- [ ] RLS enabled + grants RPC OK (`rls-audit.sql`)  
 
-→ podés pasar a Fase 3 (UX consentimiento) del plan nube.
+→ fase nube endurecida lista a nivel seguridad de datos.

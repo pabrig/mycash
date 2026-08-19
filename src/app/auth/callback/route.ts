@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
+import { safeNextPath } from "@/lib/movement-access";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-
-/** Solo paths relativos de la app — evita open redirect (//evil.com, https://…). */
-function safeNextPath(next: string | null): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
-  return next;
-}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
