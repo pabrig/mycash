@@ -2,6 +2,26 @@
 
 type IconProps = { className?: string };
 
+const BRAND_TEAL = "#0d9488";
+
+/** Letra M (variante A) — header y sidebar, no el ícono de instalación. */
+export function IconMyCash({ className = "h-8 w-8" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 512 512"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <rect width="512" height="512" rx="115" fill={BRAND_TEAL} />
+      <path
+        fill="#ffffff"
+        d="M106 396H174V240L230 332H282L338 240V396H406V116H322L256 236L190 116H106Z"
+      />
+    </svg>
+  );
+}
+
 export function IconHome({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

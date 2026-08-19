@@ -53,6 +53,18 @@ export function formatMonth(year: number, month: number): string {
   return `${MONTH_NAMES[month - 1]} ${year}`;
 }
 
+/** Desplaza un periodo YYYY-MM por `delta` meses (puede ser negativo). */
+export function shiftPeriod(
+  year: number,
+  month: number,
+  delta: number,
+): { year: number; month: number } {
+  const zero = year * 12 + (month - 1) + delta;
+  const y = Math.floor(zero / 12);
+  const m = zero - y * 12 + 1;
+  return { year: y, month: m };
+}
+
 export function todayIso(): string {
   const d = new Date();
   const y = d.getFullYear();

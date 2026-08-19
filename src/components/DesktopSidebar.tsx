@@ -8,6 +8,7 @@ import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "
 import {
   IconHome,
   IconPlus,
+  IconMyCash,
   IconUser,
   IconUsers,
 } from "@/components/ui/Icons";
@@ -25,11 +26,14 @@ export function DesktopSidebar() {
 
   return (
     <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:w-64 md:flex-col md:bg-[var(--card)] md:px-5 md:py-7 dark:md:bg-zinc-950">
-      <div className="px-2">
-        <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400 uppercase">
-          Myca$h
-        </p>
-        <p className="mt-1.5 text-xl font-bold tracking-tight">Finanzas</p>
+      <div className="flex items-center gap-3 px-2">
+        <IconMyCash className="h-9 w-9 shrink-0" />
+        <div>
+          <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400 uppercase">
+            Myca$h
+          </p>
+          <p className="text-xl font-bold tracking-tight">Finanzas</p>
+        </div>
       </div>
 
       <nav className="mt-10 flex flex-1 flex-col gap-1.5">
