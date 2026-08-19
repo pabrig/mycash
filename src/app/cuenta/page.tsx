@@ -53,6 +53,7 @@ function UsdSettings() {
 
 function SharedSettings() {
   const { sharedEnabled, setSharedEnabled } = useFinance();
+  const { isAuthenticated } = useAuth();
 
   return (
     <section className="bento space-y-3">
@@ -84,10 +85,22 @@ function SharedSettings() {
         </button>
       </div>
       {sharedEnabled && (
-        <p className="text-xs leading-relaxed text-zinc-400">
-          Aparece la pestaña Compartido. Cada integrante ve el monto completo en
-          su disponible. Invitá o uníte con código más abajo.
-        </p>
+        <div className="space-y-2 text-xs leading-relaxed text-zinc-400">
+          <p>
+            Aparece la pestaña Compartido. Cada integrante ve el monto completo
+            en su disponible.
+          </p>
+          {isAuthenticated ? (
+            <p className="font-medium text-zinc-600 dark:text-zinc-300">
+              Siguiente paso: generá un código o uníte con el de tu pareja más
+              abajo.
+            </p>
+          ) : (
+            <p className="font-medium text-zinc-600 dark:text-zinc-300">
+              Iniciá sesión para invitar o unirte al grupo.
+            </p>
+          )}
+        </div>
       )}
     </section>
   );
@@ -166,6 +179,17 @@ function WalletSettings() {
   );
 }
 
+function formatExpiry(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("es-AR", {
+      day: "numeric",
+      month: "short",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export default function CuentaPage() {
   const {
     configured,
@@ -174,17 +198,23 @@ export default function CuentaPage() {
     profile,
     household,
     members,
+    pendingInvites,
     signOut,
     createInvite,
     acceptInvite,
+    revokeInvite,
+    leaveCurrentHousehold,
+    deleteAccount,
   } = useAuth();
-  const { cloudEnabled, sharedEnabled } = useFinance();
+  const { cloudEnabled, sharedEnabled, movements, rates } = useFinance();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const inSharedGroup = members.length > 1;
 
   async function handleCreateInvite() {
     setBusy(true);
@@ -209,6 +239,71 @@ export default function CuentaPage() {
       setMessage("¡Cuentas vinculadas!");
       setJoinCode("");
     }
+  }
+
+  async function handleRevoke(id: string) {
+    setBusy(true);
+    setError("");
+    const result = await revokeInvite(id);
+    setBusy(false);
+    if (result.error) setError(result.error);
+    else {
+      setMessage("Invitación revocada");
+      if (inviteCode) setInviteCode(null);
+    }
+  }
+
+  async function handleLeave() {
+    if (
+      !confirm(
+        "¿Salir del grupo? Dejás de ver los gastos compartidos. Tus datos personales quedan.",
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError("");
+    const result = await leaveCurrentHousehold();
+    setBusy(false);
+    if (result.error) setError(result.error);
+    else setMessage("Saliste del grupo — tenés un hogar solo de nuevo");
+  }
+
+  async function handleDeleteAccount() {
+    if (
+      !confirm(
+        "¿Borrar tu cuenta y todos tus datos en la nube? Esta acción no se puede deshacer.",
+      )
+    ) {
+      return;
+    }
+    if (!confirm("Confirmá: se eliminan movimientos personales y tu acceso.")) {
+      return;
+    }
+    setBusy(true);
+    setError("");
+    const result = await deleteAccount();
+    setBusy(false);
+    if (result.error) setError(result.error);
+  }
+
+  function handleExport() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      email: user?.email ?? null,
+      movements,
+      rates,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mycash-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMessage("Export descargado");
   }
 
   const siteUrl =
@@ -276,12 +371,22 @@ export default function CuentaPage() {
                     </li>
                   ))}
                 </ul>
+                {inSharedGroup && (
+                  <button
+                    type="button"
+                    onClick={() => void handleLeave()}
+                    disabled={busy}
+                    className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
+                  >
+                    Salir del grupo
+                  </button>
+                )}
               </section>
 
               <section className="bento space-y-3 p-4">
                 <p className="text-sm font-semibold">Invitar a vincular</p>
                 <p className="text-xs text-zinc-500">
-                  Generá un código para que tu pareja una su cuenta al mismo grupo.
+                  Código de 12 caracteres, válido 7 días. Máximo 5 pendientes.
                 </p>
                 <button
                   type="button"
@@ -293,7 +398,7 @@ export default function CuentaPage() {
                 </button>
                 {inviteCode && (
                   <div className="rounded-xl bg-zinc-50 p-3 text-center dark:bg-zinc-800/50">
-                    <p className="text-2xl font-bold tracking-widest text-emerald-600">
+                    <p className="text-xl font-bold tracking-widest text-emerald-600 sm:text-2xl">
                       {inviteCode}
                     </p>
                     {inviteLink && (
@@ -302,6 +407,31 @@ export default function CuentaPage() {
                       </p>
                     )}
                   </div>
+                )}
+                {pendingInvites.length > 0 && (
+                  <ul className="space-y-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                    {pendingInvites.map((inv) => (
+                      <li
+                        key={inv.id}
+                        className="flex items-center justify-between gap-2 text-sm"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-mono tracking-wider">{inv.code}</p>
+                          <p className="text-xs text-zinc-400">
+                            vence {formatExpiry(inv.expiresAt)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void handleRevoke(inv.id)}
+                          className="shrink-0 text-xs text-red-500"
+                        >
+                          Revocar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </section>
 
@@ -312,8 +442,9 @@ export default function CuentaPage() {
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                     className="input-field flex-1 uppercase"
-                    placeholder="ABC12345"
-                    maxLength={8}
+                    placeholder="ABCD1234EFGH"
+                    maxLength={12}
+                    autoComplete="off"
                   />
                   <button
                     type="submit"
@@ -329,6 +460,25 @@ export default function CuentaPage() {
 
           {message && <p className="text-sm text-emerald-600">{message}</p>}
           {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <section className="bento space-y-3 p-4">
+            <p className="text-sm font-semibold">Datos</p>
+            <button
+              type="button"
+              onClick={handleExport}
+              className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
+            >
+              Exportar JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDeleteAccount()}
+              disabled={busy}
+              className="w-full rounded-xl border border-red-200 py-2.5 text-sm text-red-600 dark:border-red-900/50"
+            >
+              Borrar cuenta
+            </button>
+          </section>
 
           <button
             type="button"

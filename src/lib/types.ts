@@ -81,6 +81,13 @@ export interface HouseholdMember {
   role: "owner" | "member";
 }
 
+export interface HouseholdInvite {
+  id: string;
+  code: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export interface MonthlyRate {
   year: number;
   month: number;

@@ -76,7 +76,7 @@ Guía completa (glosario, qué ve tu pareja, checklist prod, RLS): **[docs/cloud
 Resumen rápido:
 
 1. Creá un proyecto en [Supabase](https://supabase.com)
-2. En SQL Editor, ejecutá en orden `supabase/migrations/001_initial.sql` … `006_cloud_hardening.sql`
+2. En SQL Editor, ejecutá en orden `supabase/migrations/001_initial.sql` … `007_lifecycle_invites.sql`
 3. Copiá `.env.example` → `.env.local` (solo URL + **anon** key — nunca `service_role`)
 4. Authentication → URL Configuration: `http://localhost:3000/auth/callback` (+ dominio prod)
 5. Reiniciá `npm run dev`

@@ -60,7 +60,7 @@ Si activaste **Gastos compartidos** y estánieron cuentas:
 ### 1. Proyecto Supabase
 
 1. Creá un proyecto en [supabase.com](https://supabase.com).
-2. Settings → API: copiá **Project URL** y **anon public** key.
+2. Settings → API: copiá **Project URL** y **anon public** key (JWT `eyJ…`, no `sb_publishable`).
 
 ### 2. Migraciones (orden fijo)
 
@@ -72,8 +72,9 @@ En **SQL Editor**, ejecutá en orden:
 4. `supabase/migrations/004_shared_enabled.sql` — flag compartido  
 5. `supabase/migrations/005_usd_enabled.sql` — flag USD  
 6. `supabase/migrations/006_cloud_hardening.sql` — grants RPC + hardening  
+7. `supabase/migrations/007_lifecycle_invites.sql` — revocar invites, salir del hogar, borrar cuenta  
 
-Si el proyecto ya tenía `001`–`005`, solo corré `006`.
+Si el proyecto ya tenía `001`–`006`, solo corré `007`.
 
 ### 3. Variables de entorno
 
@@ -125,9 +126,9 @@ Marcá antes de cargar datos reales:
 
 - [ ] Solo `anon` key en `.env` / hosting; **no** existe `SERVICE_ROLE` en el repo ni en Vercel/env públicas
 - [ ] Redirect URLs allowlist solo localhost + dominio propio
-- [ ] Migraciones `001`→`006` aplicadas
+- [ ] Migraciones `001`→`007` aplicadas
 - [ ] RLS enabled en: `profiles`, `households`, `household_members`, `household_invites`, `movements`, `monthly_rates`, `user_settings`
-- [ ] RPC `accept_household_invite` ejecutable solo por rol `authenticated` (migración `006`)
+- [ ] RPCs `accept_household_invite`, `leave_household`, `delete_own_account` solo para `authenticated`
 - [ ] Probaste login magic link en el dominio real
 - [ ] Probaste aislamiento con 2 usuarios (ver [rls-checklist.md](./rls-checklist.md))
 
@@ -136,11 +137,24 @@ Marcá antes de cargar datos reales:
 ## Sync local ↔ nube (regla simple)
 
 1. Sin sesión → datos en `localStorage`.
-2. Primer login → se **migran una vez** los movimientos locales personales a la nube.
-3. Con sesión → **la nube manda**; la UI lee/escribe remoto.
-4. Cerrar sesión → volvés a poder usar local; no borramos cloud automáticamente.
+2. Primer login → se **migran una vez** solo los movimientos **personales** locales (nunca se inventan shared sin household).
+3. Si ya hay personales en la nube → **no se re-migra**; la nube manda.
+4. Con sesión → la UI lee/escribe remoto; si falla la red, se muestra aviso y se cae a local temporalmente.
+5. Cerrar sesión → podés seguir en local; no borramos cloud automáticamente.
+6. **Salir del grupo** → perdés acceso a shared del hogar anterior; se crea un hogar solo nuevo.
+7. **Borrar cuenta** → elimina el usuario Auth (cascade a profile/movimientos propios).
 
-Detalle de errores de red/sesión se endurece en Fase 6 del plan.
+---
+
+## Ciclo de vida (invites y cuenta)
+
+| Acción | Dónde | Notas |
+|--------|--------|------|
+| Código invite | 12 chars, 7 días, máx. 5 pendientes | Owner puede **Revocar** |
+| Aceptar invite | Unir o `/join/CODE` | Invalida otros códigos abiertos del hogar |
+| Salir del grupo | Cuenta (si hay 2+ miembros) | RPC `leave_household` |
+| Exportar | Cuenta → JSON | Backup personal |
+| Borrar cuenta | Cuenta (doble confirm) | RPC `delete_own_account` |
 
 ---
 
@@ -158,10 +172,11 @@ Detalle de errores de red/sesión se endurece en Fase 6 del plan.
 
 ---
 
-## Próximos pasos del plan
+## Estado del plan
 
-1. ~~Docs + glosario~~ (este archivo)  
-2. Hardening grants (`006`) + checklist  
-3. [Auditoría RLS](./rls-checklist.md) con 2 usuarios  
-4. UX consentimiento compartido  
-5. Invites más fuertes / salir del hogar / borrar cuenta  
+1. ~~Docs + glosario~~  
+2. ~~Hardening grants (`006`) + checklist~~  
+3. [Auditoría RLS](./rls-checklist.md) con 2 usuarios (manual)  
+4. ~~UX consentimiento + migrate personal-only~~  
+5. ~~Invites fuertes / salir / borrar / export~~  
+6. ~~Errores sync visibles + regla cloud gana~~  

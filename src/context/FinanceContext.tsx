@@ -55,6 +55,9 @@ import * as storage from "@/lib/storage";
 interface FinanceContextValue {
   ready: boolean;
   cloudEnabled: boolean;
+  /** Error de sync/red visible; null si ok */
+  syncError: string | null;
+  clearSyncError: () => void;
   movements: Movement[];
   sharedMovements: Movement[];
   rates: MonthlyRate[];
@@ -92,6 +95,17 @@ interface FinanceContextValue {
   refreshData: () => Promise<void>;
 }
 
+function friendlySyncError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/JWT|session|not authenticated|Invalid Refresh Token/i.test(msg)) {
+    return "Sesión vencida — entrá de nuevo en Cuenta";
+  }
+  if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
+    return "Sin conexión con la nube — mostrando datos locales";
+  }
+  return msg || "No se pudo sincronizar con la nube";
+}
+
 const FinanceContext = createContext<FinanceContextValue | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
@@ -109,6 +123,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
 
   const cloudEnabled = configured && isAuthenticated;
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [supabase, setSupabase] = useState<ReturnType<
     typeof createClient
   > | null>(null);
@@ -116,6 +131,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (configured) setSupabase(createClient());
   }, [configured]);
+
+  const clearSyncError = useCallback(() => setSyncError(null), []);
 
   const loadLocal = useCallback(() => {
     setMovements(storage.loadMovements());
@@ -153,16 +170,19 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setWalletModeState(remoteWalletMode);
     setSharedEnabledState(remoteShared);
     setUsdEnabledState(remoteUsd);
+    setSyncError(null);
   }, [supabase, user]);
 
   const refreshData = useCallback(async () => {
     if (cloudEnabled) {
       try {
         await loadCloud();
-      } catch {
+      } catch (e) {
+        setSyncError(friendlySyncError(e));
         loadLocal();
       }
     } else {
+      setSyncError(null);
       loadLocal();
     }
   }, [cloudEnabled, loadCloud, loadLocal]);
@@ -183,8 +203,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         await loadCloud();
-      } catch {
-        if (!cancelled) loadLocal();
+      } catch (e) {
+        if (!cancelled) {
+          setSyncError(friendlySyncError(e));
+          loadLocal();
+        }
       }
     })();
 
@@ -498,6 +521,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     () => ({
       ready,
       cloudEnabled,
+      syncError,
+      clearSyncError,
       movements,
       sharedMovements,
       rates,
@@ -528,6 +553,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [
       ready,
       cloudEnabled,
+      syncError,
+      clearSyncError,
       movements,
       sharedMovements,
       rates,
