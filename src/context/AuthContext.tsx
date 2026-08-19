@@ -121,7 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-      const safeNext = next.startsWith("/") ? next : "/";
+      const safeNext =
+        next.startsWith("/") && !next.startsWith("//") ? next : "/";
       const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(safeNext)}`;
 
       const { error } = await supabase.auth.signInWithOtp({

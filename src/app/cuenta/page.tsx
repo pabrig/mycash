@@ -60,8 +60,9 @@ function SharedSettings() {
         <div>
           <p className="text-sm font-semibold tracking-tight">Gastos compartidos</p>
           <p className="meta mt-1 text-xs leading-relaxed">
-            Activá si querés cargar gastos del hogar con otra persona. Si solo
-            llevás tus finanzas, dejalo apagado.
+            Activá si querés cargar gastos del hogar con otra persona. Tu pareja
+            verá descripción y monto de lo marcado como compartido — no tus
+            ingresos ni gastos personales.
           </p>
         </div>
         <button
@@ -84,8 +85,8 @@ function SharedSettings() {
       </div>
       {sharedEnabled && (
         <p className="text-xs leading-relaxed text-zinc-400">
-          Aparece la pestaña Compartido y podés marcar gastos como del hogar.
-          Cada integrante ve el monto completo en su disponible.
+          Aparece la pestaña Compartido. Cada integrante ve el monto completo en
+          su disponible. Invitá o uníte con código más abajo.
         </p>
       )}
     </section>
