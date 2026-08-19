@@ -13,11 +13,20 @@ import { createClient } from "@/lib/supabase/client";
 import {
   acceptHouseholdInvite,
   createHouseholdInvite,
+  deleteOwnAccount,
   fetchHouseholdContext,
   fetchProfile,
+  leaveHousehold,
+  listPendingInvites,
+  revokeHouseholdInvite,
 } from "@/lib/supabase/data";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import type { Household, HouseholdMember, Profile } from "@/lib/types";
+import type {
+  Household,
+  HouseholdInvite,
+  HouseholdMember,
+  Profile,
+} from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthContextValue {
@@ -27,15 +36,33 @@ interface AuthContextValue {
   profile: Profile | null;
   household: Household | null;
   members: HouseholdMember[];
+  pendingInvites: HouseholdInvite[];
   isAuthenticated: boolean;
   signInWithEmail: (email: string, next?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   refreshHousehold: () => Promise<void>;
   createInvite: () => Promise<{ code?: string; error?: string }>;
   acceptInvite: (code: string) => Promise<{ error?: string }>;
+  revokeInvite: (inviteId: string) => Promise<{ error?: string }>;
+  leaveCurrentHousehold: () => Promise<{ error?: string }>;
+  deleteAccount: () => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function friendlyAuthError(e: unknown, fallback: string): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/Invalid or expired invite/i.test(msg)) {
+    return "Código inválido o vencido";
+  }
+  if (/Not authenticated|JWT|session/i.test(msg)) {
+    return "Sesión vencida — volvé a iniciar sesión";
+  }
+  if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
+    return "Sin conexión — reintentá en un momento";
+  }
+  return msg || fallback;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const configured = isSupabaseConfigured();
@@ -44,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<HouseholdInvite[]>([]);
   // No crear el client en SSR — solo en el browser tras mount
   const [supabase, setSupabase] = useState<ReturnType<
     typeof createClient
@@ -57,14 +85,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSupabase(createClient());
   }, [configured]);
 
+  const loadPendingInvites = useCallback(
+    async (householdId: string) => {
+      if (!supabase) return;
+      try {
+        const invites = await listPendingInvites(supabase, householdId);
+        setPendingInvites(invites);
+      } catch {
+        setPendingInvites([]);
+      }
+    },
+    [supabase],
+  );
+
   const loadHousehold = useCallback(
     async (userId: string) => {
       if (!supabase) return;
       const ctx = await fetchHouseholdContext(supabase, userId);
       setHousehold(ctx.household);
       setMembers(ctx.members);
+      if (ctx.household) {
+        await loadPendingInvites(ctx.household.id);
+      } else {
+        setPendingInvites([]);
+      }
     },
-    [supabase],
+    [supabase, loadPendingInvites],
   );
 
   const loadUser = useCallback(async () => {
@@ -88,12 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setHousehold(null);
         setMembers([]);
+        setPendingInvites([]);
       }
     } catch {
       setUser(null);
       setProfile(null);
       setHousehold(null);
       setMembers([]);
+      setPendingInvites([]);
     } finally {
       setLoading(false);
     }
@@ -121,7 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-      const safeNext = next.startsWith("/") ? next : "/";
+      const safeNext =
+        next.startsWith("/") && !next.startsWith("//") ? next : "/";
       const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(safeNext)}`;
 
       const { error } = await supabase.auth.signInWithOtp({
@@ -157,11 +206,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         household.id,
         user.id,
       );
+      await loadPendingInvites(household.id);
       return { code };
     } catch (e) {
-      return { error: e instanceof Error ? e.message : "Error al crear invitación" };
+      return { error: friendlyAuthError(e, "Error al crear invitación") };
     }
-  }, [supabase, user, household]);
+  }, [supabase, user, household, loadPendingInvites]);
 
   const acceptInvite = useCallback(
     async (code: string) => {
@@ -173,12 +223,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {};
       } catch (e) {
         return {
-          error: e instanceof Error ? e.message : "Invitación inválida",
+          error: friendlyAuthError(e, "Invitación inválida"),
         };
       }
     },
     [supabase, refreshHousehold],
   );
+
+  const revokeInvite = useCallback(
+    async (inviteId: string) => {
+      if (!supabase) return { error: "Supabase no configurado" };
+      try {
+        await revokeHouseholdInvite(supabase, inviteId);
+        if (household) await loadPendingInvites(household.id);
+        return {};
+      } catch (e) {
+        return { error: friendlyAuthError(e, "No se pudo revocar") };
+      }
+    },
+    [supabase, household, loadPendingInvites],
+  );
+
+  const leaveCurrentHousehold = useCallback(async () => {
+    if (!supabase) return { error: "Supabase no configurado" };
+    try {
+      await leaveHousehold(supabase);
+      await refreshHousehold();
+      return {};
+    } catch (e) {
+      return { error: friendlyAuthError(e, "No se pudo salir del grupo") };
+    }
+  }, [supabase, refreshHousehold]);
+
+  const deleteAccount = useCallback(async () => {
+    if (!supabase) return { error: "Supabase no configurado" };
+    try {
+      await deleteOwnAccount(supabase);
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      setHousehold(null);
+      setMembers([]);
+      setPendingInvites([]);
+      return {};
+    } catch (e) {
+      return { error: friendlyAuthError(e, "No se pudo borrar la cuenta") };
+    }
+  }, [supabase]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -188,12 +279,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       household,
       members,
+      pendingInvites,
       isAuthenticated: Boolean(user),
       signInWithEmail,
       signOut,
       refreshHousehold,
       createInvite,
       acceptInvite,
+      revokeInvite,
+      leaveCurrentHousehold,
+      deleteAccount,
     }),
     [
       configured,
@@ -202,11 +297,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       household,
       members,
+      pendingInvites,
       signInWithEmail,
       signOut,
       refreshHousehold,
       createInvite,
       acceptInvite,
+      revokeInvite,
+      leaveCurrentHousehold,
+      deleteAccount,
     ],
   );
 
