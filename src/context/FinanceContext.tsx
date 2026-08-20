@@ -75,6 +75,8 @@ interface FinanceContextValue {
   setSharedEnabled: (enabled: boolean) => void;
   usdEnabled: boolean;
   setUsdEnabled: (enabled: boolean) => void;
+  amountsHidden: boolean;
+  setAmountsHidden: (hidden: boolean) => void;
   setPeriod: (year: number, month: number) => void;
   addMovement: (
     movement: Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName">,
@@ -124,6 +126,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [walletMode, setWalletModeState] = useState<WalletMode>("unified");
   const [sharedEnabled, setSharedEnabledState] = useState(false);
   const [usdEnabled, setUsdEnabledState] = useState(true);
+  const [amountsHidden, setAmountsHiddenState] = useState(false);
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
 
   const cloudEnabled = configured && isAuthenticated;
@@ -140,6 +143,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setWalletModeState(storage.loadWalletMode());
     setSharedEnabledState(storage.loadSharedEnabled());
     setUsdEnabledState(storage.loadUsdEnabled());
+    setAmountsHiddenState(storage.loadAmountsHidden());
   }, []);
 
   const loadCloud = useCallback(async () => {
@@ -276,6 +280,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     },
     [cloudEnabled, supabase, user, persistDisplayCurrency, persistWalletMode],
   );
+
+  const setAmountsHidden = useCallback((hidden: boolean) => {
+    setAmountsHiddenState(hidden);
+    storage.saveAmountsHidden(hidden);
+  }, []);
 
   const setPeriod = useCallback((y: number, m: number) => {
     setPeriodState({ year: y, month: m });
@@ -533,6 +542,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedEnabled,
       usdEnabled,
       setUsdEnabled,
+      amountsHidden,
+      setAmountsHidden,
       setPeriod,
       addMovement,
       updateMovement,
@@ -566,6 +577,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedEnabled,
       usdEnabled,
       setUsdEnabled,
+      amountsHidden,
+      setAmountsHidden,
       setPeriod,
       addMovement,
       updateMovement,

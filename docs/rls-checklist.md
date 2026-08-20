@@ -34,7 +34,7 @@ Opcional: corré primero el script estructural [`rls-audit.sql`](./rls-audit.sql
 | El monto resta del disponible de **A**; B lo ve y su fondo no cambia | Compartido = visualización, el saldo es individual |
 | Autor = nombre de A | Visible en la fila |
 
-### 3. Ingresos del partner ocultos
+### 3. Ingresos ajenos ocultos
 
 | Paso | Esperado |
 |------|----------|

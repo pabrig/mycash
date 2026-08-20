@@ -7,6 +7,7 @@ const DISPLAY_KEY = "mycash_display";
 const WALLET_MODE_KEY = "mycash_wallet_mode";
 const SHARED_ENABLED_KEY = "mycash_shared_enabled";
 const USD_ENABLED_KEY = "mycash_usd_enabled";
+const AMOUNTS_HIDDEN_KEY = "mycash_amounts_hidden";
 
 const LEGACY_KEYS = [
   ["pagapp_movements", MOVEMENTS_KEY],
@@ -131,4 +132,14 @@ export function loadUsdEnabled(): boolean {
 
 export function saveUsdEnabled(enabled: boolean): void {
   localStorage.setItem(USD_ENABLED_KEY, enabled ? "true" : "false");
+}
+
+/** Solo este dispositivo — útil en un lugar público. */
+export function loadAmountsHidden(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(AMOUNTS_HIDDEN_KEY) === "true";
+}
+
+export function saveAmountsHidden(hidden: boolean): void {
+  localStorage.setItem(AMOUNTS_HIDDEN_KEY, hidden ? "true" : "false");
 }

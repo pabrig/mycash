@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AmountsToggle } from "@/components/AmountsToggle";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { UserAvatar } from "@/components/UserAvatar";
+import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
 import {
@@ -17,6 +20,7 @@ import {
 export function DesktopSidebar() {
   const pathname = usePathname();
   const { sharedEnabled, usdEnabled, walletMode } = useFinance();
+  const { isAuthenticated, profile, user } = useAuth();
 
   const homeActive = pathname === "/" || pathname === "/mes";
   const sharedActive = pathname.startsWith("/compartido");
@@ -38,7 +42,32 @@ export function DesktopSidebar() {
         </div>
       </div>
 
-      <nav className="mt-10 flex flex-1 flex-col gap-1.5">
+      <Link
+        href="/cuenta"
+        className={`mt-8 flex items-center gap-3 rounded-2xl px-3 py-2.5 transition ${
+          cuentaActive
+            ? "bg-[var(--card-muted)]"
+            : "hover:bg-[var(--card-muted)]/70"
+        }`}
+      >
+        {isAuthenticated ? (
+          <UserAvatar name={profile?.displayName} size="sm" />
+        ) : (
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--card-muted)] text-zinc-400">
+            <IconUser className="h-4 w-4" />
+          </span>
+        )}
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold">
+            {isAuthenticated ? profile?.displayName || "Tu usuario" : "Sin usuario"}
+          </span>
+          <span className="block truncate text-[11px] text-zinc-400">
+            {isAuthenticated ? user?.email : "Entrá para sincronizar"}
+          </span>
+        </span>
+      </Link>
+
+      <nav className="mt-6 flex flex-1 flex-col gap-1.5">
         <SideLink href="/" label="Inicio" active={homeActive} icon="home" />
         {sharedEnabled && (
           <SideLink
@@ -63,6 +92,13 @@ export function DesktopSidebar() {
         )}
 
         {usdEnabled && <SidebarRate />}
+
+        <div className="flex items-center justify-between px-1">
+          <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+            Privacidad
+          </p>
+          <AmountsToggle className="bg-[var(--card-muted)]" />
+        </div>
 
         <Link
           href={nuevoHref}

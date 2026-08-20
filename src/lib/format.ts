@@ -27,6 +27,10 @@ export function formatUsdShort(amount: number): string {
   return `${sign}${formatIntegerPart(rounded, ",")}`;
 }
 
+export const HIDDEN_AMOUNT_ARS = "$ ••••";
+export const HIDDEN_AMOUNT_USD = "USD •••";
+export const HIDDEN_AMOUNT_SHORT = "••••";
+
 /** Convierte monto en ARS al formato de visualización elegido */
 export function formatDisplay(
   amountArs: number,
@@ -135,4 +139,12 @@ export function buildAnnualBrief(
   );
 
   return parts.join(" ");
+}
+
+/** Iniciales para avatares (1 palabra → 2 letras; 2+ → primera de cada una). */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
