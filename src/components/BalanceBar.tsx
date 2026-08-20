@@ -21,9 +21,9 @@ export function BalanceBar() {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between text-left"
       >
-        <span className="text-sm font-semibold text-zinc-500">Flujo del mes</span>
+        <span className="text-sm font-semibold text-zinc-500">Entró y salió</span>
         <span className="text-xs font-medium text-zinc-400">
-          {open ? "Menos" : "Detalle"}
+          {open ? "Ocultar" : "Ver más"}
         </span>
       </button>
 
@@ -45,14 +45,14 @@ export function BalanceBar() {
 
       {open && (
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <Detail label="Pasivos" value={summary.passiveIncome} fmt={fmt} tone="income" />
-          <Detail label="Activos" value={summary.activeIncome} fmt={fmt} tone="income" />
-          <Detail label="Personales" value={summary.personalExpenses} fmt={fmt} tone="expense" />
+          <Detail label="Rentas" value={summary.passiveIncome} fmt={fmt} tone="income" />
+          <Detail label="Trabajo" value={summary.activeIncome} fmt={fmt} tone="income" />
+          <Detail label="Míos" value={summary.personalExpenses} fmt={fmt} tone="expense" />
           {sharedEnabled && (
-            <Detail label="Compartidos" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
+            <Detail label="Con otros" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
           )}
-          <Detail label="Fijos" value={summary.personalFixed} fmt={fmt} />
-          <Detail label="Variables" value={summary.personalVariable} fmt={fmt} />
+          <Detail label="Todos los meses" value={summary.personalFixed} fmt={fmt} />
+          <Detail label="Una vez" value={summary.personalVariable} fmt={fmt} />
         </div>
       )}
     </section>

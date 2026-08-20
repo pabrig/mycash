@@ -121,7 +121,7 @@ export function buildAnnualBrief(
   fmt: (amountArs: number) => string,
 ): string {
   if (summary.movementCount === 0) {
-    return `Sin movimientos registrados en ${year}.`;
+    return `No hay nada anotado en ${year}.`;
   }
 
   const parts: string[] = [];
@@ -129,13 +129,13 @@ export function buildAnnualBrief(
     summary.activeMonths === 1 ? "1 mes" : `${summary.activeMonths} meses`;
 
   parts.push(
-    `Ingresos ${fmt(summary.totalIncome)} (${fmt(summary.averages.totalIncome)}/mes): ${fmt(summary.passiveIncome)} pasivos y ${fmt(summary.activeIncome)} activos.`,
+    `Ingresos ${fmt(summary.totalIncome)} (${fmt(summary.averages.totalIncome)}/mes): ${fmt(summary.passiveIncome)} rentas y ${fmt(summary.activeIncome)} trabajo.`,
   );
   parts.push(
-    `Egresos ${fmt(summary.totalExpenses)} (${fmt(summary.averages.totalExpenses)}/mes): ${fmt(summary.personalExpenses)} personales y ${fmt(summary.sharedExpenses)} compartidos.`,
+    `Gastos ${fmt(summary.totalExpenses)} (${fmt(summary.averages.totalExpenses)}/mes): ${fmt(summary.personalExpenses)} tuyos y ${fmt(summary.sharedExpenses)} con otros.`,
   );
   parts.push(
-    `Disponible anual ${fmt(summary.disponible)} · prom. mensual ${fmt(summary.averages.disponible)} (${monthLabel}).`,
+    `Te quedó ${fmt(summary.disponible)} en el año · ${fmt(summary.averages.disponible)} por mes (${monthLabel}).`,
   );
 
   return parts.join(" ");

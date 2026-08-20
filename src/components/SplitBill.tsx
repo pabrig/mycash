@@ -71,9 +71,8 @@ export function SplitBill() {
   return (
     <div className="space-y-5">
       <p className="text-sm leading-relaxed text-zinc-500">
-        Cargá quiénes comieron y cuánto puso cada uno. Si alguien no pagó, dejá
-        $0. Marcá quién sos vos: se puede cargar tu parte (lo que te toca) como
-        gasto, no lo que pusiste en la mesa.
+        Cargá quiénes estaban y cuánto pagó cada uno. Si alguien no pagó, dejá
+        0. Marcate a vos: después podés cargar solo lo que te toca.
       </p>
 
       <input
@@ -81,7 +80,7 @@ export function SplitBill() {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="input-field"
-        placeholder="¿Qué fue? Ej: Cena, asado, after…"
+          placeholder="¿Qué fue? Ej: cena, asado…"
       />
 
       <section className="space-y-3">
@@ -169,11 +168,11 @@ export function SplitBill() {
 
         {!canSettle ? (
           <p className="text-sm text-zinc-400">
-            Ingresá al menos un monto para ver quién le transfiere a quién.
+            Poné un monto para ver quién le debe a quién.
           </p>
         ) : result.transfers.length === 0 ? (
           <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-            Quedaron a mano — nadie se debe nada.
+            Quedaron a mano. Nadie se debe nada.
           </p>
         ) : (
           <ul className="space-y-2">

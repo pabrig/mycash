@@ -42,8 +42,8 @@ export function AnnualOverview({
             Mes a mes · {year}
           </h2>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Promedios sobre {activeMonths}{" "}
-            {activeMonths === 1 ? "mes con movimientos" : "meses con movimientos"}
+            Promedio de {activeMonths}{" "}
+            {activeMonths === 1 ? "mes con algo anotado" : "meses con algo anotado"}
           </p>
         </div>
 
@@ -60,13 +60,13 @@ export function AnnualOverview({
                 tone="income"
               />
               <AvgPill
-                label="↓ Egresos"
+                label="↓ Gastos"
                 value={averages.vida.expenses}
                 formatter={formatMoney}
                 tone="expense"
               />
               <AvgPill
-                label="Disponible"
+                label="Te queda"
                 value={averages.vida.disponible}
                 formatter={formatMoney}
                 tone="balance"
@@ -92,7 +92,7 @@ export function AnnualOverview({
                 tone="expense"
               />
               <AvgPill
-                label="Disponible"
+                label="Te queda"
                 value={averages.ahorro.disponible}
                 formatter={formatUsd}
                 tone="balance"
@@ -166,7 +166,7 @@ export function AnnualOverview({
                       </>
                     ) : (
                       <span className="col-span-2 self-center text-right text-xs text-zinc-300 dark:text-zinc-600">
-                        Sin movimientos
+                        Sin nada
                       </span>
                     )}
                   </button>
@@ -177,7 +177,7 @@ export function AnnualOverview({
 
           <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 bg-[var(--card-muted)] px-4 py-3.5 text-sm">
             <span className="self-center font-semibold text-zinc-500">
-              Prom.
+              Promedio
             </span>
             <MonthBucketCell
               disponible={averages.vida.disponible}
@@ -200,7 +200,7 @@ export function AnnualOverview({
         </div>
 
         <p className="text-center text-xs text-zinc-400">
-          Tocá un mes para ver el detalle diario
+          Tocá un mes para ver el día a día
         </p>
       </section>
     );
@@ -215,15 +215,15 @@ export function AnnualOverview({
           Mes a mes · {year}
         </h2>
         <p className="mt-0.5 text-xs text-zinc-400">
-          Promedios sobre {activeMonths}{" "}
-          {activeMonths === 1 ? "mes con movimientos" : "meses con movimientos"}
+          Promedio de {activeMonths}{" "}
+          {activeMonths === 1 ? "mes con algo anotado" : "meses con algo anotado"}
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <AvgPill label="Prom. ingresos" value={averages.totalIncome} fmt={fmt} tone="income" />
-        <AvgPill label="Prom. egresos" value={averages.totalExpenses} fmt={fmt} tone="expense" />
-        <AvgPill label="Prom. disponible" value={averages.disponible} fmt={fmt} tone="balance" />
+        <AvgPill label="Ingresos" value={averages.totalIncome} fmt={fmt} tone="income" />
+        <AvgPill label="Gastos" value={averages.totalExpenses} fmt={fmt} tone="expense" />
+        <AvgPill label="Te queda" value={averages.disponible} fmt={fmt} tone="balance" />
       </div>
 
       <IncomeMixCard averages={averages} fmt={fmt} />
@@ -232,8 +232,8 @@ export function AnnualOverview({
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
           <span>Mes</span>
           <span className="text-right amount-positive">Ingresos</span>
-          <span className="text-right amount-negative">Egresos</span>
-          <span className="text-right">Disp.</span>
+          <span className="text-right amount-negative">Gastos</span>
+          <span className="text-right">Te queda</span>
         </div>
 
         <ul className="space-y-0.5 px-1.5 pb-2">
@@ -289,7 +289,7 @@ export function AnnualOverview({
                     </>
                   ) : (
                     <span className="col-span-3 text-right text-xs text-zinc-300 dark:text-zinc-600">
-                      Sin movimientos
+                      Sin nada
                     </span>
                   )}
                 </button>
@@ -317,7 +317,7 @@ export function AnnualOverview({
       </div>
 
       <p className="text-center text-xs text-zinc-400">
-        Tocá un mes para ver el detalle diario
+        Tocá un mes para ver el día a día
       </p>
     </section>
   );
@@ -347,17 +347,17 @@ function IncomeMixCard({
     <div className="bento space-y-3">
       <div>
         <p className="text-sm font-semibold tracking-tight">
-          Ingresos · promedio mensual
+          De dónde sale tu plata
         </p>
         <p className="meta mt-0.5 text-xs">
-          Pasivos vs activos
+          Promedio por mes: trabajo y rentas
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-2xl bg-[var(--card-muted)] px-3 py-2.5">
           <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
-            Pasivos
+            Rentas
           </p>
           <p className="mt-0.5 text-sm font-bold tabular-nums amount-positive">
             {fmt(passiveIncome)}
@@ -370,7 +370,7 @@ function IncomeMixCard({
         </div>
         <div className="rounded-2xl bg-[var(--card-muted)] px-3 py-2.5">
           <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
-            Activos
+            Trabajo
           </p>
           <p className="mt-0.5 text-sm font-bold tabular-nums text-zinc-800 dark:text-zinc-100">
             {fmt(activeIncome)}
@@ -401,7 +401,7 @@ function IncomeMixCard({
 
       <dl className="space-y-2 text-sm">
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-zinc-400">Diferencia pasivos − activos</dt>
+          <dt className="text-zinc-400">Rentas vs trabajo</dt>
           <dd
             className={`font-bold tabular-nums ${
               gap >= 0 ? "amount-positive" : "text-zinc-800 dark:text-zinc-100"
@@ -413,7 +413,7 @@ function IncomeMixCard({
         </div>
         {coverage !== null && (
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-zinc-400">Pasivos vs egresos</dt>
+            <dt className="text-zinc-400">¿Las rentas cubren los gastos?</dt>
             <dd className="font-bold tabular-nums">
               {coverage.toFixed(0)}%
             </dd>
@@ -424,8 +424,8 @@ function IncomeMixCard({
       {coverage !== null && (
         <p className="text-xs leading-relaxed text-zinc-400">
           {coverage >= 100
-            ? "Tus pasivos promedio alcanzan a cubrir el total de egresos."
-            : `Los pasivos promedio cubren ${coverage.toFixed(0)}% de tus egresos; el resto lo sostiene el ingreso activo.`}
+            ? "Con las rentas te alcanza para cubrir los gastos."
+            : `Las rentas cubren el ${coverage.toFixed(0)}% de los gastos. El resto sale del trabajo.`}
         </p>
       )}
     </div>

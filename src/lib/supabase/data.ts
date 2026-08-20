@@ -118,7 +118,7 @@ export async function updateDisplayName(
   displayName: string,
 ): Promise<Profile> {
   const name = displayName.trim();
-  if (!name) throw new Error("El nombre no puede estar vacío");
+  if (!name) throw new Error("Falta el nombre");
 
   const { data, error } = await supabase
     .from("profiles")
@@ -427,7 +427,7 @@ export async function createHouseholdInvite(
     .gt("expires_at", new Date().toISOString());
 
   if ((count ?? 0) >= 5) {
-    throw new Error("Máximo 5 invitaciones pendientes. Revocá alguna primero.");
+    throw new Error("Ya hay 5 invitaciones. Cancelá una para crear otra.");
   }
 
   const code = generateInviteCode();

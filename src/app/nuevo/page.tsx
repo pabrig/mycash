@@ -26,7 +26,7 @@ function NuevoBody() {
           ‹
         </Link>
         <h1 className="text-lg font-bold md:text-xl">
-          {prefill ? "Cargar mi parte" : "Nuevo movimiento"}
+          {prefill ? "Cargar mi parte" : "Cargar"}
         </h1>
       </div>
       <MovementForm

@@ -59,7 +59,7 @@ export function SharedAccountCard() {
     if (result.error) setError(result.error);
     else if (result.code) {
       setInviteCode(result.code);
-      setMessage("Código generado — válido 7 días");
+      setMessage("Código listo. Vale 7 días.");
     }
   }
 
@@ -75,7 +75,7 @@ export function SharedAccountCard() {
     }
     await setSharedEnabled(true);
     await refreshData();
-    setMessage("Cuentas vinculadas");
+    setMessage("Listo, ya están juntos");
     setJoinCode("");
     setBusy(false);
   }
@@ -87,7 +87,7 @@ export function SharedAccountCard() {
     setBusy(false);
     if (result.error) setError(result.error);
     else {
-      setMessage("Invitación revocada");
+      setMessage("Invitación cancelada");
       if (inviteCode) setInviteCode(null);
     }
   }
@@ -95,7 +95,7 @@ export function SharedAccountCard() {
   async function handleLeave() {
     if (
       !confirm(
-        "¿Salir del grupo? Dejás de ver los gastos compartidos de las demás personas. Tus datos personales quedan.",
+        "¿Salir del grupo? Dejás de ver los gastos de los demás. Tu plata sigue igual.",
       )
     ) {
       return;
@@ -121,11 +121,11 @@ export function SharedAccountCard() {
       <section className="bento space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold tracking-tight">Cuenta compartida</p>
+            <p className="text-sm font-semibold tracking-tight">Gastos con otros</p>
             <p className="meta mt-1 text-xs leading-relaxed">
               {paired
-                ? "Lista que ve el grupo. El gasto resta solo de quien lo cargó."
-                : "Gastos compartidos con otras personas. Cada una tiene su propio disponible."}
+                ? "El grupo ve la lista. El gasto resta solo de quien lo cargó."
+                : "Para anotar gastos de todos. Cada uno sigue con su plata."}
             </p>
           </div>
           <button
@@ -160,12 +160,12 @@ export function SharedAccountCard() {
         {sharedEnabled && configured && !paired && (
           <div className="space-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
             <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
-              Paso siguiente · vincular
+              Invitar a alguien
             </p>
             <div className="space-y-3">
               <p className="text-sm font-semibold">Invitar</p>
               <p className="text-xs text-zinc-500">
-                Código de 12 caracteres, válido 7 días. Máximo 5 pendientes.
+                El código dura 7 días.
               </p>
               <button
                 type="button"
@@ -173,7 +173,7 @@ export function SharedAccountCard() {
                 disabled={busy}
                 className="btn-primary w-full text-sm"
               >
-                Generar código
+                Crear código
               </button>
               {inviteCode && (
                 <div className="rounded-2xl bg-[var(--card-muted)] p-3 text-center">
@@ -204,7 +204,7 @@ export function SharedAccountCard() {
                         onClick={() => void handleRevoke(inv.id)}
                         className="shrink-0 text-xs text-red-500"
                       >
-                        Revocar
+                        Cancelar
                       </button>
                     </li>
                   ))}
@@ -224,7 +224,7 @@ export function SharedAccountCard() {
                   autoComplete="off"
                 />
                 <button type="submit" disabled={busy} className="btn-primary px-4">
-                  Unir
+                  Unirme
                 </button>
               </form>
             </div>
@@ -267,8 +267,8 @@ function SharedStatus({
   if (!configured) {
     return (
       <p className="text-xs leading-relaxed text-zinc-400">
-        Aparece la pestaña Compartido en este dispositivo. Sin nube no se puede
-        armar un grupo.
+        Vas a ver la pestaña Compartido. Para invitar a alguien, primero entrá
+        con tu email.
       </p>
     );
   }
@@ -276,10 +276,9 @@ function SharedStatus({
   if (!paired) {
     return (
       <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
-        <p className="text-sm font-semibold">Tu usuario está listo</p>
+        <p className="text-sm font-semibold">Falta alguien más</p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-          Todavía no hay nadie más. Invitá o uníte con un código para ver la
-          misma lista.
+          Invitá o usá un código para compartir la lista.
         </p>
       </div>
     );

@@ -18,8 +18,7 @@ function UsdSettings() {
         <div>
           <p className="text-sm font-semibold tracking-tight">Dólares (USD)</p>
           <p className="meta mt-1 text-xs leading-relaxed">
-            Activá si cargás movimientos en USD, mirás montos en dólares o usás
-            el bolsillo Ahorro. Si solo manejás pesos, dejalo apagado.
+            Activá si usás dólares. Si solo usás pesos, dejalo apagado.
           </p>
         </div>
         <button
@@ -42,13 +41,11 @@ function UsdSettings() {
       </div>
       {usdEnabled ? (
         <p className="text-xs leading-relaxed text-zinc-400">
-          Aparecen el toggle ARS/USD, la cotización oficial, cargar en dólares y
-          la opción Dos bolsillos (Cotidiano + Ahorro USD).
+          Vas a poder ver en dólares, cargar en USD y usar dos bolsillos.
         </p>
       ) : (
         <p className="text-xs leading-relaxed text-zinc-400">
-          Todo queda en ARS. Los movimientos viejos en USD siguen contando
-          convertidos al oficial; no podés cargar nuevos en dólares.
+          Todo queda en pesos. Lo que ya cargaste en dólares se sigue contando.
         </p>
       )}
     </section>
@@ -65,8 +62,7 @@ function WalletSettings() {
       <div>
         <p className="text-sm font-semibold tracking-tight">¿Cómo querés ver tu plata?</p>
         <p className="meta mt-1 text-xs">
-          Elegí si preferís un solo disponible o separar lo del día a día de lo
-          que guardás.
+          Un número o dos bolsillos: día a día y ahorro.
         </p>
       </div>
 
@@ -88,8 +84,7 @@ function WalletSettings() {
                 : "text-zinc-400"
             }`}
           >
-            Un solo disponible. Ideal si convertís todo y querés ver el total de
-            un vistazo.
+            Un solo número. Toda tu plata junta.
           </p>
         </button>
 
@@ -110,17 +105,16 @@ function WalletSettings() {
                 : "text-zinc-400"
             }`}
           >
-            Cotidiano en ARS · Ahorro USD para lo que no tocás.
+            Cotidiano en pesos. Ahorro en dólares, para lo que no tocás.
           </p>
         </button>
       </div>
 
       {walletMode === "split" && (
         <p className="text-xs leading-relaxed text-zinc-400">
-          Myca$h lo ordena solo: lo que entra en ARS va a Cotidiano, lo que
-          entra en USD a Ahorro USD.
+          Lo que entra en pesos va a Cotidiano. Lo que entra en dólares, a Ahorro.
           {sharedEnabled
-            ? " Los gastos compartidos que cargás cuentan como Cotidiano."
+            ? " Los gastos con otros que cargás cuentan como Cotidiano."
             : ""}
         </p>
       )}
@@ -150,12 +144,12 @@ export default function CuentaPage() {
   async function handleDeleteAccount() {
     if (
       !confirm(
-        "¿Borrar tu cuenta y todos tus datos en la nube? Esta acción no se puede deshacer.",
+        "¿Borrar tu cuenta? Se borra todo y no se puede deshacer.",
       )
     ) {
       return;
     }
-    if (!confirm("Confirmá: se eliminan movimientos personales y tu acceso.")) {
+    if (!confirm("¿Seguro? Se borran tus gastos, ingresos y el acceso.")) {
       return;
     }
     setBusy(true);
@@ -182,7 +176,7 @@ export default function CuentaPage() {
     a.download = `mycash-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setMessage("Export descargado");
+    setMessage("Listo, se descargó");
   }
 
   return (
@@ -204,13 +198,13 @@ export default function CuentaPage() {
 
       {isAuthenticated && (
         <section className="bento space-y-3 p-4">
-          <p className="text-sm font-semibold">Datos</p>
+          <p className="text-sm font-semibold">Tus datos</p>
           <button
             type="button"
             onClick={handleExport}
             className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
           >
-            Exportar JSON
+            Descargar mis datos
           </button>
           <button
             type="button"

@@ -29,7 +29,7 @@ export default function CompartidoNuevoPage() {
         >
           ‹
         </Link>
-        <h1 className="text-lg font-bold">Gasto compartido</h1>
+        <h1 className="text-lg font-bold">Gasto con otros</h1>
       </div>
       <MovementForm mode="shared" redirectTo="/compartido" />
     </div>
