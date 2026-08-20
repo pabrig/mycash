@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatMoney, todayIso } from "@/lib/format";
@@ -252,16 +252,18 @@ export function SplitEventDetail({
         </div>
       </DetailSheet>
 
-      <AddExpenseSheet
-        open={adding}
-        onClose={() => setAdding(false)}
-        event={event}
-        defaultPaidById={me?.id ?? event.people[0]?.id ?? ""}
-        onSave={(input) => {
-          onAddExpense(input);
-          setAdding(false);
-        }}
-      />
+      {adding ? (
+        <AddExpenseSheet
+          open
+          onClose={() => setAdding(false)}
+          event={event}
+          defaultPaidById={me?.id ?? event.people[0]?.id ?? ""}
+          onSave={(input) => {
+            onAddExpense(input);
+            setAdding(false);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -289,31 +291,13 @@ function AddExpenseSheet({
   const [paidById, setPaidById] = useState(defaultPaidById);
   const [date, setDate] = useState(todayIso());
 
-  useEffect(() => {
-    if (!open) return;
-    setDescription("");
-    setAmount("");
-    setPaidById(defaultPaidById);
-    setDate(todayIso());
-  }, [open, defaultPaidById]);
-
   const paid = parsePaid(amount);
   const canSave = paid > 0;
-
-  function reset() {
-    setDescription("");
-    setAmount("");
-    setPaidById(defaultPaidById);
-    setDate(todayIso());
-  }
 
   return (
     <DetailSheet
       open={open}
-      onClose={() => {
-        reset();
-        onClose();
-      }}
+      onClose={onClose}
       title="Agregar gasto"
     >
       <form
@@ -327,7 +311,6 @@ function AddExpenseSheet({
             amount: paid,
             paidById: paidById || defaultPaidById,
           });
-          reset();
         }}
       >
         <p className="text-sm leading-relaxed text-zinc-500">
