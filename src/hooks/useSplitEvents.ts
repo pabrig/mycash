@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useIsClient } from "@/hooks/useIsClient";
 import type { SplitEvent, SplitExpense } from "@/lib/split-bill";
 import { loadSplitEvents, saveSplitEvents } from "@/lib/storage";
@@ -9,26 +9,42 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-function persist(events: SplitEvent[]) {
-  saveSplitEvents(events);
-  return events;
+const EMPTY: SplitEvent[] = [];
+const listeners = new Set<() => void>();
+let memory: SplitEvent[] | null = null;
+
+function emit() {
+  for (const listener of listeners) listener();
+}
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
+}
+
+function getSnapshot(): SplitEvent[] {
+  if (!memory) memory = loadSplitEvents();
+  return memory;
+}
+
+function getServerSnapshot(): SplitEvent[] {
+  return EMPTY;
+}
+
+function commit(next: SplitEvent[]) {
+  memory = next;
+  saveSplitEvents(next);
+  emit();
 }
 
 export function useSplitEvents() {
-  const hydrated = useIsClient();
-  const [events, setEvents] = useState<SplitEvent[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    setEvents(loadSplitEvents());
-    setLoaded(true);
-  }, [hydrated]);
-
-  const ready = hydrated && loaded;
+  const ready = useIsClient();
+  const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const replace = useCallback((updater: (prev: SplitEvent[]) => SplitEvent[]) => {
-    setEvents((prev) => persist(updater(prev)));
+    commit(updater(getSnapshot()));
   }, []);
 
   const createEvent = useCallback(

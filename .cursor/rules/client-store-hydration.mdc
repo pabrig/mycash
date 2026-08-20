@@ -1,0 +1,37 @@
+---
+description: Hidratar datos del browser (localStorage, flags, stores) sin setState en useEffect — CI falla con react-hooks/set-state-in-effect
+globs: src/hooks/**/*.{ts,tsx},src/context/**/*.tsx
+alwaysApply: false
+---
+
+# Store de cliente: no hidratar con useEffect
+
+`eslint-plugin-react-hooks` (regla `react-hooks/set-state-in-effect`) **falla el CI** si un efecto llama `setState` al montar para leer localStorage u otro estado del browser. Esta casuística aparece en cada hook de datos locales.
+
+## Qué hacer
+
+Usar `useSyncExternalStore` (como [`useIsClient`](src/hooks/useIsClient.ts) y [`useSplitEvents`](src/hooks/useSplitEvents.ts)):
+
+- `getServerSnapshot`: valor estable de SSR (array/objeto vacío **constante**, misma referencia).
+- `getSnapshot`: leer el store (memoria + localStorage). Devolver **la misma referencia** si no cambió.
+- `subscribe` + `emit` al guardar, para que todos los consumidores se enteren.
+- `ready` = `useIsClient()`. No renderizar la lista real hasta `ready` (evitar mismatch de hidratación).
+
+```ts
+// ❌ CI: set-state-in-effect
+useEffect(() => {
+  if (!hydrated) return;
+  setEvents(loadSplitEvents());
+  setLoaded(true);
+}, [hydrated]);
+
+// ✅
+const ready = useIsClient();
+const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+```
+
+## No
+
+- `useEffect` + `setState` para “cargar al hidratar”.
+- `getSnapshot` que haga `JSON.parse` y devuelva un array nuevo en cada llamada (loop).
+- Un `useState` por pantalla: el store es **módulo compartido** para que wizard y detalle vean lo mismo.
