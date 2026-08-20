@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useFinance } from "@/context/FinanceContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 export default function JoinPage() {
@@ -11,22 +12,35 @@ export default function JoinPage() {
   const router = useRouter();
   const code = (params.code ?? "").toUpperCase();
   const { configured, loading, isAuthenticated, acceptInvite } = useAuth();
+  const { setSharedEnabled, refreshData, ready } = useFinance();
   const [error, setError] = useState("");
   const startedForCode = useRef<string | null>(null);
 
   useEffect(() => {
-    if (loading || !configured || !isAuthenticated) return;
+    if (loading || !configured || !isAuthenticated || !ready) return;
     if (startedForCode.current === code) return;
     startedForCode.current = code;
 
-    void acceptInvite(code).then((result) => {
+    void acceptInvite(code).then(async (result) => {
       if (result.error) {
         setError(result.error);
         return;
       }
+      await setSharedEnabled(true);
+      await refreshData();
       router.replace("/compartido");
     });
-  }, [loading, configured, isAuthenticated, code, acceptInvite, router]);
+  }, [
+    loading,
+    configured,
+    isAuthenticated,
+    ready,
+    code,
+    acceptInvite,
+    setSharedEnabled,
+    refreshData,
+    router,
+  ]);
 
   if (!configured) {
     return (
@@ -39,7 +53,7 @@ export default function JoinPage() {
     );
   }
 
-  if (loading) {
+  if (loading || (isAuthenticated && !ready && !error)) {
     return <LoadingScreen variant="auth" />;
   }
 

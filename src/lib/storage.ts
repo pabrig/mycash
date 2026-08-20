@@ -143,3 +143,33 @@ export function loadAmountsHidden(): boolean {
 export function saveAmountsHidden(hidden: boolean): void {
   localStorage.setItem(AMOUNTS_HIDDEN_KEY, hidden ? "true" : "false");
 }
+
+const SYNCED_KEYS = [
+  MOVEMENTS_KEY,
+  RATES_KEY,
+  DISPLAY_KEY,
+  WALLET_MODE_KEY,
+  SHARED_ENABLED_KEY,
+  USD_ENABLED_KEY,
+] as const;
+
+/** Snapshot para migrar a la nube en el primer login. */
+export function loadLocalSnapshot() {
+  return {
+    movements: loadMovements(),
+    rates: loadRates(),
+    displayCurrency: loadDisplayCurrency(),
+    walletMode: loadWalletMode(),
+    sharedEnabled: loadSharedEnabled(),
+    usdEnabled: loadUsdEnabled(),
+  };
+}
+
+/** Tras sync ok o al cerrar sesión: la nube es la fuente de verdad. */
+export function clearSyncedLocalFinance(): void {
+  if (typeof window === "undefined") return;
+  migrateLegacyStorage();
+  for (const key of SYNCED_KEYS) {
+    localStorage.removeItem(key);
+  }
+}

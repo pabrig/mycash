@@ -59,10 +59,10 @@ export function DesktopSidebar() {
         )}
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">
-            {isAuthenticated ? profile?.displayName || "Tu usuario" : "Sin usuario"}
+            {isAuthenticated ? profile?.displayName || "Tu usuario" : "Tu usuario"}
           </span>
           <span className="block truncate text-[11px] text-zinc-400">
-            {isAuthenticated ? user?.email : "Entrá para sincronizar"}
+            {isAuthenticated ? user?.email : "Sesión"}
           </span>
         </span>
       </Link>

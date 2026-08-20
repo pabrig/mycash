@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { UserAvatar } from "@/components/UserAvatar";
 
@@ -14,6 +15,7 @@ export function AccountIdentity() {
     signOut,
     updateDisplayName,
   } = useAuth();
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile?.displayName ?? "");
   const [busy, setBusy] = useState(false);
@@ -24,7 +26,7 @@ export function AccountIdentity() {
       <section className="bento space-y-2">
         <p className="text-sm font-semibold tracking-tight">Tu usuario</p>
         <p className="text-xs leading-relaxed text-zinc-400">
-          Esta instalación no tiene nube. Todo queda en este teléfono.
+          Esta instalación no tiene nube. Todo queda en este dispositivo.
         </p>
       </section>
     );
@@ -36,8 +38,8 @@ export function AccountIdentity() {
         <div>
           <p className="text-sm font-semibold tracking-tight">Tu usuario</p>
           <p className="meta mt-1 text-xs leading-relaxed">
-            Estás en este teléfono, sin cuenta. Para sincronizar y compartir
-            gastos con alguien, necesitás entrar con tu email.
+            Estás en este dispositivo, sin sesión. Entrá con tu email para ver
+            tus movimientos.
           </p>
         </div>
         <Link href="/login?reason=account" className="btn-primary block text-center text-sm">
@@ -129,7 +131,9 @@ export function AccountIdentity() {
       </p>
       <button
         type="button"
-        onClick={() => void signOut()}
+        onClick={() => {
+          void signOut().then(() => router.replace("/login"));
+        }}
         className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
       >
         Cerrar sesión
