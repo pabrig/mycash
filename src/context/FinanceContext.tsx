@@ -21,6 +21,7 @@ import {
   computeSplitMonthlySummary,
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
+import { affectsUserBalance } from "@/lib/movement-access";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -59,6 +60,8 @@ interface FinanceContextValue {
   syncError: string | null;
   clearSyncError: () => void;
   movements: Movement[];
+  /** Movimientos que entran en el disponible (sin lo compartido del otro) */
+  ownMovements: Movement[];
   sharedMovements: Movement[];
   rates: MonthlyRate[];
   year: number;
@@ -482,9 +485,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [rates, year, month],
   );
 
+  const ownMovements = useMemo(
+    () => movements.filter((m) => affectsUserBalance(m, user?.id)),
+    [movements, user?.id],
+  );
+
   const monthMovements = useMemo(
-    () => filterByMonth(movements, year, month),
-    [movements, year, month],
+    () => filterByMonth(ownMovements, year, month),
+    [ownMovements, year, month],
   );
 
   const sharedMovements = useMemo(
@@ -498,8 +506,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const annualSummary = useMemo(
-    () => computeAnnualSummary(movements, year, rates),
-    [movements, year, rates],
+    () => computeAnnualSummary(ownMovements, year, rates),
+    [ownMovements, year, rates],
   );
 
   const splitSummary = useMemo(
@@ -508,8 +516,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const splitAnnualSummary = useMemo(
-    () => computeSplitAnnualSummary(movements, year, rates),
-    [movements, year, rates],
+    () => computeSplitAnnualSummary(ownMovements, year, rates),
+    [ownMovements, year, rates],
   );
 
   const effectiveWalletMode: WalletMode =
@@ -524,6 +532,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       syncError,
       clearSyncError,
       movements,
+      ownMovements,
       sharedMovements,
       rates,
       year,
@@ -556,6 +565,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       syncError,
       clearSyncError,
       movements,
+      ownMovements,
       sharedMovements,
       rates,
       year,
