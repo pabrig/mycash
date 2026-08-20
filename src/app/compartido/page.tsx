@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { SharedMovementList } from "@/components/SharedMovementList";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/context/AuthContext";
@@ -12,7 +13,7 @@ import { useFinance } from "@/context/FinanceContext";
 export default function CompartidoPage() {
   const router = useRouter();
   const { loading, members, user } = useAuth();
-  const { ready, sharedEnabled } = useFinance();
+  const { ready, sharedEnabled, walletMode } = useFinance();
 
   useEffect(() => {
     if (ready && !sharedEnabled) router.replace("/");
@@ -42,6 +43,11 @@ export default function CompartidoPage() {
               : "Acá van a ver los gastos de todos. Cada uno sigue con su plata."}
           </p>
         </div>
+        {walletMode === "unified" && (
+          <div className="md:hidden">
+            <CurrencyToggle />
+          </div>
+        )}
       </div>
 
       {!paired && (

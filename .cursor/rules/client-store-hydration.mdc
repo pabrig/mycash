@@ -1,0 +1,44 @@
+---
+description: No setState en useEffect para hidratar stores ni resetear formularios/sheets — CI falla con react-hooks/set-state-in-effect
+globs: src/hooks/**/*.{ts,tsx},src/context/**/*.tsx,src/components/**/*.tsx
+alwaysApply: false
+---
+
+# No `setState` síncrono en `useEffect`
+
+`react-hooks/set-state-in-effect` **rompe el CI**. No uses un efecto para (1) cargar datos del browser ni (2) vaciar un form al abrir un sheet.
+
+## 1. Store de cliente (localStorage)
+
+Usar `useSyncExternalStore` (como [`useIsClient`](src/hooks/useIsClient.ts) y [`useSplitEvents`](src/hooks/useSplitEvents.ts)):
+
+- `getServerSnapshot`: valor estable de SSR (misma referencia).
+- `getSnapshot`: misma referencia si no cambió.
+- `subscribe` + `emit` al guardar.
+- `ready` = `useIsClient()`.
+
+```ts
+// ❌
+useEffect(() => {
+  setEvents(loadSplitEvents());
+}, []);
+
+// ✅
+const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+```
+
+## 2. Reset de sheet / formulario
+
+No resets con efecto al pasar `open` a true. Montá el form **solo cuando está abierto**: al cerrar se desmonta y al reabrir el `useState` nace limpio.
+
+```tsx
+// ❌
+useEffect(() => {
+  if (!open) return;
+  setDescription("");
+  setAmount("");
+}, [open]);
+
+// ✅
+{adding ? <AddExpenseSheet open onClose={() => setAdding(false)} /> : null}
+```
