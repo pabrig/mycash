@@ -5,37 +5,18 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MovementForm } from "@/components/MovementForm";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 
 export default function CompartidoNuevoPage() {
   const router = useRouter();
-  const { configured, isAuthenticated, loading } = useAuth();
   const { ready, sharedEnabled } = useFinance();
 
   useEffect(() => {
     if (ready && !sharedEnabled) router.replace("/");
   }, [ready, sharedEnabled, router]);
 
-  if (!ready || (configured && loading) || !sharedEnabled) {
+  if (!ready || !sharedEnabled) {
     return <LoadingScreen variant="form" />;
-  }
-
-  if (configured && !isAuthenticated) {
-    return (
-      <div className="card space-y-4 p-6 text-center">
-        <p className="font-medium">Entrá para cargar un gasto compartido</p>
-        <p className="text-sm text-zinc-500">
-          Sin usuario, el resto del grupo no puede ver lo que cargás.
-        </p>
-        <Link
-          href="/login?next=/compartido/nuevo&reason=shared"
-          className="btn-primary inline-block px-6"
-        >
-          Entrar con email
-        </Link>
-      </div>
-    );
   }
 
   return (

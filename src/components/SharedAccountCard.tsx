@@ -18,10 +18,8 @@ function formatExpiry(iso: string): string {
 }
 
 export function SharedAccountCard() {
-  const { sharedEnabled, setSharedEnabled } = useFinance();
   const {
     configured,
-    isAuthenticated,
     user,
     household,
     members,
@@ -31,6 +29,7 @@ export function SharedAccountCard() {
     revokeInvite,
     leaveCurrentHousehold,
   } = useAuth();
+  const { sharedEnabled, setSharedEnabled, refreshData } = useFinance();
 
   const [setupOpen, setSetupOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -69,12 +68,16 @@ export function SharedAccountCard() {
     setBusy(true);
     setError("");
     const result = await acceptInvite(joinCode.trim());
-    setBusy(false);
-    if (result.error) setError(result.error);
-    else {
-      setMessage("Cuentas vinculadas");
-      setJoinCode("");
+    if (result.error) {
+      setBusy(false);
+      setError(result.error);
+      return;
     }
+    await setSharedEnabled(true);
+    await refreshData();
+    setMessage("Cuentas vinculadas");
+    setJoinCode("");
+    setBusy(false);
   }
 
   async function handleRevoke(id: string) {
@@ -100,9 +103,14 @@ export function SharedAccountCard() {
     setBusy(true);
     setError("");
     const result = await leaveCurrentHousehold();
+    if (result.error) {
+      setBusy(false);
+      setError(result.error);
+      return;
+    }
+    await refreshData();
+    setMessage("Saliste del grupo");
     setBusy(false);
-    if (result.error) setError(result.error);
-    else setMessage("Saliste del grupo");
   }
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -142,7 +150,6 @@ export function SharedAccountCard() {
         {sharedEnabled && (
           <SharedStatus
             configured={configured}
-            isAuthenticated={isAuthenticated}
             paired={paired}
             householdName={household?.name}
             members={members}
@@ -150,7 +157,7 @@ export function SharedAccountCard() {
           />
         )}
 
-        {sharedEnabled && configured && isAuthenticated && !paired && (
+        {sharedEnabled && configured && !paired && (
           <div className="space-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
             <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
               Paso siguiente · vincular
@@ -224,7 +231,7 @@ export function SharedAccountCard() {
           </div>
         )}
 
-        {sharedEnabled && configured && isAuthenticated && paired && (
+        {sharedEnabled && configured && paired && (
           <button
             type="button"
             onClick={() => void handleLeave()}
@@ -246,14 +253,12 @@ export function SharedAccountCard() {
 
 function SharedStatus({
   configured,
-  isAuthenticated,
   paired,
   householdName,
   members,
   otherNames,
 }: {
   configured: boolean;
-  isAuthenticated: boolean;
   paired: boolean;
   householdName?: string;
   members: { userId: string; displayName: string; role: string }[];
@@ -262,23 +267,9 @@ function SharedStatus({
   if (!configured) {
     return (
       <p className="text-xs leading-relaxed text-zinc-400">
-        Aparece la pestaña Compartido en este teléfono. Sin nube no se puede
+        Aparece la pestaña Compartido en este dispositivo. Sin nube no se puede
         armar un grupo.
       </p>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="rounded-2xl bg-amber-500/10 px-3.5 py-3">
-        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-          Falta tu usuario
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-amber-800/80 dark:text-amber-200/80">
-          La pestaña ya está visible, pero lo que cargues queda solo acá. Entrá
-          con tu email (arriba) para que el resto del grupo pueda verte.
-        </p>
-      </div>
     );
   }
 

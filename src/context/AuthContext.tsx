@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
+import { clearSyncedLocalFinance } from "@/lib/storage";
 import {
   acceptHouseholdInvite,
   createHouseholdInvite,
@@ -195,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+    clearSyncedLocalFinance();
     await loadUser();
   }, [supabase, loadUser]);
 
@@ -267,6 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await deleteOwnAccount(supabase);
       await supabase.auth.signOut();
+      clearSyncedLocalFinance();
       setUser(null);
       setProfile(null);
       setHousehold(null);

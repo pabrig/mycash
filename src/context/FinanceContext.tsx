@@ -32,7 +32,7 @@ import {
   fetchRates,
   fetchWalletMode,
   insertMovement,
-  migrateLocalMovements,
+  migrateLocalIfEmpty,
   saveDisplayCurrencyRemote,
   saveSharedEnabledRemote,
   saveUsdEnabledRemote,
@@ -104,7 +104,7 @@ interface FinanceContextValue {
 function friendlySyncError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (/JWT|session|not authenticated|Invalid Refresh Token/i.test(msg)) {
-    return "Sesión vencida — entrá de nuevo en Cuenta";
+    return "Sesión vencida — volvé a entrar";
   }
   if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
     return "Sin conexión con la nube — mostrando datos locales";
@@ -149,7 +149,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const loadCloud = useCallback(async () => {
     if (!supabase || !user) return;
 
-    await migrateLocalMovements(supabase, user.id, storage.loadMovements());
+    await migrateLocalIfEmpty(supabase, user.id, storage.loadLocalSnapshot());
 
     const [
       remoteMovements,
@@ -173,6 +173,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setWalletModeState(remoteWalletMode);
     setSharedEnabledState(remoteShared);
     setUsdEnabledState(remoteUsd);
+    storage.clearSyncedLocalFinance();
     setSyncError(null);
   }, [supabase, user]);
 
@@ -190,26 +191,57 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }
   }, [cloudEnabled, loadCloud, loadLocal]);
 
-  // Upgrade a nube cuando la sesión esté lista
+  // Esperar sesión y cargar nube antes de pintar. Sin eso, un dispositivo
+  // nuevo muestra localStorage vacío como si se hubiera perdido la cuenta.
   useEffect(() => {
-    if (authLoading || !cloudEnabled) return;
+    if (!isClient || authLoading) return;
 
     let cancelled = false;
+
     void (async () => {
+      setPeriodState((prev) => (prev.year === 0 ? currentPeriod() : prev));
+      setAmountsHiddenState(storage.loadAmountsHidden());
+
+      if (configured && !isAuthenticated) {
+        setMovements([]);
+        setRates([]);
+        setDisplayCurrencyState("ARS");
+        setWalletModeState("unified");
+        setSharedEnabledState(false);
+        setUsdEnabledState(true);
+        if (!cancelled) setReady(true);
+        return;
+      }
+
       try {
-        await loadCloud();
+        if (cloudEnabled) {
+          await loadCloud();
+        } else {
+          setSyncError(null);
+          loadLocal();
+        }
       } catch (e) {
         if (!cancelled) {
           setSyncError(friendlySyncError(e));
           loadLocal();
         }
+      } finally {
+        if (!cancelled) setReady(true);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [authLoading, cloudEnabled, loadCloud, loadLocal]);
+  }, [
+    isClient,
+    authLoading,
+    configured,
+    isAuthenticated,
+    cloudEnabled,
+    loadCloud,
+    loadLocal,
+  ]);
 
   const { year, month } = period;
 
@@ -594,14 +626,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       refreshData,
     ],
   );
-
-  // Carga local inmediata (no depende de auth) para no quedar en "Cargando…"
-  // si hay remount por hydration o auth lento.
-  if (isClient && !ready) {
-    setPeriodState(currentPeriod());
-    loadLocal();
-    setReady(true);
-  }
 
   return (
     <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>

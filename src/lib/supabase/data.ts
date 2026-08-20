@@ -9,6 +9,28 @@ import type {
   WalletMode,
 } from "@/lib/types";
 
+export type LocalSnapshot = {
+  movements: Movement[];
+  rates: MonthlyRate[];
+  displayCurrency: DisplayCurrency;
+  walletMode: WalletMode;
+  sharedEnabled: boolean;
+  usdEnabled: boolean;
+};
+
+/** Hay algo local que vale la pena subir en el primer login. */
+export function hasLocalToMigrate(local: LocalSnapshot): boolean {
+  const personal = local.movements.filter((m) => m.scope !== "shared");
+  return (
+    personal.length > 0 ||
+    local.rates.length > 0 ||
+    local.displayCurrency === "USD" ||
+    local.walletMode === "split" ||
+    local.sharedEnabled ||
+    local.usdEnabled === false
+  );
+}
+
 type DbMovement = {
   id: string;
   user_id: string;
@@ -484,16 +506,16 @@ export async function deleteOwnAccount(
 }
 
 /**
- * Primera sync: sube solo movimientos personales locales.
+ * Primera sync: sube personales + settings/rates locales.
  * No sube `shared` (sin household válido / no inventar gastos de grupo).
  * Si ya hay personales en nube, no vuelve a migrar (cloud gana).
  */
-export async function migrateLocalMovements(
+export async function migrateLocalIfEmpty(
   supabase: SupabaseClient,
   userId: string,
-  localMovements: Movement[],
+  local: LocalSnapshot,
 ): Promise<void> {
-  if (localMovements.length === 0) return;
+  if (!hasLocalToMigrate(local)) return;
 
   const { count } = await supabase
     .from("movements")
@@ -503,7 +525,7 @@ export async function migrateLocalMovements(
 
   if ((count ?? 0) > 0) return;
 
-  const rows = localMovements
+  const rows = local.movements
     .filter((m) => m.scope !== "shared")
     .map((m) => ({
       id: m.id,
@@ -524,8 +546,31 @@ export async function migrateLocalMovements(
       created_at: m.createdAt,
     }));
 
-  if (rows.length === 0) return;
+  if (rows.length > 0) {
+    const { error } = await supabase.from("movements").insert(rows);
+    if (error) throw error;
+  }
 
-  const { error } = await supabase.from("movements").insert(rows);
-  if (error) throw error;
+  if (local.rates.length > 0) {
+    const { error } = await supabase.from("monthly_rates").upsert(
+      local.rates.map((r) => ({
+        user_id: userId,
+        year: r.year,
+        month: r.month,
+        usd_to_ars: r.usdToArs,
+        updated_at: r.updatedAt ?? new Date().toISOString(),
+      })),
+      { onConflict: "user_id,year,month" },
+    );
+    if (error) throw error;
+  }
+
+  const { error: settingsError } = await supabase.from("user_settings").upsert({
+    user_id: userId,
+    display_currency: local.displayCurrency,
+    wallet_mode: local.walletMode,
+    shared_enabled: local.sharedEnabled,
+    usd_enabled: local.usdEnabled,
+  });
+  if (settingsError) throw settingsError;
 }
