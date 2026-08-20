@@ -88,8 +88,8 @@ function SharedSettings() {
       {sharedEnabled && (
         <div className="space-y-2 text-xs leading-relaxed text-zinc-400">
           <p>
-            Aparece la pestaña Compartido. Cada integrante ve el monto completo
-            en su disponible.
+            Aparece la pestaña Compartido. El gasto resta solo de quien lo
+            cargó; tu pareja lo ve, sin tocar su disponible.
           </p>
           {isAuthenticated ? (
             <p className="font-medium text-zinc-600 dark:text-zinc-300">

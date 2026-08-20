@@ -51,7 +51,7 @@ Si activaste **Gastos compartidos** y estánieron cuentas:
 - Tu **tipo de cambio** mensual ni settings (ARS/USD display, bolsillos, flags).
 - Tu bolsillo Ahorro / Cotidiano como “cuenta bancaria” privada.
 
-**Importante:** en Myca$h el gasto compartido **resta el monto completo** del disponible de cada uno (no hay “quién debe a quién”).
+**Importante:** el gasto compartido **resta solo del disponible de quien lo cargó**. Tu pareja lo ve, pero no le descuenta de su fondo (no hay “quién debe a quién”).
 
 ---
 

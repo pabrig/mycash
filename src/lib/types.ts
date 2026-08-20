@@ -104,7 +104,7 @@ export interface MonthlySummary {
   totalIncome: number;
   sharedExpenses: number;
   totalExpenses: number;
-  /** Ingresos − gastos personales − gastos compartidos */
+  /** Ingresos − gastos personales − gastos compartidos propios */
   disponible: number;
 }
 

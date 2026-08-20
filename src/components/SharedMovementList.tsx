@@ -149,6 +149,11 @@ function SharedDetail({
         <p className="mt-2 text-4xl font-extrabold tracking-tighter tabular-nums">
           −{fmt(arsAmount)}
         </p>
+        {!canManage && (
+          <p className="meta mt-2 text-xs">
+            Solo visualización — no descuenta de tu fondo
+          </p>
+        )}
       </div>
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
@@ -275,7 +280,7 @@ export function SharedMovementList() {
                 {fmt(total)}
               </p>
               <p className="meta mt-1 text-xs">
-                Cada uno ve el monto completo en su disponible
+                Resta solo del disponible de quien lo cargó
               </p>
             </div>
             <div className="flex -space-x-2">

@@ -39,7 +39,7 @@ export default function CompartidoPage() {
             </p>
           ) : (
             <p className="meta mt-1">
-              Gastos del hogar — monto completo en el disponible de cada uno
+              Gastos del hogar — cada uno ve lo del otro, sin descontarlo de su fondo
             </p>
           )}
         </div>

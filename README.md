@@ -6,7 +6,7 @@ PWA de **finanzas personales** para controlar ingresos, gastos y disponible mens
 
 - **Modo local** — sin login, datos en el teléfono (localStorage)
 - **Modo nube** (opcional) — Supabase: magic link, sync personal y gastos compartidos en pareja
-- **Gastos compartidos**: solo egresos; el monto completo resta del disponible de cada miembro (sin reparto)
+- **Gastos compartidos**: solo egresos; resta del disponible de quien lo cargó; el otro lo ve (sin reparto)
 - **Un hogar por usuario** — vinculación por código de invitación
 - **Disponible** = ingresos − gastos personales − gastos compartidos
 - **Modo bolsillos** (opcional, requiere USD): **Todo junto** o **Dos bolsillos** (Cotidiano ARS + Ahorro USD)
