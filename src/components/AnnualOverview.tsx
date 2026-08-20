@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { useFinance } from "@/context/FinanceContext";
-import { useDisplayAmount } from "@/hooks/useDisplayAmount";
-import { currentPeriod, formatMoney, formatUsd, formatUsdShort } from "@/lib/format";
+import { useDisplayAmount, useFormatMoney, useFormatUsd, useFormatUsdShort } from "@/hooks/useDisplayAmount";
+import { currentPeriod } from "@/lib/format";
 import { computeMonthlyBreakdown } from "@/lib/summary";
 import { computeSplitMonthlyBreakdown } from "@/lib/wallet";
 import { MONTH_NAMES } from "@/lib/types";
@@ -16,6 +16,9 @@ export function AnnualOverview({
   const { walletMode, year, month, movements, rates, annualSummary, splitAnnualSummary, setPeriod } =
     useFinance();
   const fmt = useDisplayAmount();
+  const formatMoney = useFormatMoney();
+  const formatUsd = useFormatUsd();
+  const formatUsdShort = useFormatUsdShort();
 
   const breakdown = useMemo(
     () => computeMonthlyBreakdown(movements, year, rates),

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AmountsToggle } from "@/components/AmountsToggle";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
@@ -91,6 +92,13 @@ export function DesktopSidebar() {
         )}
 
         {usdEnabled && <SidebarRate />}
+
+        <div className="flex items-center justify-between px-1">
+          <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+            Privacidad
+          </p>
+          <AmountsToggle className="bg-[var(--card-muted)]" />
+        </div>
 
         <Link
           href={nuevoHref}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatMonth, shiftPeriod } from "@/lib/format";
+import { AmountsToggle } from "@/components/AmountsToggle";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { PeriodSheet } from "@/components/PeriodSheet";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -49,6 +50,7 @@ export function AppHeader() {
 
         <div className="flex shrink-0 items-center gap-2">
           {walletMode === "unified" && <CurrencyToggle />}
+          <AmountsToggle />
           <Link
             href="/dividir"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"

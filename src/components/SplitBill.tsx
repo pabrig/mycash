@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
+import { useFormatMoney } from "@/hooks/useDisplayAmount";
 import {
   formatSplitSummary,
   settleEqualSplit,
@@ -18,6 +19,7 @@ function parsePaid(raw: string): number {
 }
 
 export function SplitBill() {
+  const formatArs = useFormatMoney();
   const [title, setTitle] = useState("");
   const [rows, setRows] = useState<Row[]>([
     { id: "p1", name: "", paid: "" },
@@ -154,13 +156,13 @@ export function SplitBill() {
           <div>
             <p className="text-sm font-medium text-zinc-400">Total</p>
             <p className="mt-1 text-3xl font-extrabold tracking-tighter tabular-nums">
-              {formatMoney(result.total)}
+              {formatArs(result.total)}
             </p>
           </div>
           <div className="text-right">
             <p className="text-sm font-medium text-zinc-400">Cada uno</p>
             <p className="mt-1 text-xl font-bold tabular-nums">
-              {formatMoney(result.share)}
+              {formatArs(result.share)}
             </p>
           </div>
         </div>
@@ -186,7 +188,7 @@ export function SplitBill() {
                   <span className="truncate">{t.toName}</span>
                 </span>
                 <span className="shrink-0 font-bold tabular-nums">
-                  {formatMoney(t.amount)}
+                  {formatArs(t.amount)}
                 </span>
               </li>
             ))}
@@ -199,7 +201,7 @@ export function SplitBill() {
               href={shareHref}
               className="btn-primary block w-full text-center text-sm"
             >
-              Cargar mi parte · {formatMoney(myShare)}
+              Cargar mi parte · {formatArs(myShare)}
             </Link>
             <button
               type="button"

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
-import { useDisplayAmount } from "@/hooks/useDisplayAmount";
-import { formatMoney, formatUsd, todayIso } from "@/lib/format";
+import { useDisplayAmount, useFormatMoney, useFormatUsd } from "@/hooks/useDisplayAmount";
+import { formatMoney, todayIso } from "@/lib/format";
 import type { SummaryScope } from "@/lib/types";
 import { IconChevronDown } from "@/components/ui/Icons";
 
@@ -118,6 +118,8 @@ function MacroStat({
 
 function SplitHero({ scope }: { scope: SummaryScope }) {
   const { splitSummary, splitAnnualSummary, year, rate } = useFinance();
+  const formatArs = useFormatMoney();
+  const formatUsd = useFormatUsd();
   const isYear = scope === "year";
   const [ahorroOpen, setAhorroOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
@@ -140,7 +142,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
-            {formatMoney(cotidiano.disponible)}
+            {formatArs(cotidiano.disponible)}
           </p>
           <p className="meta mt-2">
             {isYear
@@ -149,8 +151,8 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4">
-          <MacroStat label="Ingresos" value={formatMoney(cotidiano.income)} tone="income" />
-          <MacroStat label="Gastos" value={formatMoney(cotidiano.expenses)} tone="expense" />
+          <MacroStat label="Ingresos" value={formatArs(cotidiano.income)} tone="income" />
+          <MacroStat label="Gastos" value={formatArs(cotidiano.expenses)} tone="expense" />
         </div>
       </div>
 
@@ -170,7 +172,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
             <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums">
               {formatUsd(ahorro.disponible)}
             </p>
-            <p className="meta text-xs">≈ {formatMoney(ahorroArs)}</p>
+            <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
           </div>
           <IconChevronDown
             className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform ${ahorroOpen ? "rotate-180" : ""}`}
@@ -230,6 +232,8 @@ type ConvertDirection = "to_usd" | "to_ars";
 
 function WalletConvertForm({ onDone }: { onDone: () => void }) {
   const { rate, addConversion } = useFinance();
+  const formatArs = useFormatMoney();
+  const formatUsd = useFormatUsd();
   const [direction, setDirection] = useState<ConvertDirection>("to_usd");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
@@ -244,7 +248,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
         ? `Comprás ≈ ${formatUsd(parsed / rate.usdToArs)}`
         : "Ingresá pesos a convertir"
       : valid
-        ? `Vendés ≈ ${formatMoney(parsed * rate.usdToArs)}`
+        ? `Vendés ≈ ${formatArs(parsed * rate.usdToArs)}`
         : "Ingresá dólares a vender";
 
   async function handleSubmit(e: React.FormEvent) {

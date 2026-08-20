@@ -27,6 +27,10 @@ export function formatUsdShort(amount: number): string {
   return `${sign}${formatIntegerPart(rounded, ",")}`;
 }
 
+export const HIDDEN_AMOUNT_ARS = "$ ••••";
+export const HIDDEN_AMOUNT_USD = "USD •••";
+export const HIDDEN_AMOUNT_SHORT = "••••";
+
 /** Convierte monto en ARS al formato de visualización elegido */
 export function formatDisplay(
   amountArs: number,

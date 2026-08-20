@@ -92,6 +92,7 @@ function MovementRow({
   dense?: boolean;
 }) {
   const fmt = useDisplayAmount();
+  const { amountsHidden } = useFinance();
   const isIncome = movement.type === "income";
   const isShared = movement.scope === "shared";
 
@@ -151,7 +152,7 @@ function MovementRow({
             {isIncome ? "+" : "−"}
             {fmt(arsAmount)}
           </p>
-          {movement.currency !== "ARS" && (
+          {movement.currency !== "ARS" && !amountsHidden && (
             <p className="mt-0.5 text-[10px] text-zinc-400">
               {movement.amount} {movement.currency}
             </p>
@@ -177,6 +178,7 @@ function MovementDetail({
 }) {
   const router = useRouter();
   const fmt = useDisplayAmount();
+  const { amountsHidden } = useFinance();
   const [deleting, setDeleting] = useState(false);
   const isIncome = movement.type === "income";
 
@@ -206,7 +208,7 @@ function MovementDetail({
           {isIncome ? "+" : "−"}
           {fmt(arsAmount)}
         </p>
-        {movement.currency !== "ARS" && (
+        {movement.currency !== "ARS" && !amountsHidden && (
           <p className="meta mt-1">
             {movement.amount} {movement.currency}
           </p>
