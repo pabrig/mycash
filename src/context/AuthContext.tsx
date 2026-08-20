@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
 import {
   acceptHouseholdInvite,
   createHouseholdInvite,
@@ -17,6 +17,7 @@ import {
   fetchHouseholdContext,
   fetchProfile,
   leaveHousehold,
+  updateDisplayName as saveDisplayName,
   listPendingInvites,
   revokeHouseholdInvite,
 } from "@/lib/supabase/data";
@@ -38,8 +39,13 @@ interface AuthContextValue {
   members: HouseholdMember[];
   pendingInvites: HouseholdInvite[];
   isAuthenticated: boolean;
-  signInWithEmail: (email: string, next?: string) => Promise<{ error?: string }>;
+  signInWithEmail: (
+    email: string,
+    next?: string,
+    displayName?: string,
+  ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  updateDisplayName: (name: string) => Promise<{ error?: string }>;
   refreshHousehold: () => Promise<void>;
   createInvite: () => Promise<{ code?: string; error?: string }>;
   acceptInvite: (code: string) => Promise<{ error?: string }>;
@@ -72,18 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<HouseholdInvite[]>([]);
-  // No crear el client en SSR — solo en el browser tras mount
-  const [supabase, setSupabase] = useState<ReturnType<
-    typeof createClient
-  > | null>(null);
-
-  useEffect(() => {
-    if (!configured) {
-      setLoading(false);
-      return;
-    }
-    setSupabase(createClient());
-  }, [configured]);
+  const supabase = useBrowserSupabase();
 
   const loadPendingInvites = useCallback(
     async (householdId: string) => {
@@ -114,10 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const loadUser = useCallback(async () => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
+    if (!supabase) return;
 
     try {
       const {
@@ -148,8 +140,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase, loadHousehold]);
 
   useEffect(() => {
-    void loadUser();
-
     if (!supabase) return;
 
     const {
@@ -162,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase, loadUser]);
 
   const signInWithEmail = useCallback(
-    async (email: string, next = "/") => {
+    async (email: string, next = "/", displayName?: string) => {
       if (!supabase) {
         return { error: "Supabase no configurado" };
       }
@@ -172,17 +162,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const safeNext =
         next.startsWith("/") && !next.startsWith("//") ? next : "/";
       const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(safeNext)}`;
+      const name = displayName?.trim();
 
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: redirectTo,
+          ...(name ? { data: { display_name: name } } : {}),
         },
       });
 
       return { error: error?.message };
     },
     [supabase],
+  );
+
+  const updateDisplayName = useCallback(
+    async (name: string) => {
+      if (!supabase || !user) return { error: "No hay sesión" };
+      try {
+        const profile = await saveDisplayName(supabase, user.id, name);
+        setProfile(profile);
+        await loadHousehold(user.id);
+        return {};
+      } catch (e) {
+        return { error: friendlyAuthError(e, "No se pudo guardar el nombre") };
+      }
+    },
+    [supabase, user, loadHousehold],
   );
 
   const signOut = useCallback(async () => {
@@ -283,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       signInWithEmail,
       signOut,
+      updateDisplayName,
       refreshHousehold,
       createInvite,
       acceptInvite,
@@ -300,6 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pendingInvites,
       signInWithEmail,
       signOut,
+      updateDisplayName,
       refreshHousehold,
       createInvite,
       acceptInvite,

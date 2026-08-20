@@ -21,8 +21,10 @@ import {
   computeSplitMonthlySummary,
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
+import { affectsUserBalance } from "@/lib/movement-access";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
-import { createClient } from "@/lib/supabase/client";
+import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
+import { useIsClient } from "@/hooks/useIsClient";
 import {
   deleteMovementById,
   fetchAllMovementsForUser,
@@ -59,6 +61,8 @@ interface FinanceContextValue {
   syncError: string | null;
   clearSyncError: () => void;
   movements: Movement[];
+  /** Movimientos que entran en el disponible (sin lo compartido del otro) */
+  ownMovements: Movement[];
   sharedMovements: Movement[];
   rates: MonthlyRate[];
   year: number;
@@ -71,6 +75,8 @@ interface FinanceContextValue {
   setSharedEnabled: (enabled: boolean) => void;
   usdEnabled: boolean;
   setUsdEnabled: (enabled: boolean) => void;
+  amountsHidden: boolean;
+  setAmountsHidden: (hidden: boolean) => void;
   setPeriod: (year: number, month: number) => void;
   addMovement: (
     movement: Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName">,
@@ -120,17 +126,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [walletMode, setWalletModeState] = useState<WalletMode>("unified");
   const [sharedEnabled, setSharedEnabledState] = useState(false);
   const [usdEnabled, setUsdEnabledState] = useState(true);
+  const [amountsHidden, setAmountsHiddenState] = useState(false);
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
 
   const cloudEnabled = configured && isAuthenticated;
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [supabase, setSupabase] = useState<ReturnType<
-    typeof createClient
-  > | null>(null);
-
-  useEffect(() => {
-    if (configured) setSupabase(createClient());
-  }, [configured]);
+  const supabase = useBrowserSupabase();
+  const isClient = useIsClient();
 
   const clearSyncError = useCallback(() => setSyncError(null), []);
 
@@ -141,6 +143,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setWalletModeState(storage.loadWalletMode());
     setSharedEnabledState(storage.loadSharedEnabled());
     setUsdEnabledState(storage.loadUsdEnabled());
+    setAmountsHiddenState(storage.loadAmountsHidden());
   }, []);
 
   const loadCloud = useCallback(async () => {
@@ -186,14 +189,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       loadLocal();
     }
   }, [cloudEnabled, loadCloud, loadLocal]);
-
-  // Carga local inmediata (no depende de auth) para no quedar en "Cargando…"
-  // si hay remount por hydration o auth lento.
-  useEffect(() => {
-    setPeriodState(currentPeriod());
-    loadLocal();
-    setReady(true);
-  }, [loadLocal]);
 
   // Upgrade a nube cuando la sesión esté lista
   useEffect(() => {
@@ -285,6 +280,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     },
     [cloudEnabled, supabase, user, persistDisplayCurrency, persistWalletMode],
   );
+
+  const setAmountsHidden = useCallback((hidden: boolean) => {
+    setAmountsHiddenState(hidden);
+    storage.saveAmountsHidden(hidden);
+  }, []);
 
   const setPeriod = useCallback((y: number, m: number) => {
     setPeriodState({ year: y, month: m });
@@ -482,9 +482,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [rates, year, month],
   );
 
+  const ownMovements = useMemo(
+    () => movements.filter((m) => affectsUserBalance(m, user?.id)),
+    [movements, user?.id],
+  );
+
   const monthMovements = useMemo(
-    () => filterByMonth(movements, year, month),
-    [movements, year, month],
+    () => filterByMonth(ownMovements, year, month),
+    [ownMovements, year, month],
   );
 
   const sharedMovements = useMemo(
@@ -498,8 +503,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const annualSummary = useMemo(
-    () => computeAnnualSummary(movements, year, rates),
-    [movements, year, rates],
+    () => computeAnnualSummary(ownMovements, year, rates),
+    [ownMovements, year, rates],
   );
 
   const splitSummary = useMemo(
@@ -508,8 +513,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const splitAnnualSummary = useMemo(
-    () => computeSplitAnnualSummary(movements, year, rates),
-    [movements, year, rates],
+    () => computeSplitAnnualSummary(ownMovements, year, rates),
+    [ownMovements, year, rates],
   );
 
   const effectiveWalletMode: WalletMode =
@@ -524,6 +529,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       syncError,
       clearSyncError,
       movements,
+      ownMovements,
       sharedMovements,
       rates,
       year,
@@ -536,6 +542,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedEnabled,
       usdEnabled,
       setUsdEnabled,
+      amountsHidden,
+      setAmountsHidden,
       setPeriod,
       addMovement,
       updateMovement,
@@ -556,6 +564,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       syncError,
       clearSyncError,
       movements,
+      ownMovements,
       sharedMovements,
       rates,
       year,
@@ -568,6 +577,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedEnabled,
       usdEnabled,
       setUsdEnabled,
+      amountsHidden,
+      setAmountsHidden,
       setPeriod,
       addMovement,
       updateMovement,
@@ -583,6 +594,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       refreshData,
     ],
   );
+
+  // Carga local inmediata (no depende de auth) para no quedar en "Cargando…"
+  // si hay remount por hydration o auth lento.
+  if (isClient && !ready) {
+    setPeriodState(currentPeriod());
+    loadLocal();
+    setReady(true);
+  }
 
   return (
     <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>

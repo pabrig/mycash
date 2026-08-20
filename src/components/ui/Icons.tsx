@@ -137,6 +137,27 @@ export function IconSplit({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function IconEye({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M2.5 12S6.2 6.5 12 6.5 21.5 12 21.5 12 17.8 17.5 12 17.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3.2" />
+    </svg>
+  );
+}
+
+export function IconEyeOff({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.7a3.2 3.2 0 0 0 4.5 4.5" />
+      <path d="M6.7 6.8C4.4 8.2 2.5 12 2.5 12S6.2 17.5 12 17.5c1.7 0 3.2-.4 4.5-1.1" />
+      <path d="M14.1 6.7A10 10 0 0 1 12 6.5C6.2 6.5 2.5 12 2.5 12" />
+      <path d="M17.4 9.2C19.5 10.5 21.5 12 21.5 12S17.8 17.5 12 17.5" />
+    </svg>
+  );
+}
+
 export function IconClose({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>

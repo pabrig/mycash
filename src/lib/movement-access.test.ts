@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  affectsUserBalance,
   canManageMovement,
   matchesMovementFilter,
   safeNextPath,
@@ -45,6 +46,40 @@ describe("matchesMovementFilter", () => {
     expect(matchesMovementFilter(sharedExpense, "shared")).toBe(true);
     expect(matchesMovementFilter(personalExpense, "shared")).toBe(false);
     expect(matchesMovementFilter(income, "shared")).toBe(false);
+  });
+});
+
+describe("affectsUserBalance", () => {
+  const mine = movement({
+    type: "expense",
+    scope: "shared",
+    createdByUserId: "user-a",
+  });
+  const theirs = movement({
+    type: "expense",
+    scope: "shared",
+    createdByUserId: "user-b",
+  });
+  const legacyShared = movement({
+    type: "expense",
+    scope: "shared",
+  });
+  const personal = movement({ type: "expense", scope: "personal" });
+  const income = movement({ type: "income" });
+
+  it("personal and income always count", () => {
+    expect(affectsUserBalance(personal, "user-a")).toBe(true);
+    expect(affectsUserBalance(income, "user-a")).toBe(true);
+  });
+
+  it("own shared counts; partner shared is view-only", () => {
+    expect(affectsUserBalance(mine, "user-a")).toBe(true);
+    expect(affectsUserBalance(theirs, "user-a")).toBe(false);
+  });
+
+  it("legacy shared and local (no user) still count", () => {
+    expect(affectsUserBalance(legacyShared, "user-a")).toBe(true);
+    expect(affectsUserBalance(theirs, undefined)).toBe(true);
   });
 });
 

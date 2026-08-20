@@ -1,7 +1,7 @@
 # Myca$h — Nube (Supabase)
 
 Guía operativa para configurar, entender y endurecer el modo nube.  
-Pensada para **uso íntimo** (vos + pareja): priorizamos aislamiento de datos y consentimiento, no escala SaaS.
+Pensada para **uso entre pocas personas** (vos + quien elijas): priorizamos aislamiento de datos y consentimiento, no escala SaaS.
 
 ## Mapa mental (1 minuto)
 
@@ -31,15 +31,15 @@ En la app solo van **URL** + **anon key** (ver [`.env.example`](../.env.example)
 | **JWT** | Token de sesión tras el magic link | Viaja en cada request; Postgres sabe quién sos (`auth.uid()`). |
 | **RLS** | Políticas por fila en cada tabla | Define qué filas podés SELECT/INSERT/UPDATE/DELETE. |
 | **household** | “Hogar” / grupo compartido | Un usuario ∈ un solo hogar. |
-| **scope personal** | Movimiento solo tuyo | El partner **no** lo ve. |
-| **scope shared** | Gasto del hogar | Ambos lo ven (monto + descripción + quién lo cargó). |
+| **scope personal** | Movimiento solo tuyo | El resto del grupo **no** lo ve. |
+| **scope shared** | Gasto compartido | El grupo lo ve (monto + descripción + quién lo cargó). |
 | **RPC security definer** | Función SQL con privilegios elevados | Usada p.ej. para aceptar invitaciones; hay que restringir `GRANT EXECUTE`. |
 
 ---
 
-## Qué ve tu pareja (contrato de privacidad)
+## Qué ve el resto del grupo (contrato de privacidad)
 
-Si activaste **Gastos compartidos** y estánieron cuentas:
+Si activaste **Gastos compartidos** y vincularon cuentas:
 
 **Sí ve**
 - Gastos marcados como **compartidos** (descripción, monto, moneda, categoría, autor).
@@ -51,7 +51,7 @@ Si activaste **Gastos compartidos** y estánieron cuentas:
 - Tu **tipo de cambio** mensual ni settings (ARS/USD display, bolsillos, flags).
 - Tu bolsillo Ahorro / Cotidiano como “cuenta bancaria” privada.
 
-**Importante:** en Myca$h el gasto compartido **resta el monto completo** del disponible de cada uno (no hay “quién debe a quién”).
+**Importante:** el gasto compartido **resta solo del disponible de quien lo cargó**. Tu pareja lo ve, pero no le descuenta de su fondo (no hay “quién debe a quién”).
 
 ---
 

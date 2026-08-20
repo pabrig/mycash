@@ -20,6 +20,20 @@ export function matchesMovementFilter(
 }
 
 /**
+ * Si el movimiento entra en el disponible de este usuario.
+ * Lo compartido del otro integrante se ve, pero no descuenta (ni suma) acá.
+ * Local / sin autor: cuenta como propio.
+ */
+export function affectsUserBalance(
+  movement: Movement,
+  userId: string | undefined,
+): boolean {
+  if (movement.scope !== "shared") return true;
+  if (!userId || !movement.createdByUserId) return true;
+  return movement.createdByUserId === userId;
+}
+
+/**
  * Quién puede editar/borrar en la UI.
  * Local (sin nube): siempre.
  * Shared en nube: solo el autor (o sin createdBy → legacy/local).

@@ -5,9 +5,9 @@ PWA de **finanzas personales** para controlar ingresos, gastos y disponible mens
 ## Modelo
 
 - **Modo local** — sin login, datos en el teléfono (localStorage)
-- **Modo nube** (opcional) — Supabase: magic link, sync personal y gastos compartidos en pareja
-- **Gastos compartidos**: solo egresos; el monto completo resta del disponible de cada miembro (sin reparto)
-- **Un hogar por usuario** — vinculación por código de invitación
+- **Modo nube** (opcional) — Supabase: magic link, sync personal y gastos compartidos en grupo
+- **Gastos compartidos**: solo egresos; resta del disponible de quien lo cargó; el resto lo ve (sin reparto)
+- **Un grupo por usuario** — vinculación por código de invitación
 - **Disponible** = ingresos − gastos personales − gastos compartidos
 - **Modo bolsillos** (opcional, requiere USD): **Todo junto** o **Dos bolsillos** (Cotidiano ARS + Ahorro USD)
 - **USD** (opcional): activable en Cuenta — cotización, cargar en dólares y bolsillos
@@ -19,7 +19,7 @@ PWA de **finanzas personales** para controlar ingresos, gastos y disponible mens
 - **Resumen mes/año**: toggle con acumulados y promedios mensuales
 - **Visualización ARS/USD** con dólar oficial del mes
 - **Lista del mes** con filtros (ingresos, personal, compartido)
-- **Pestaña Compartido** — gastos del hogar con autor (nube)
+- **Pestaña Compartido** — gastos del grupo con autor (nube)
 - **Cuenta** — USD on/off, bolsillos, compartido, invitar / unirse, cerrar sesión
 - **Offline**: datos en localStorage + service worker básico
 
@@ -71,7 +71,7 @@ Si `process.arch` dice `x64`, instalá Node arm64 con `nvm install 22.23.1` y re
 
 ### Supabase (sync y compartido, opcional)
 
-Guía completa (glosario, qué ve tu pareja, checklist prod, RLS): **[docs/cloud.md](docs/cloud.md)**.
+Guía completa (glosario, qué ve el grupo, checklist prod, RLS): **[docs/cloud.md](docs/cloud.md)**.
 
 Resumen rápido:
 

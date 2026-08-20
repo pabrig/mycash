@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatDisplay, formatMoney, formatUsd } from "./format";
+import { formatDisplay, formatMoney, formatUsd, initials } from "./format";
+import { affectsUserBalance } from "./movement-access";
 import { computeAnnualSummary, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth } from "./summary";
 import type { MonthlyRate, Movement } from "./types";
 
@@ -70,6 +71,21 @@ const movements: Movement[] = [
   },
 ];
 
+describe("initials", () => {
+  it("uses two letters from a single name", () => {
+    expect(initials("Pablo")).toBe("PA");
+  });
+
+  it("uses first letters of two words", () => {
+    expect(initials("Pablo Rigalli")).toBe("PR");
+  });
+
+  it("falls back when empty", () => {
+    expect(initials("")).toBe("?");
+    expect(initials("   ")).toBe("?");
+  });
+});
+
 describe("formatDisplay", () => {
   it("converts ARS to USD for display", () => {
     expect(formatDisplay(1200, "USD", 1200)).toBe("USD 1");
@@ -90,10 +106,36 @@ describe("formatUsd", () => {
 });
 
 describe("computeMonthlySummary", () => {
-  it("computes disponible including shared expenses", () => {
+  it("computes disponible including own shared expenses", () => {
     const feb = filterByMonth(movements, 2026, 2);
     const summary = computeMonthlySummary(feb, rate);
 
+    expect(summary.disponible).toBe(
+      3500 * 1200 + 500000 - 280000 - 100 * 1200,
+    );
+  });
+
+  it("does not deduct a partner shared expense from disponible", () => {
+    const feb = [
+      ...filterByMonth(movements, 2026, 2),
+      {
+        id: "partner-shared",
+        type: "expense" as const,
+        date: "2026-02-12",
+        amount: 200000,
+        currency: "ARS" as const,
+        description: "Cena de B",
+        scope: "shared" as const,
+        kind: "variable" as const,
+        category: "salidas",
+        createdAt: "2026-02-12T00:00:00Z",
+        createdByUserId: "user-b",
+      },
+    ];
+    const own = feb.filter((m) => affectsUserBalance(m, "user-a"));
+    const summary = computeMonthlySummary(own, rate);
+
+    expect(summary.sharedExpenses).toBe(100 * 1200);
     expect(summary.disponible).toBe(
       3500 * 1200 + 500000 - 280000 - 100 * 1200,
     );

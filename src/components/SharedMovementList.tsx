@@ -9,6 +9,7 @@ import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 import { toArs } from "@/lib/currency";
 import { filterByMonth } from "@/lib/summary";
 import { DetailSheet } from "@/components/ui/DetailSheet";
+import { UserAvatar } from "@/components/UserAvatar";
 import { canManageMovement } from "@/lib/movement-access";
 import type { Movement } from "@/lib/types";
 
@@ -46,20 +47,6 @@ function groupByDate(movements: Movement[]): Map<string, Movement[]> {
   return groups;
 }
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
-const AVATAR_TONES = [
-  "bg-teal-500/15 text-teal-700 dark:text-teal-300",
-  "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900",
-  "bg-rose-500/15 text-rose-700 dark:text-rose-300",
-  "bg-amber-500/15 text-amber-800 dark:text-amber-300",
-];
-
 function SharedRow({
   movement,
   arsAmount,
@@ -84,12 +71,7 @@ function SharedRow({
         }`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold ${AVATAR_TONES[0]}`}
-            title={name}
-          >
-            {initials(name)}
-          </div>
+          <UserAvatar name={name} />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold tracking-tight">
               {movement.description}
@@ -149,6 +131,11 @@ function SharedDetail({
         <p className="mt-2 text-4xl font-extrabold tracking-tighter tabular-nums">
           −{fmt(arsAmount)}
         </p>
+        {!canManage && (
+          <p className="meta mt-2 text-xs">
+            Solo visualización — no descuenta de tu fondo
+          </p>
+        )}
       </div>
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
@@ -178,6 +165,11 @@ function SharedDetail({
           </div>
         )}
       </dl>
+      {!canManage && (
+        <p className="text-xs leading-relaxed text-zinc-400">
+          Solo visualización — no descuenta de tu fondo.
+        </p>
+      )}
       {canManage && (
         <div className="flex gap-2 pt-2">
           <button
@@ -243,7 +235,7 @@ export function SharedMovementList() {
     return (
       <section className="bento animate-slide-up py-12 text-center">
         <p className="text-sm font-semibold text-zinc-400">Sin gastos compartidos</p>
-        <p className="meta mt-1">Tocá + para cargar un gasto del hogar</p>
+        <p className="meta mt-1">Tocá + para cargar un gasto compartido</p>
         <Link
           href="/compartido/nuevo"
           className="btn-primary mt-6 inline-block px-8 text-sm"
@@ -275,18 +267,17 @@ export function SharedMovementList() {
                 {fmt(total)}
               </p>
               <p className="meta mt-1 text-xs">
-                Cada uno ve el monto completo en su disponible
+                Resta solo del disponible de quien lo cargó
               </p>
             </div>
             <div className="flex -space-x-2">
               {displayMembers.slice(0, 4).map((m, i) => (
-                <div
+                <UserAvatar
                   key={m.userId}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold ring-2 ring-[var(--card)] ${AVATAR_TONES[i % AVATAR_TONES.length]}`}
-                  title={m.displayName}
-                >
-                  {initials(m.displayName)}
-                </div>
+                  name={m.displayName}
+                  tone={i}
+                  className="ring-2 ring-[var(--card)]"
+                />
               ))}
             </div>
           </div>
@@ -317,11 +308,7 @@ export function SharedMovementList() {
                     className="flex items-center justify-between gap-3 text-sm"
                   >
                     <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${AVATAR_TONES[i % AVATAR_TONES.length]}`}
-                      >
-                        {initials(c.name)}
-                      </span>
+                      <UserAvatar name={c.name} size="sm" tone={i} />
                       <span className="truncate font-medium">{c.name}</span>
                     </span>
                     <span className="shrink-0 font-bold tabular-nums">
