@@ -61,15 +61,14 @@ export default function JoinPage() {
     return (
       <div className="space-y-6 py-8">
         <div className="card space-y-3 p-6 text-center">
-          <p className="text-3xl">🔗</p>
-          <h1 className="text-lg font-bold">Te invitaron a compartir</h1>
+          <h1 className="text-lg font-bold">Te invitaron al grupo</h1>
           <p className="text-sm text-zinc-500">
             Código:{" "}
             <span className="font-mono font-semibold text-teal-600">{code}</span>
           </p>
           <p className="text-sm text-zinc-500">
-            Entrá con tu email para unirte. Vas a ver los gastos compartidos; el
-            saldo de cada persona sigue siendo propio.
+            Entrá con tu email para unirte. Vas a ver los gastos de todos. Cada
+            uno sigue con su plata.
           </p>
           <Link
             href={`/login?next=${encodeURIComponent(`/join/${code}`)}&reason=shared`}

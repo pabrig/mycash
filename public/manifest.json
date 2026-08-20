@@ -1,7 +1,7 @@
 {
-  "name": "Myca$h — Finanzas personales",
+  "name": "Myca$h",
   "short_name": "Myca$h",
-  "description": "Controlá ingresos, gastos y tu disponible. Finanzas personales simples.",
+  "description": "Anotá lo que entra y lo que sale. Vemos cuánto te queda.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f3",

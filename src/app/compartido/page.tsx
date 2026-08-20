@@ -38,17 +38,17 @@ export default function CompartidoPage() {
           </h2>
           <p className="meta mt-1">
             {paired
-              ? `Con ${otherNames.join(", ")} · cada gasto resta de quien lo cargó`
-              : "Lista compartida. El saldo de cada persona sigue siendo propio."}
+              ? `Con ${otherNames.join(", ")}. Cada gasto resta de quien lo cargó.`
+              : "Acá van a ver los gastos de todos. Cada uno sigue con su plata."}
           </p>
         </div>
       </div>
 
       {!paired && (
         <div className="bento space-y-3 md:max-w-md">
-          <p className="text-sm font-semibold">Todavía estás solo</p>
+          <p className="text-sm font-semibold">Todavía no hay nadie más</p>
           <p className="text-sm leading-relaxed text-zinc-500">
-            Invitá a alguien o uníte con un código para ver la misma lista.
+            Invitá a alguien o usá un código para compartir la lista.
           </p>
           <Link href="/cuenta" className="btn-primary inline-block px-6 text-sm">
             Invitar o unirme

@@ -16,7 +16,7 @@ export default function DividirPage() {
         </Link>
         <div>
           <h1 className="text-lg font-bold md:text-2xl">Dividir</h1>
-          <p className="meta text-xs">Partes iguales</p>
+          <p className="meta text-xs">En partes iguales</p>
         </div>
       </div>
       <SplitBill />

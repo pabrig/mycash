@@ -39,7 +39,7 @@ export function AppHeader() {
             onClick={() => setPeriodOpen(true)}
             className="flex min-w-0 items-center gap-1 rounded-full py-1 pr-1.5 transition active:scale-[0.98] active:bg-zinc-200/60 dark:active:bg-zinc-800"
             aria-haspopup="dialog"
-            aria-label={`Periodo ${formatMonth(year, month)}. Cambiar mes`}
+            aria-label={`Mes ${formatMonth(year, month)}. Cambiar`}
           >
             <h1 className="truncate text-xl font-bold tracking-tight">
               {formatMonth(year, month)}
@@ -80,7 +80,7 @@ export function AppHeader() {
 
       {/* Desktop — stepper centrado */}
       <div className="hidden md:flex md:flex-col md:items-center md:gap-1">
-        <p className="text-xs font-medium text-zinc-400">Periodo</p>
+        <p className="text-xs font-medium text-zinc-400">Mes</p>
         <div className="flex items-center gap-2">
           <button
             type="button"

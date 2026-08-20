@@ -12,24 +12,24 @@ function loginCopy(next: string, reason: string | null) {
   if (next.startsWith("/join/")) {
     return {
       title: "Unirte al grupo",
-      sub: "Entrá con tu email para vincularte. Cada persona sigue con su propio disponible.",
+      sub: "Entrá con tu email para unirte. Cada uno sigue viendo su propia plata.",
     };
   }
   if (reason === "shared" || next.startsWith("/compartido")) {
     return {
       title: "Unirte al grupo",
-      sub: "Te mandamos un link al mail. Sin contraseña. Ese nombre es el que ven las demás personas.",
+      sub: "Te mandamos un link al mail. Sin contraseña. Van a verte con el nombre que pongas.",
     };
   }
   return {
     title: "Entrá a Myca$h",
-    sub: "Te mandamos un link al mail. Sin contraseña. Tus movimientos te siguen en cualquier dispositivo.",
+    sub: "Te mandamos un link al mail. Sin contraseña. Así ves tu plata en cualquier celular.",
   };
 }
 
 function authErrorCopy(code: string | null): string | null {
   if (code === "auth") return "El link expiró o no es válido. Pedí uno nuevo.";
-  if (code === "supabase") return "Login no disponible en esta instalación.";
+  if (code === "supabase") return "No se puede entrar en esta instalación.";
   return null;
 }
 
@@ -68,7 +68,7 @@ function LoginForm() {
   if (!configured) {
     return (
       <div className="space-y-4 py-8 text-center">
-        <h1 className="text-lg font-bold">Login no disponible</h1>
+        <h1 className="text-lg font-bold">No se puede entrar</h1>
         <p className="text-sm text-zinc-500">
           Configurá Supabase en <code className="text-xs">.env.local</code>
         </p>
@@ -92,7 +92,7 @@ function LoginForm() {
           <p className="font-medium">Revisá tu email</p>
           <p className="text-sm text-zinc-500">
             Te enviamos un link a <strong>{email}</strong>. Abrilo en este
-            dispositivo.
+            celular.
           </p>
         </div>
       ) : (

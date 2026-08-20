@@ -104,12 +104,12 @@ interface FinanceContextValue {
 function friendlySyncError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (/JWT|session|not authenticated|Invalid Refresh Token/i.test(msg)) {
-    return "Sesión vencida — volvé a entrar";
+    return "Se venció el acceso. Entrá de nuevo.";
   }
   if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
-    return "Sin conexión con la nube — mostrando datos locales";
+    return "Sin conexión. Estamos mostrando lo de este celular.";
   }
-  return msg || "No se pudo sincronizar con la nube";
+  return msg || "No se pudo guardar en la nube.";
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -395,7 +395,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }) => {
       const currentRate = getRateForMonth(rates, year, month);
       if (currentRate.usdToArs <= 0) {
-        throw new Error("Tipo de cambio no disponible");
+        throw new Error("No hay cotización ahora");
       }
 
       const pair =
@@ -405,7 +405,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 type: "expense" as const,
                 amount: input.amount,
                 currency: "ARS" as const,
-                description: "Conversión a Ahorro USD",
+                description: "Pasé a ahorro",
                 scope: "personal" as const,
                 kind: "variable" as const,
                 category: "extras",
@@ -416,7 +416,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 type: "income" as const,
                 amount: input.amount / currentRate.usdToArs,
                 currency: "USD" as const,
-                description: "Conversión desde Cotidiano",
+                description: "Saqué de cotidiano",
                 incomeKind: "active" as const,
                 source: "otros",
                 wallet: "ahorro" as const,
@@ -428,7 +428,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 type: "expense" as const,
                 amount: input.amount,
                 currency: "USD" as const,
-                description: "Venta de USD a Cotidiano",
+                description: "Pasé a cotidiano",
                 scope: "personal" as const,
                 kind: "variable" as const,
                 category: "extras",
@@ -439,7 +439,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 type: "income" as const,
                 amount: input.amount * currentRate.usdToArs,
                 currency: "ARS" as const,
-                description: "Conversión desde Ahorro USD",
+                description: "Saqué de ahorro",
                 incomeKind: "active" as const,
                 source: "otros",
                 wallet: "vida" as const,

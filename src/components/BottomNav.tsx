@@ -63,7 +63,7 @@ function RatePill() {
     <div className="mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl bg-[var(--card)]/90 px-4 py-2.5 text-[11px] shadow-[var(--surface-elevated)] backdrop-blur-md">
       <div className="min-w-0">
         <p className="font-semibold text-zinc-500">
-          USD oficial
+          Dólar oficial
           {!isCurrent && (
             <span className="font-normal text-zinc-400">
               {" "}
@@ -78,7 +78,7 @@ function RatePill() {
             </p>
           ) : (
             <p className="text-zinc-400">
-              {isCurrent ? "Sin actualizar" : "TC del mes"}
+              {isCurrent ? "Todavía no hay cotización" : "Dólar de ese mes"}
             </p>
           )
         ) : (

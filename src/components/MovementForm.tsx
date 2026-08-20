@@ -16,6 +16,12 @@ import {
   type MovementType,
   type Wallet,
 } from "@/lib/types";
+import {
+  EXPENSE_KIND_LABELS,
+  INCOME_KIND_LABELS,
+  expenseCategoryLabel,
+  incomeSourceLabel,
+} from "@/lib/labels";
 
 const CURRENCIES: Currency[] = ["ARS", "USD"];
 
@@ -257,7 +263,7 @@ export function MovementForm({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="input-field text-lg"
-          placeholder="¿En qué fue? Ej: Super, OSDE, sueldo…"
+          placeholder="¿Qué fue? Ej: súper, sueldo, luz…"
         />
       </div>
 
@@ -276,7 +282,7 @@ export function MovementForm({
                   : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
               }`}
             >
-              {s === "personal" ? "Personal" : "Compartido"}
+              {s === "personal" ? "Mío" : "Con otros"}
             </button>
           ))}
         </div>
@@ -291,26 +297,33 @@ export function MovementForm({
               onClick={() => setCategory(c)}
               className={`chip ${category === c ? "chip-active" : "chip-inactive"}`}
             >
-              {CATEGORY_ICONS[c]} {c}
+              {CATEGORY_ICONS[c]} {expenseCategoryLabel(c)}
             </button>
           ))}
         </div>
       )}
 
       {type === "income" && (
-        <div className="flex gap-2">
-          {(["active", "passive"] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setIncomeKind(k)}
-              className={`flex-1 rounded-xl py-3 text-sm font-medium active:scale-95 ${
-                incomeKind === k ? "chip-active" : "chip-inactive"
-              }`}
-            >
-              {k === "passive" ? "Pasivo" : "Activo"}
-            </button>
-          ))}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            {(["active", "passive"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setIncomeKind(k)}
+                className={`flex-1 rounded-xl py-3 text-sm font-medium active:scale-95 ${
+                  incomeKind === k ? "chip-active" : "chip-inactive"
+                }`}
+              >
+                {INCOME_KIND_LABELS[k]}
+              </button>
+            ))}
+          </div>
+          <p className="text-center text-xs text-zinc-400">
+            {incomeKind === "active"
+              ? "Sueldo, freelance, changas"
+              : "Alquileres u otra plata que entra sola"}
+          </p>
         </div>
       )}
 
@@ -319,7 +332,7 @@ export function MovementForm({
         onClick={() => setShowMore(!showMore)}
         className="w-full text-center text-sm text-zinc-500"
       >
-        {showMore ? "▲ Menos opciones" : "▼ Más opciones"}
+        {showMore ? "Menos" : "Fecha y más"}
       </button>
 
       {showMore && (
@@ -344,7 +357,7 @@ export function MovementForm({
                   onClick={() => setKind(k)}
                   className={`flex-1 rounded-xl py-2.5 text-sm ${kind === k ? "chip-active" : "chip-inactive"}`}
                 >
-                  {k === "fixed" ? "Fijo" : "Variable"}
+                  {EXPENSE_KIND_LABELS[k]}
                 </button>
               ))}
             </div>
@@ -352,7 +365,7 @@ export function MovementForm({
 
           {type === "income" && (
             <div>
-              <label className="mb-1 block text-xs text-zinc-500">Fuente</label>
+              <label className="mb-1 block text-xs text-zinc-500">De dónde sale</label>
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
@@ -360,7 +373,7 @@ export function MovementForm({
               >
                 {INCOME_SOURCES.map((s) => (
                   <option key={s} value={s}>
-                    {s.replace(/_/g, " ")}
+                    {incomeSourceLabel(s)}
                   </option>
                 ))}
               </select>
@@ -375,7 +388,7 @@ export function MovementForm({
               <div className="flex gap-2">
                 {(
                   [
-                    { id: "auto" as const, label: "Automático" },
+                    { id: "auto" as const, label: "Según moneda" },
                     { id: "vida" as const, label: "Cotidiano" },
                     { id: "ahorro" as const, label: "Ahorro USD" },
                   ] as const
@@ -398,9 +411,9 @@ export function MovementForm({
       <button type="submit" disabled={submitting} className="btn-primary w-full">
         {submitting
           ? "Guardando…"
-          : isEdit
+            : isEdit
             ? "Guardar cambios"
-            : "Guardar"}
+            : "Cargar"}
       </button>
 
       <Link

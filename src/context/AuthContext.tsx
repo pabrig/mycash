@@ -63,10 +63,10 @@ function friendlyAuthError(e: unknown, fallback: string): string {
     return "Código inválido o vencido";
   }
   if (/Not authenticated|JWT|session/i.test(msg)) {
-    return "Sesión vencida — volvé a iniciar sesión";
+    return "Se venció el acceso. Entrá de nuevo.";
   }
   if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
-    return "Sin conexión — reintentá en un momento";
+    return "Sin conexión. Probá de nuevo en un rato.";
   }
   return msg || fallback;
 }
@@ -180,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateDisplayName = useCallback(
     async (name: string) => {
-      if (!supabase || !user) return { error: "No hay sesión" };
+      if (!supabase || !user) return { error: "Entrá de nuevo" };
       try {
         const profile = await saveDisplayName(supabase, user.id, name);
         setProfile(profile);
@@ -206,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const createInvite = useCallback(async () => {
     if (!supabase || !user || !household) {
-      return { error: "No hay grupo activo" };
+      return { error: "Todavía no hay grupo" };
     }
 
     try {
@@ -218,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await loadPendingInvites(household.id);
       return { code };
     } catch (e) {
-      return { error: friendlyAuthError(e, "Error al crear invitación") };
+      return { error: friendlyAuthError(e, "No se pudo crear el código") };
     }
   }, [supabase, user, household, loadPendingInvites]);
 
@@ -232,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {};
       } catch (e) {
         return {
-          error: friendlyAuthError(e, "Invitación inválida"),
+          error: friendlyAuthError(e, "Ese código no sirve"),
         };
       }
     },
@@ -247,7 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (household) await loadPendingInvites(household.id);
         return {};
       } catch (e) {
-        return { error: friendlyAuthError(e, "No se pudo revocar") };
+        return { error: friendlyAuthError(e, "No se pudo cancelar") };
       }
     },
     [supabase, household, loadPendingInvites],

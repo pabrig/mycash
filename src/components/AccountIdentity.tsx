@@ -26,7 +26,7 @@ export function AccountIdentity() {
       <section className="bento space-y-2">
         <p className="text-sm font-semibold tracking-tight">Tu usuario</p>
         <p className="text-xs leading-relaxed text-zinc-400">
-          Esta instalación no tiene nube. Todo queda en este dispositivo.
+          Esta app guarda todo en este celular.
         </p>
       </section>
     );
@@ -38,16 +38,15 @@ export function AccountIdentity() {
         <div>
           <p className="text-sm font-semibold tracking-tight">Tu usuario</p>
           <p className="meta mt-1 text-xs leading-relaxed">
-            Estás en este dispositivo, sin sesión. Entrá con tu email para ver
-            tus movimientos.
+            Estás en este celular, sin entrar. Entrá con tu email para ver tu
+            plata en cualquier lado.
           </p>
         </div>
         <Link href="/login?reason=account" className="btn-primary block text-center text-sm">
           Entrar con email
         </Link>
         <p className="text-[11px] leading-relaxed text-zinc-400">
-          Te mandamos un link al mail. Sin contraseña. Ese es tu usuario: el
-          nombre y el email con los que te van a ver.
+          Te mandamos un link al mail. Sin contraseña.
         </p>
       </section>
     );
@@ -127,7 +126,7 @@ export function AccountIdentity() {
         </div>
       </div>
       <p className="text-xs text-teal-600 dark:text-teal-400">
-        Sesión activa · tus movimientos se sincronizan
+        Estás adentro. Tu plata se guarda en la nube.
       </p>
       <button
         type="button"
