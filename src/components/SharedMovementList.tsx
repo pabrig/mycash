@@ -131,6 +131,11 @@ function SharedDetail({
         <p className="mt-2 text-4xl font-extrabold tracking-tighter tabular-nums">
           −{fmt(arsAmount)}
         </p>
+        {!canManage && (
+          <p className="meta mt-2 text-xs">
+            Solo visualización — no descuenta de tu fondo
+          </p>
+        )}
       </div>
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">

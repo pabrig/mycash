@@ -13,7 +13,7 @@ export function AnnualOverview({
 }: {
   onOpenMonth: (month: number) => void;
 }) {
-  const { walletMode, year, month, movements, rates, annualSummary, splitAnnualSummary, setPeriod } =
+  const { walletMode, year, month, ownMovements, rates, annualSummary, splitAnnualSummary, setPeriod } =
     useFinance();
   const fmt = useDisplayAmount();
   const formatMoney = useFormatMoney();
@@ -21,13 +21,13 @@ export function AnnualOverview({
   const formatUsdShort = useFormatUsdShort();
 
   const breakdown = useMemo(
-    () => computeMonthlyBreakdown(movements, year, rates),
-    [movements, year, rates],
+    () => computeMonthlyBreakdown(ownMovements, year, rates),
+    [ownMovements, year, rates],
   );
 
   const splitBreakdown = useMemo(
-    () => computeSplitMonthlyBreakdown(movements, year, rates),
-    [movements, year, rates],
+    () => computeSplitMonthlyBreakdown(ownMovements, year, rates),
+    [ownMovements, year, rates],
   );
 
   const now = currentPeriod();
