@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { IconClose } from "@/components/ui/Icons";
+import { useIsClient } from "@/hooks/useIsClient";
 
 /**
  * Mobile: drawer desde abajo.
@@ -21,11 +22,7 @@ export function DetailSheet({
   title: string;
   children: ReactNode;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
 
   useEffect(() => {
     if (!open) return;
