@@ -7,7 +7,14 @@ import { useFinance } from "@/context/FinanceContext";
 import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
 import { IconHome, IconSplit, IconUsers } from "@/components/ui/Icons";
 
-const HIDE_NAV_PREFIXES = ["/nuevo", "/compartido/nuevo", "/editar", "/login", "/join"];
+const HIDE_NAV_PREFIXES = [
+  "/nuevo",
+  "/compartido/nuevo",
+  "/editar",
+  "/login",
+  "/join",
+  "/dividir/nuevo",
+];
 
 type NavItem = {
   href: string;

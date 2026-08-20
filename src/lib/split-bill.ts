@@ -32,6 +32,35 @@ export interface SplitResult {
   transfers: SplitTransfer[];
 }
 
+export interface SplitPerson {
+  id: string;
+  name: string;
+  isMe: boolean;
+}
+
+export interface SplitExpense {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  paidById: string;
+}
+
+export interface SplitEvent {
+  id: string;
+  title: string;
+  createdAt: string;
+  startDate?: string;
+  endDate?: string;
+  people: SplitPerson[];
+  expenses: SplitExpense[];
+}
+
+export interface SplitExpenseGroup {
+  date: string;
+  items: SplitExpense[];
+}
+
 function toPesos(n: number): number {
   if (!Number.isFinite(n) || n <= 0) return 0;
   return Math.round(n);
@@ -102,6 +131,96 @@ export function settleEqualSplit(people: SplitParticipant[]): SplitResult {
   return { total, count: n, share: Math.round(total / n), balances, transfers };
 }
 
+/** Suma lo que pagó cada persona en el evento. */
+export function paidByPerson(event: SplitEvent): SplitParticipant[] {
+  const paid = new Map<string, number>();
+  for (const person of event.people) paid.set(person.id, 0);
+  for (const expense of event.expenses) {
+    paid.set(
+      expense.paidById,
+      (paid.get(expense.paidById) ?? 0) + toPesos(expense.amount),
+    );
+  }
+  return event.people.map((person) => ({
+    id: person.id,
+    name: person.name,
+    paid: paid.get(person.id) ?? 0,
+  }));
+}
+
+export function settleEvent(event: SplitEvent): SplitResult {
+  return settleEqualSplit(paidByPerson(event));
+}
+
+export function eventMyShare(event: SplitEvent, result: SplitResult): number {
+  const me = event.people.find((person) => person.isMe);
+  if (!me) return result.share;
+  return result.balances.find((b) => b.id === me.id)?.share ?? result.share;
+}
+
+export function groupExpensesByDate(
+  expenses: SplitExpense[],
+): SplitExpenseGroup[] {
+  const order: string[] = [];
+  const map = new Map<string, SplitExpense[]>();
+  const sorted = [...expenses].sort((a, b) =>
+    b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
+  );
+  for (const expense of sorted) {
+    const list = map.get(expense.date);
+    if (list) {
+      list.push(expense);
+    } else {
+      map.set(expense.date, [expense]);
+      order.push(expense.date);
+    }
+  }
+  return order.map((date) => ({ date, items: map.get(date) ?? [] }));
+}
+
+/** Día calendario desde YYYY-MM-DD, sin Date (hidrata igual en server y client). */
+export function formatIsoDay(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return iso;
+  return `${Number(match[3])}/${Number(match[2])}`;
+}
+
+export function eventDaySpan(
+  startDate?: string,
+  endDate?: string,
+): number | null {
+  if (!startDate || !endDate) return null;
+  const start = Date.parse(`${startDate}T00:00:00`);
+  const end = Date.parse(`${endDate}T00:00:00`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    return null;
+  }
+  return Math.round((end - start) / 86_400_000) + 1;
+}
+
+export function formatEventDates(event: SplitEvent): string {
+  const { startDate, endDate } = event;
+  if (!startDate && !endDate) return "";
+  if (startDate && endDate && startDate !== endDate) {
+    const days = eventDaySpan(startDate, endDate);
+    const range = `${formatIsoDay(startDate)} – ${formatIsoDay(endDate)}`;
+    return days && days > 1 ? `${range} · ${days} días` : range;
+  }
+  return formatIsoDay(startDate || endDate || "");
+}
+
+export function personName(
+  event: SplitEvent,
+  personId: string,
+  fallback = "Alguien",
+): string {
+  const person = event.people.find((p) => p.id === personId);
+  const name = person?.name.trim();
+  if (name) return name;
+  const i = event.people.findIndex((p) => p.id === personId);
+  return i >= 0 ? `Persona ${i + 1}` : fallback;
+}
+
 export function formatSplitSummary(
   title: string,
   result: SplitResult,
@@ -120,6 +239,46 @@ export function formatSplitSummary(
       lines.push(`${t.fromName} → ${t.toName}  ${fmt(t.amount)}`);
     }
   }
+  return lines.join("\n");
+}
+
+export function formatEventSplitSummary(
+  event: SplitEvent,
+  result: SplitResult,
+  fmt: (n: number) => string,
+): string {
+  const heading = event.title.trim() || "Cuenta dividida";
+  const dates = formatEventDates(event);
+  const lines = [
+    heading,
+    ...(dates ? [dates] : []),
+    `Total ${fmt(result.total)} · ${fmt(result.share)} cada uno`,
+    "",
+  ];
+  if (result.transfers.length === 0) {
+    lines.push("Nadie se debe nada.");
+  } else {
+    for (const t of result.transfers) {
+      lines.push(`${t.fromName} → ${t.toName}  ${fmt(t.amount)}`);
+    }
+  }
+
+  const recent = [...event.expenses]
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
+    .slice(0, 8);
+  if (recent.length > 0) {
+    lines.push("", "Gastos");
+    for (const expense of recent) {
+      const what = expense.description.trim() || "Gasto";
+      lines.push(
+        `${formatIsoDay(expense.date)} ${what} ${fmt(expense.amount)} (${personName(event, expense.paidById)})`,
+      );
+    }
+    if (event.expenses.length > recent.length) {
+      lines.push(`… y ${event.expenses.length - recent.length} más`);
+    }
+  }
+
   return lines.join("\n");
 }
 
