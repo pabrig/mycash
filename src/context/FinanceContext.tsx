@@ -22,7 +22,8 @@ import {
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
-import { createClient } from "@/lib/supabase/client";
+import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
+import { useIsClient } from "@/hooks/useIsClient";
 import {
   deleteMovementById,
   fetchAllMovementsForUser,
@@ -124,13 +125,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const cloudEnabled = configured && isAuthenticated;
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [supabase, setSupabase] = useState<ReturnType<
-    typeof createClient
-  > | null>(null);
-
-  useEffect(() => {
-    if (configured) setSupabase(createClient());
-  }, [configured]);
+  const supabase = useBrowserSupabase();
+  const isClient = useIsClient();
 
   const clearSyncError = useCallback(() => setSyncError(null), []);
 
@@ -186,14 +182,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       loadLocal();
     }
   }, [cloudEnabled, loadCloud, loadLocal]);
-
-  // Carga local inmediata (no depende de auth) para no quedar en "Cargando…"
-  // si hay remount por hydration o auth lento.
-  useEffect(() => {
-    setPeriodState(currentPeriod());
-    loadLocal();
-    setReady(true);
-  }, [loadLocal]);
 
   // Upgrade a nube cuando la sesión esté lista
   useEffect(() => {
@@ -583,6 +571,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       refreshData,
     ],
   );
+
+  // Carga local inmediata (no depende de auth) para no quedar en "Cargando…"
+  // si hay remount por hydration o auth lento.
+  if (isClient && !ready) {
+    setPeriodState(currentPeriod());
+    loadLocal();
+    setReady(true);
+  }
 
   return (
     <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>
