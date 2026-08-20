@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
@@ -136,6 +137,7 @@ export default function CuentaPage() {
     deleteAccount,
   } = useAuth();
   const { movements, rates, ready } = useFinance();
+  const router = useRouter();
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -161,6 +163,7 @@ export default function CuentaPage() {
     const result = await deleteAccount();
     setBusy(false);
     if (result.error) setError(result.error);
+    else router.replace("/login");
   }
 
   function handleExport() {

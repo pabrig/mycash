@@ -5,17 +5,25 @@ import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 
 export function CloudBanner() {
-  const { configured, isAuthenticated, loading } = useAuth();
-  const { sharedEnabled, syncError, clearSyncError, refreshData } =
-    useFinance();
+  const { isAuthenticated, loading } = useAuth();
+  const { syncError, clearSyncError, refreshData } = useFinance();
 
-  if (loading || !configured) return null;
+  if (loading || !syncError || !isAuthenticated) return null;
 
-  if (syncError && isAuthenticated) {
-    return (
-      <div className="bento flex w-full items-start justify-between gap-3 animate-fade-in text-sm md:mx-auto md:max-w-md">
-        <p className="text-amber-700 dark:text-amber-400">{syncError}</p>
-        <div className="flex shrink-0 gap-2">
+  const sessionExpired = /Sesión vencida/i.test(syncError);
+
+  return (
+    <div className="bento flex w-full items-start justify-between gap-3 animate-fade-in text-sm md:mx-auto md:max-w-md">
+      <p className="text-amber-700 dark:text-amber-400">{syncError}</p>
+      <div className="flex shrink-0 gap-2">
+        {sessionExpired ? (
+          <Link
+            href="/login"
+            className="text-xs font-semibold text-zinc-900 dark:text-white"
+          >
+            Entrar
+          </Link>
+        ) : (
           <button
             type="button"
             onClick={() => void refreshData()}
@@ -23,32 +31,16 @@ export function CloudBanner() {
           >
             Reintentar
           </button>
-          <button
-            type="button"
-            onClick={clearSyncError}
-            className="text-xs text-zinc-400"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={clearSyncError}
+          className="text-xs text-zinc-400"
+          aria-label="Cerrar"
+        >
+          ✕
+        </button>
       </div>
-    );
-  }
-
-  if (isAuthenticated) return null;
-
-  return (
-    <Link
-      href={sharedEnabled ? "/login?reason=shared" : "/login?reason=account"}
-      className="bento block w-full animate-fade-in text-sm text-zinc-500 transition active:opacity-80 md:mx-auto md:max-w-md"
-    >
-      <span className="font-semibold text-zinc-900 dark:text-white">
-        Entrá con tu email
-      </span>{" "}
-      {sharedEnabled
-        ? "para crear tu usuario y compartir gastos →"
-        : "para guardar tus movimientos en tu usuario →"}
-    </Link>
+    </div>
   );
 }

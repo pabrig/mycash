@@ -11,14 +11,14 @@ import { useFinance } from "@/context/FinanceContext";
 
 export default function CompartidoPage() {
   const router = useRouter();
-  const { configured, isAuthenticated, loading, members, user } = useAuth();
+  const { loading, members, user } = useAuth();
   const { ready, sharedEnabled } = useFinance();
 
   useEffect(() => {
     if (ready && !sharedEnabled) router.replace("/");
   }, [ready, sharedEnabled, router]);
 
-  if (!ready || (configured && loading) || !sharedEnabled) {
+  if (!ready || loading || !sharedEnabled) {
     return <LoadingScreen variant="shared" />;
   }
 
@@ -37,35 +37,18 @@ export default function CompartidoPage() {
             Compartido
           </h2>
           <p className="meta mt-1">
-            {configured && isAuthenticated && paired
+            {paired
               ? `Con ${otherNames.join(", ")} · cada gasto resta de quien lo cargó`
               : "Lista compartida. El saldo de cada persona sigue siendo propio."}
           </p>
         </div>
       </div>
 
-      {configured && !isAuthenticated && (
-        <div className="bento space-y-3 md:max-w-md">
-          <p className="text-sm font-semibold">Falta tu usuario</p>
-          <p className="text-sm leading-relaxed text-zinc-500">
-            Lo que cargues acá queda en este teléfono. Para que el resto del
-            grupo vea los mismos gastos, entrá con tu email.
-          </p>
-          <Link
-            href="/login?next=/compartido&reason=shared"
-            className="btn-primary inline-block px-6 text-sm"
-          >
-            Entrar con email
-          </Link>
-        </div>
-      )}
-
-      {configured && isAuthenticated && !paired && (
+      {!paired && (
         <div className="bento space-y-3 md:max-w-md">
           <p className="text-sm font-semibold">Todavía estás solo</p>
           <p className="text-sm leading-relaxed text-zinc-500">
-            Tu usuario está listo. Invitá a alguien o uníte con un código
-            para ver la misma lista.
+            Invitá a alguien o uníte con un código para ver la misma lista.
           </p>
           <Link href="/cuenta" className="btn-primary inline-block px-6 text-sm">
             Invitar o unirme

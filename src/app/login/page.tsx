@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { safeNextPath } from "@/lib/movement-access";
+import { IconMyCash } from "@/components/ui/Icons";
 
 function loginCopy(next: string, reason: string | null) {
   if (next.startsWith("/join/")) {
@@ -13,28 +15,34 @@ function loginCopy(next: string, reason: string | null) {
       sub: "Entrá con tu email para vincularte. Cada persona sigue con su propio disponible.",
     };
   }
-  if (reason === "shared" || reason === "account" || next.startsWith("/compartido")) {
+  if (reason === "shared" || next.startsWith("/compartido")) {
     return {
-      title: "Tu usuario en Myca$h",
+      title: "Unirte al grupo",
       sub: "Te mandamos un link al mail. Sin contraseña. Ese nombre es el que ven las demás personas.",
     };
   }
   return {
-    title: "Tu usuario en Myca$h",
-    sub: "Te mandamos un link al mail. Sin contraseña. Tus movimientos quedan en tu cuenta.",
+    title: "Entrá a Myca$h",
+    sub: "Te mandamos un link al mail. Sin contraseña. Tus movimientos te siguen en cualquier dispositivo.",
   };
+}
+
+function authErrorCopy(code: string | null): string | null {
+  if (code === "auth") return "El link expiró o no es válido. Pedí uno nuevo.";
+  if (code === "supabase") return "Login no disponible en esta instalación.";
+  return null;
 }
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  const next = safeNextPath(searchParams.get("next"));
   const reason = searchParams.get("reason");
   const { configured, signInWithEmail } = useAuth();
   const copy = loginCopy(next, reason);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(authErrorCopy(searchParams.get("error")) ?? "");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,20 +82,18 @@ function LoginForm() {
   return (
     <div className="space-y-6 py-8">
       <div className="text-center">
-        <h1 className="text-xl font-bold">{copy.title}</h1>
+        <IconMyCash className="mx-auto h-12 w-12" />
+        <h1 className="mt-4 text-xl font-bold">{copy.title}</h1>
         <p className="mt-1 text-sm text-zinc-500">{copy.sub}</p>
       </div>
 
       {sent ? (
         <div className="card space-y-3 p-5 text-center">
-          <p className="text-3xl">📬</p>
           <p className="font-medium">Revisá tu email</p>
           <p className="text-sm text-zinc-500">
-            Te enviamos un link a <strong>{email}</strong>
+            Te enviamos un link a <strong>{email}</strong>. Abrilo en este
+            dispositivo.
           </p>
-          <Link href="/" className="text-sm text-teal-600">
-            Volver al inicio
-          </Link>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="card space-y-4 p-5">
