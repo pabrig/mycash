@@ -11,6 +11,7 @@ import { filterByMonth } from "@/lib/summary";
 import { DetailSheet } from "@/components/ui/DetailSheet";
 import { UserAvatar } from "@/components/UserAvatar";
 import { canManageMovement } from "@/lib/movement-access";
+import { expenseCategoryLabel } from "@/lib/labels";
 import type { Movement } from "@/lib/types";
 
 function formatDayLabel(date: string): string {
@@ -78,15 +79,15 @@ function SharedRow({
             </p>
             <p className="meta mt-0.5 text-xs md:hidden">
               {movement.createdByName ? `${movement.createdByName} · ` : ""}
-              {movement.category ?? "compartido"}
+              {expenseCategoryLabel(movement.category) || "Con otros"}
             </p>
           </div>
         </div>
         <p className="meta hidden text-xs md:block">
           {formatDayLabel(movement.date)}
         </p>
-        <p className="meta hidden truncate text-xs capitalize md:block">
-          {movement.category ?? "—"}
+        <p className="meta hidden truncate text-xs md:block">
+          {expenseCategoryLabel(movement.category) || "—"}
         </p>
         <p className="shrink-0 text-right font-bold tabular-nums tracking-tight">
           −{fmt(arsAmount)}
@@ -133,13 +134,13 @@ function SharedDetail({
         </p>
         {!canManage && (
           <p className="meta mt-2 text-xs">
-            Solo visualización — no descuenta de tu fondo
+            Esto lo cargó otra persona. No resta de tu plata.
           </p>
         )}
       </div>
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
-          <dt className="text-zinc-400">Descripción</dt>
+            <dt className="text-zinc-400">Qué fue</dt>
           <dd className="max-w-[60%] text-right font-semibold">
             {movement.description}
           </dd>
@@ -152,22 +153,22 @@ function SharedDetail({
         </div>
         {movement.category && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Categoría</dt>
-            <dd className="text-right font-medium capitalize">
-              {movement.category}
+            <dt className="text-zinc-400">Tipo</dt>
+            <dd className="text-right font-medium">
+              {expenseCategoryLabel(movement.category)}
             </dd>
           </div>
         )}
         {movement.createdByName && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Cargado por</dt>
+            <dt className="text-zinc-400">Lo cargó</dt>
             <dd className="text-right font-medium">{movement.createdByName}</dd>
           </div>
         )}
       </dl>
       {!canManage && (
         <p className="text-xs leading-relaxed text-zinc-400">
-          Solo visualización — no descuenta de tu fondo.
+          Esto lo cargó otra persona. No resta de tu plata.
         </p>
       )}
       {canManage && (
@@ -234,13 +235,13 @@ export function SharedMovementList() {
   if (monthShared.length === 0) {
     return (
       <section className="bento animate-slide-up py-12 text-center">
-        <p className="text-sm font-semibold text-zinc-400">Sin gastos compartidos</p>
-        <p className="meta mt-1">Tocá + para cargar un gasto compartido</p>
+        <p className="text-sm font-semibold text-zinc-400">Todavía no hay gastos del grupo</p>
+        <p className="meta mt-1">Cuando alguien pague algo de todos, cargalo acá</p>
         <Link
           href="/compartido/nuevo"
           className="btn-primary mt-6 inline-block px-8 text-sm"
         >
-          Cargar gasto compartido
+          Cargar gasto del grupo
         </Link>
       </section>
     );
@@ -267,7 +268,7 @@ export function SharedMovementList() {
                 {fmt(total)}
               </p>
               <p className="meta mt-1 text-xs">
-                Resta solo del disponible de quien lo cargó
+                Resta de la plata de quien lo cargó
               </p>
             </div>
             <div className="flex -space-x-2">
@@ -333,9 +334,9 @@ export function SharedMovementList() {
           </div>
 
           <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
-            <span>Descripción</span>
+            <span>Qué fue</span>
             <span>Fecha</span>
-            <span>Categoría</span>
+            <span>Tipo</span>
             <span className="text-right">Monto</span>
           </div>
 

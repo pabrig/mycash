@@ -18,6 +18,7 @@ import {
   matchesMovementFilter,
   type MovementListFilter,
 } from "@/lib/movement-access";
+import { expenseCategoryLabel, incomeSourceLabel } from "@/lib/labels";
 import type { Movement } from "@/lib/types";
 
 type Filter = MovementListFilter;
@@ -25,8 +26,8 @@ type Filter = MovementListFilter;
 const ALL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
   { id: "income", label: "Ingresos" },
-  { id: "personal", label: "Personal" },
-  { id: "shared", label: "Compartido" },
+  { id: "personal", label: "Míos" },
+  { id: "shared", label: "Con otros" },
 ];
 
 const PERSONAL_FILTERS: { id: Filter; label: string }[] = [
@@ -69,13 +70,19 @@ function groupByDate(movements: Movement[]): Map<string, Movement[]> {
   return groups;
 }
 
-function scopeLabel(movement: Movement): string {
+function tagLabel(movement: Movement): string {
   if (movement.scope === "shared") {
     return movement.createdByName
-      ? `${movement.createdByName} · Compartido`
-      : "Compartido";
+      ? `${movement.createdByName} · Con otros`
+      : "Con otros";
   }
-  return movement.type === "income" ? "Ingreso" : "Personal";
+  if (movement.type === "income") return "Ingreso";
+  return "Mío";
+}
+
+function kindLabel(movement: Movement): string {
+  if (movement.type === "income") return incomeSourceLabel(movement.source);
+  return expenseCategoryLabel(movement.category);
 }
 
 function MovementRow({
@@ -130,8 +137,8 @@ function MovementRow({
               {movement.description}
             </p>
             <p className="meta mt-0.5 truncate text-xs md:hidden">
-              {scopeLabel(movement)}
-              {movement.category && ` · ${movement.category}`}
+              {tagLabel(movement)}
+              {kindLabel(movement) && ` · ${kindLabel(movement)}`}
             </p>
           </div>
         </div>
@@ -139,8 +146,8 @@ function MovementRow({
         <p className="meta hidden text-xs md:block">
           {formatDayLabel(movement.date)}
         </p>
-        <p className="meta hidden truncate text-xs capitalize md:block">
-          {movement.category ?? movement.source ?? "—"}
+        <p className="meta hidden truncate text-xs md:block">
+          {kindLabel(movement) || "—"}
         </p>
 
         <div className="shrink-0 text-right">
@@ -198,7 +205,7 @@ function MovementDetail({
       <div>
         <p className="text-sm font-medium text-zinc-400">
           {isIncome ? "Ingreso" : "Gasto"}
-          {movement.scope === "shared" ? " · Compartido" : ""}
+          {movement.scope === "shared" ? " · Con otros" : ""}
         </p>
         <p
           className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${
@@ -217,7 +224,7 @@ function MovementDetail({
 
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
-          <dt className="text-zinc-400">Descripción</dt>
+            <dt className="text-zinc-400">Qué fue</dt>
           <dd className="max-w-[60%] text-right font-semibold">
             {movement.description}
           </dd>
@@ -231,16 +238,16 @@ function MovementDetail({
         {(movement.category || movement.source) && (
           <div className="flex justify-between gap-4">
             <dt className="text-zinc-400">
-              {movement.type === "income" ? "Fuente" : "Categoría"}
+              {movement.type === "income" ? "De dónde" : "Tipo"}
             </dt>
-            <dd className="text-right font-medium capitalize">
-              {movement.category ?? movement.source}
+            <dd className="text-right font-medium">
+              {kindLabel(movement)}
             </dd>
           </div>
         )}
         {movement.createdByName && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Cargado por</dt>
+            <dt className="text-zinc-400">Lo cargó</dt>
             <dd className="text-right font-medium">{movement.createdByName}</dd>
           </div>
         )}
@@ -295,10 +302,10 @@ export function MovementList({
   if (monthMovements.length === 0) {
     return (
       <section className="bento animate-slide-up-delay-2 py-12 text-center">
-        <p className="text-sm font-semibold text-zinc-400">Sin movimientos</p>
-        <p className="meta mt-1">Tocá + para cargar el primero</p>
+        <p className="text-sm font-semibold text-zinc-400">Todavía no hay nada</p>
+        <p className="meta mt-1">Cargá un gasto o un ingreso para empezar</p>
         <Link href="/nuevo" className="btn-primary mt-6 inline-block px-8 text-sm">
-          Cargar movimiento
+          Cargar el primero
         </Link>
       </section>
     );
@@ -310,7 +317,7 @@ export function MovementList({
     <section className={dense ? "animate-fade-in" : "animate-slide-up-delay-2"}>
       <div className="mb-4 flex items-end justify-between">
         <h2 className={`font-bold tracking-tight ${dense ? "text-base" : "text-lg"}`}>
-          {dense ? "Últimos movimientos" : "Movimientos"}
+          {dense ? "Últimos" : "Este mes"}
         </h2>
         <span className="text-xs font-medium text-zinc-400">{filtered.length}</span>
       </div>
@@ -330,15 +337,15 @@ export function MovementList({
 
       {/* Header columnas desktop */}
       <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
-        <span>Descripción</span>
+        <span>Qué fue</span>
         <span>Fecha</span>
-        <span>Categoría</span>
+        <span>Tipo</span>
         <span className="text-right">Monto</span>
       </div>
 
       {filtered.length === 0 ? (
         <p className="py-10 text-center text-sm text-zinc-400">
-          Nada con este filtro
+          No hay nada de este tipo
         </p>
       ) : (
         <div className="bento space-y-5 !px-2 !py-3">

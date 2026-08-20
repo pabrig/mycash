@@ -38,7 +38,7 @@ export function DesktopSidebar() {
           <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400 uppercase">
             Myca$h
           </p>
-          <p className="text-xl font-bold tracking-tight">Finanzas</p>
+          <p className="text-xl font-bold tracking-tight">Tu plata</p>
         </div>
       </div>
 
@@ -59,10 +59,10 @@ export function DesktopSidebar() {
         )}
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">
-            {isAuthenticated ? profile?.displayName || "Tu usuario" : "Tu usuario"}
+            {isAuthenticated ? profile?.displayName || "Vos" : "Entrá"}
           </span>
           <span className="block truncate text-[11px] text-zinc-400">
-            {isAuthenticated ? user?.email : "Sesión"}
+            {isAuthenticated ? user?.email : "Con tu email"}
           </span>
         </span>
       </Link>
@@ -95,7 +95,7 @@ export function DesktopSidebar() {
 
         <div className="flex items-center justify-between px-1">
           <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
-            Privacidad
+            Montos
           </p>
           <AmountsToggle className="bg-[var(--card-muted)]" />
         </div>
@@ -105,7 +105,7 @@ export function DesktopSidebar() {
           className="btn-primary flex w-full items-center justify-center gap-2 text-sm"
         >
           <IconPlus className="h-4 w-4" />
-          Nueva transacción
+          Cargar
         </Link>
       </div>
     </aside>
@@ -120,7 +120,7 @@ function SidebarRate() {
   return (
     <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3.5">
       <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
-        USD oficial
+        Dólar oficial
         {!isCurrent && (
           <span className="font-normal"> · {formatMonth(year, month)}</span>
         )}

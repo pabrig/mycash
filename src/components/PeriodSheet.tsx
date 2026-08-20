@@ -61,7 +61,7 @@ export function PeriodSheet({
   }
 
   return (
-    <DetailSheet open={open} onClose={onClose} title="Periodo">
+    <DetailSheet open={open} onClose={onClose} title="Elegí el mes">
       <div className="flex items-center justify-between gap-2 py-2">
         <button
           type="button"

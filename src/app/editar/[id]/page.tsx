@@ -18,7 +18,7 @@ export default function EditarPage() {
   if (!movement) {
     return (
       <div className="bento mx-auto max-w-lg space-y-4 p-6 text-center">
-        <p className="font-medium">Movimiento no encontrado</p>
+        <p className="font-medium">No encontramos esto</p>
         <Link href="/" className="text-sm font-semibold text-zinc-900 dark:text-white">
           Volver al inicio
         </Link>
@@ -40,7 +40,7 @@ export default function EditarPage() {
           ‹
         </Link>
         <h1 className="text-lg font-bold md:text-xl">
-          {isShared ? "Editar compartido" : "Editar movimiento"}
+          {isShared ? "Editar gasto" : "Editar"}
         </h1>
       </div>
       <MovementForm

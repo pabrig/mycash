@@ -43,8 +43,8 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
         <div className="px-6 pt-7 pb-6">
           <p className="text-sm font-medium text-zinc-400">
             {isYear
-              ? `Promedio mensual · ${annualSummary.year}`
-              : "Disponible del mes"}
+              ? `Por mes, en ${annualSummary.year}`
+              : "Te queda este mes"}
           </p>
           <p
             className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
@@ -55,7 +55,7 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
           </p>
           {isYear && (
             <p className="meta mt-2">
-              Acumulado {fmt(annualSummary.disponible)} · {monthLabel}
+              En el año {fmt(annualSummary.disponible)} · {monthLabel}
             </p>
           )}
 
@@ -64,7 +64,7 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
             onClick={() => setDetailsOpen((v) => !v)}
             className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition active:opacity-70"
           >
-            {detailsOpen ? "Ocultar desglose" : "Ver desglose"}
+            {detailsOpen ? "Ocultar" : "Ver de dónde sale"}
             <IconChevronDown
               className={`h-4 w-4 transition-transform ${detailsOpen ? "rotate-180" : ""}`}
             />
@@ -73,11 +73,11 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
 
         {detailsOpen && (
           <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4 sm:grid-cols-3">
-            <MacroStat label={isYear ? "Prom. ingresos" : "Ingresos"} value={fmt(income)} tone="income" />
-            <MacroStat label={isYear ? "Prom. egresos" : "Gastos"} value={fmt(expenses)} tone="expense" />
+            <MacroStat label="Ingresos" value={fmt(income)} tone="income" />
+            <MacroStat label="Gastos" value={fmt(expenses)} tone="expense" />
             {sharedEnabled && (
               <MacroStat
-                label={isYear ? "Prom. compart." : "Compartido"}
+                label="Con otros"
                 value={fmt(shared)}
                 tone="shared"
                 className="col-span-2 sm:col-span-1"
@@ -199,7 +199,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
                   onClick={() => setConvertOpen((v) => !v)}
                   className="btn-primary w-full text-sm"
                 >
-                  {convertOpen ? "Cerrar conversión" : "Convertir ARS ↔ USD"}
+                  {convertOpen ? "Cerrar" : "Pasar plata"}
                 </button>
                 {convertOpen && (
                   <WalletConvertForm onDone={() => setConvertOpen(false)} />
@@ -219,7 +219,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
               }}
               className="w-full text-center text-xs font-semibold text-zinc-400 transition active:text-zinc-700"
             >
-              Convertir entre bolsillos
+              Pasar plata entre bolsillos
             </button>
           </div>
         )}
@@ -245,11 +245,11 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
   const preview =
     direction === "to_usd"
       ? valid
-        ? `Comprás ≈ ${formatUsd(parsed / rate.usdToArs)}`
-        : "Ingresá pesos a convertir"
+        ? `Van a ahorro ≈ ${formatUsd(parsed / rate.usdToArs)}`
+        : "¿Cuántos pesos?"
       : valid
-        ? `Vendés ≈ ${formatArs(parsed * rate.usdToArs)}`
-        : "Ingresá dólares a vender";
+        ? `Van a cotidiano ≈ ${formatArs(parsed * rate.usdToArs)}`
+        : "¿Cuántos dólares?";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -274,7 +274,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-[var(--card)] p-4">
       <p className="text-xs leading-relaxed text-zinc-400">
-        Pasá plata entre Cotidiano y Ahorro al tipo oficial.
+        Pasás plata de un bolsillo al otro, al dólar oficial.
       </p>
 
       <div className="grid grid-cols-2 gap-2">
@@ -328,8 +328,8 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
         {busy
           ? "Guardando…"
           : direction === "to_usd"
-            ? "Pasar a Ahorro"
-            : "Pasar a Cotidiano"}
+            ? "Pasar a ahorro"
+            : "Pasar a cotidiano"}
       </button>
     </form>
   );

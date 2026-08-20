@@ -16,8 +16,8 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Myca$h — Finanzas personales",
-  description: "Control de ingresos y gastos personales. Tu plata, clara y al día.",
+  title: "Myca$h — Tu plata, clara",
+  description: "Anotá lo que entra y lo que sale. Vemos cuánto te queda.",
   manifest: "/manifest.json",
   icons: {
     icon: [

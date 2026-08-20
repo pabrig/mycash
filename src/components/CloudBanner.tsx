@@ -10,7 +10,7 @@ export function CloudBanner() {
 
   if (loading || !syncError || !isAuthenticated) return null;
 
-  const sessionExpired = /Sesión vencida/i.test(syncError);
+  const sessionExpired = /venció el acceso|Sesión vencida/i.test(syncError);
 
   return (
     <div className="bento flex w-full items-start justify-between gap-3 animate-fade-in text-sm md:mx-auto md:max-w-md">
