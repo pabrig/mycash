@@ -70,7 +70,7 @@ export function DetailSheet({
             <IconClose className="h-4 w-4" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,var(--app-bottom-gap))]">
           {children}
         </div>
       </div>

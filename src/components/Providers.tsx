@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/context/AuthContext";
 import { FinanceProvider } from "@/context/FinanceContext";
@@ -14,6 +14,16 @@ import {
 import { useIsClient } from "@/hooks/useIsClient";
 import { isAuthShellPath } from "@/lib/auth-routes";
 
+function isStandaloneDisplay() {
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return (
+    nav.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    window.matchMedia("(display-mode: minimal-ui)").matches
+  );
+}
+
 /**
  * Mobile: columna centrada max-w-lg.
  * Desktop: sidebar fijo a la izquierda; el contenido se centra en el
@@ -23,6 +33,12 @@ export function Providers({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const hydrated = useIsClient();
   const hideChrome = isAuthShellPath(pathname);
+
+  useEffect(() => {
+    if (isStandaloneDisplay()) {
+      document.documentElement.dataset.display = "standalone";
+    }
+  }, []);
 
   return (
     <AuthProvider>

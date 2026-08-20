@@ -21,7 +21,7 @@ export function BottomNav() {
   const sharedActive = pathname.startsWith("/compartido");
 
   return (
-    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[var(--app-bottom-gap)] md:hidden">
       <div className="pointer-events-auto relative mx-auto max-w-lg px-4">
         {usdEnabled && <RatePill />}
         <div className="relative mt-2 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
