@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
 import { MONTH_NAMES } from "@/lib/types";
@@ -29,11 +29,8 @@ export function PeriodSheet({
 }) {
   const { year, month, setPeriod, movements, sharedMovements } = useFinance();
   const [draftYear, setDraftYear] = useState(year);
+  const [resetKey, setResetKey] = useState(`${open}:${year}`);
   const now = currentPeriod();
-
-  useEffect(() => {
-    if (open) setDraftYear(year);
-  }, [open, year]);
 
   const activeMonths = useMemo(
     () =>
@@ -43,6 +40,12 @@ export function PeriodSheet({
       ),
     [movements, sharedMovements, draftYear],
   );
+
+  const nextResetKey = `${open}:${year}`;
+  if (nextResetKey !== resetKey) {
+    setResetKey(nextResetKey);
+    if (open) setDraftYear(year);
+  }
 
   const showEsteMes =
     !isCurrentPeriod(year, month) || draftYear !== now.year;

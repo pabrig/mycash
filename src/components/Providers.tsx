@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/context/AuthContext";
 import { FinanceProvider } from "@/context/FinanceContext";
@@ -11,6 +11,7 @@ import {
   LoadingScreen,
   variantFromPath,
 } from "@/components/ui/LoadingScreen";
+import { useIsClient } from "@/hooks/useIsClient";
 
 /**
  * Mobile: columna centrada max-w-lg.
@@ -19,11 +20,7 @@ import {
  */
 export function Providers({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
+  const hydrated = useIsClient();
 
   return (
     <AuthProvider>
