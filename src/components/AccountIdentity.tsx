@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { UserAvatar } from "@/components/UserAvatar";
 
@@ -18,10 +18,6 @@ export function AccountIdentity() {
   const [name, setName] = useState(profile?.displayName ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!editing) setName(profile?.displayName ?? "");
-  }, [profile?.displayName, editing]);
 
   if (!configured) {
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { DetailSheet } from "@/components/ui/DetailSheet";
@@ -20,14 +20,17 @@ export function SharedSetupSheet({
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [wasOpen, setWasOpen] = useState(open);
 
-  useEffect(() => {
-    if (!open) return;
-    setStep("explain");
-    setSent(false);
-    setError("");
-    setBusy(false);
-  }, [open]);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setStep("explain");
+      setSent(false);
+      setError("");
+      setBusy(false);
+    }
+  }
 
   async function activateAndClose() {
     await setSharedEnabled(true);
