@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/context/AuthContext";
 import { FinanceProvider } from "@/context/FinanceContext";
@@ -14,6 +14,16 @@ import {
 import { useIsClient } from "@/hooks/useIsClient";
 import { isAuthShellPath } from "@/lib/auth-routes";
 
+function isStandaloneDisplay() {
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return (
+    nav.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    window.matchMedia("(display-mode: minimal-ui)").matches
+  );
+}
+
 /**
  * Mobile: columna centrada max-w-lg.
  * Desktop: sidebar fijo a la izquierda; el contenido se centra en el
@@ -23,6 +33,12 @@ export function Providers({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const hydrated = useIsClient();
   const hideChrome = isAuthShellPath(pathname);
+
+  useEffect(() => {
+    if (isStandaloneDisplay()) {
+      document.documentElement.dataset.display = "standalone";
+    }
+  }, []);
 
   return (
     <AuthProvider>
@@ -38,7 +54,7 @@ export function Providers({ children }: { children: ReactNode }) {
             className={`mx-auto flex min-h-full w-full max-w-lg flex-col px-5 ${
               hideChrome
                 ? "pb-12 pt-8"
-                : "pb-40 pt-4 md:max-w-7xl md:px-8 md:pb-12 md:pt-8 lg:px-10"
+                : "pb-44 pt-4 md:max-w-7xl md:px-8 md:pb-12 md:pt-8 lg:px-10"
             }`}
           >
             <main className="mx-auto w-full flex-1 md:mx-0">

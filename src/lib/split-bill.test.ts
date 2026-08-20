@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   equalShares,
+  eventDaySpan,
+  eventMyShare,
+  formatEventDates,
+  formatEventSplitSummary,
+  formatIsoDay,
   formatSplitSummary,
+  groupExpensesByDate,
+  paidByPerson,
   parseSplitExpensePrefill,
   settleEqualSplit,
+  settleEvent,
   splitSharePath,
+  type SplitEvent,
 } from "./split-bill";
 
 describe("equalShares", () => {
@@ -118,5 +127,115 @@ describe("formatSplitSummary", () => {
     const text = formatSplitSummary("Cena", result, (n) => `$${n}`);
     expect(text).toContain("Cena");
     expect(text).toContain("Bob → Ana  $5000");
+  });
+});
+
+const trip: SplitEvent = {
+  id: "e1",
+  title: "Bariloche",
+  createdAt: "2026-01-10T12:00:00.000Z",
+  startDate: "2026-01-12",
+  endDate: "2026-01-18",
+  people: [
+    { id: "a", name: "Ana", isMe: true },
+    { id: "b", name: "Bob", isMe: false },
+    { id: "c", name: "Cara", isMe: false },
+  ],
+  expenses: [
+    {
+      id: "g1",
+      date: "2026-01-12",
+      description: "Nafta",
+      amount: 15000,
+      paidById: "a",
+    },
+    {
+      id: "g2",
+      date: "2026-01-13",
+      description: "Cena",
+      amount: 9000,
+      paidById: "b",
+    },
+    {
+      id: "g3",
+      date: "2026-01-13",
+      description: "Almuerzo",
+      amount: 6000,
+      paidById: "a",
+    },
+  ],
+};
+
+describe("paidByPerson / settleEvent", () => {
+  it("sums what each person paid across expenses", () => {
+    expect(paidByPerson(trip)).toEqual([
+      { id: "a", name: "Ana", paid: 21000 },
+      { id: "b", name: "Bob", paid: 9000 },
+      { id: "c", name: "Cara", paid: 0 },
+    ]);
+  });
+
+  it("settles the trip equally", () => {
+    const result = settleEvent(trip);
+    expect(result.total).toBe(30000);
+    expect(result.share).toBe(10000);
+    expect(result.transfers).toEqual([
+      {
+        fromId: "b",
+        fromName: "Bob",
+        toId: "a",
+        toName: "Ana",
+        amount: 1000,
+      },
+      {
+        fromId: "c",
+        fromName: "Cara",
+        toId: "a",
+        toName: "Ana",
+        amount: 10000,
+      },
+    ]);
+  });
+
+  it("uses my share from the event", () => {
+    const result = settleEvent(trip);
+    expect(eventMyShare(trip, result)).toBe(10000);
+  });
+});
+
+describe("groupExpensesByDate", () => {
+  it("groups newest day first", () => {
+    const groups = groupExpensesByDate(trip.expenses);
+    expect(groups.map((g) => g.date)).toEqual(["2026-01-13", "2026-01-12"]);
+    expect(groups[0].items.map((e) => e.description)).toEqual([
+      "Almuerzo",
+      "Cena",
+    ]);
+  });
+});
+
+describe("event dates", () => {
+  it("formats iso day without Date", () => {
+    expect(formatIsoDay("2026-01-12")).toBe("12/1");
+  });
+
+  it("counts inclusive days", () => {
+    expect(eventDaySpan("2026-01-12", "2026-01-18")).toBe(7);
+    expect(eventDaySpan("2026-01-12", "2026-01-12")).toBe(1);
+    expect(eventDaySpan("2026-01-18", "2026-01-12")).toBeNull();
+  });
+
+  it("formats range with day count", () => {
+    expect(formatEventDates(trip)).toBe("12/1 – 18/1 · 7 días");
+  });
+});
+
+describe("formatEventSplitSummary", () => {
+  it("includes dates, transfers and recent expenses", () => {
+    const text = formatEventSplitSummary(trip, settleEvent(trip), (n) => `$${n}`);
+    expect(text).toContain("Bariloche");
+    expect(text).toContain("12/1 – 18/1");
+    expect(text).toContain("Cara → Ana  $10000");
+    expect(text).toContain("Nafta $15000 (Ana)");
   });
 });

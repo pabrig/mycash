@@ -9,11 +9,12 @@ import { AnnualOverview } from "@/components/AnnualOverview";
 import { MovementList } from "@/components/MovementList";
 import { CloudBanner } from "@/components/CloudBanner";
 import { PeriodToggle } from "@/components/PeriodToggle";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import type { SummaryScope } from "@/lib/types";
 
 export default function HomePage() {
-  const { ready } = useFinance();
+  const { ready, walletMode } = useFinance();
   const [scope, setScope] = useState<SummaryScope>("month");
 
   if (!ready) return <LoadingScreen variant="dashboard" />;
@@ -24,8 +25,15 @@ export default function HomePage() {
 
       <div className="flex flex-col items-stretch gap-3 md:items-center">
         <CloudBanner />
-        <div className="w-full md:mx-auto md:max-w-xs">
-          <PeriodToggle scope={scope} onChange={setScope} />
+        <div className="flex w-full items-center gap-2 md:mx-auto md:max-w-xs">
+          <div className="min-w-0 flex-1">
+            <PeriodToggle scope={scope} onChange={setScope} />
+          </div>
+          {walletMode === "unified" && (
+            <div className="shrink-0 md:hidden">
+              <CurrencyToggle />
+            </div>
+          )}
         </div>
       </div>
 

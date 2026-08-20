@@ -1,4 +1,5 @@
 import type { DisplayCurrency, MonthlyRate, Movement, WalletMode } from "./types";
+import type { SplitEvent, SplitExpense, SplitPerson } from "./split-bill";
 import { getDefaultRate } from "./currency";
 
 const MOVEMENTS_KEY = "mycash_movements";
@@ -142,6 +143,67 @@ export function loadAmountsHidden(): boolean {
 
 export function saveAmountsHidden(hidden: boolean): void {
   localStorage.setItem(AMOUNTS_HIDDEN_KEY, hidden ? "true" : "false");
+}
+
+const SPLIT_EVENTS_KEY = "mycash_split_events";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function parseSplitPerson(raw: unknown): SplitPerson | null {
+  if (!isRecord(raw) || typeof raw.id !== "string") return null;
+  return {
+    id: raw.id,
+    name: typeof raw.name === "string" ? raw.name : "",
+    isMe: raw.isMe === true,
+  };
+}
+
+function parseSplitExpense(raw: unknown): SplitExpense | null {
+  if (!isRecord(raw) || typeof raw.id !== "string") return null;
+  const amount = typeof raw.amount === "number" ? raw.amount : Number(raw.amount);
+  if (!Number.isFinite(amount)) return null;
+  return {
+    id: raw.id,
+    date: typeof raw.date === "string" ? raw.date : "",
+    description: typeof raw.description === "string" ? raw.description : "",
+    amount,
+    paidById: typeof raw.paidById === "string" ? raw.paidById : "",
+  };
+}
+
+function parseSplitEvent(raw: unknown): SplitEvent | null {
+  if (!isRecord(raw) || typeof raw.id !== "string") return null;
+  const people = Array.isArray(raw.people)
+    ? raw.people.map(parseSplitPerson).filter((p): p is SplitPerson => p !== null)
+    : [];
+  const expenses = Array.isArray(raw.expenses)
+    ? raw.expenses
+        .map(parseSplitExpense)
+        .filter((e): e is SplitExpense => e !== null)
+    : [];
+  return {
+    id: raw.id,
+    title: typeof raw.title === "string" ? raw.title : "",
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : "",
+    startDate: typeof raw.startDate === "string" ? raw.startDate : undefined,
+    endDate: typeof raw.endDate === "string" ? raw.endDate : undefined,
+    people,
+    expenses,
+  };
+}
+
+export function loadSplitEvents(): SplitEvent[] {
+  const raw = readJson<unknown>(SPLIT_EVENTS_KEY, []);
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(parseSplitEvent)
+    .filter((event): event is SplitEvent => event !== null);
+}
+
+export function saveSplitEvents(events: SplitEvent[]): void {
+  writeJson(SPLIT_EVENTS_KEY, events);
 }
 
 const SYNCED_KEYS = [

@@ -14,7 +14,7 @@ export function CurrencyToggle() {
           key={c}
           type="button"
           onClick={() => setDisplayCurrency(c)}
-          className={`rounded-full px-3 py-1.5 text-xs font-bold tracking-wide transition-all active:scale-95 ${
+          className={`rounded-full px-3 py-2 text-xs font-bold tracking-wide transition-all active:scale-95 ${
             displayCurrency === c
               ? "bg-[var(--card)] text-zinc-900 shadow-sm dark:text-white"
               : "text-zinc-400"
