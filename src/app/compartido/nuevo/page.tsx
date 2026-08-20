@@ -24,12 +24,15 @@ export default function CompartidoNuevoPage() {
   if (configured && !isAuthenticated) {
     return (
       <div className="card space-y-4 p-6 text-center">
-        <p className="font-medium">Iniciá sesión para cargar gastos compartidos</p>
+        <p className="font-medium">Entrá para cargar un gasto compartido</p>
+        <p className="text-sm text-zinc-500">
+          Sin usuario, el resto del grupo no puede ver lo que cargás.
+        </p>
         <Link
-          href="/login?next=/compartido/nuevo"
+          href="/login?next=/compartido/nuevo&reason=shared"
           className="btn-primary inline-block px-6"
         >
-          Entrar
+          Entrar con email
         </Link>
       </div>
     );

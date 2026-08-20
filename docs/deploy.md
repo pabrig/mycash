@@ -1,6 +1,6 @@
 # Myca$h — Guía paso a paso: desplegar en Vercel
 
-Publicá la PWA en una URL HTTPS (`*.vercel.app`) para usarla vos y tu pareja desde el celular.  
+Publicá la PWA en una URL HTTPS (`*.vercel.app`) para usarla vos y las personas con las que compartís, desde el celular.  
 Stack: **Vercel** (Next.js) + **Supabase** (Auth + datos).
 
 Tiempo estimado: **15–25 minutos** la primera vez.

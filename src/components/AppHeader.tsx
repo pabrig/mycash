@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatMonth, shiftPeriod } from "@/lib/format";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { PeriodSheet } from "@/components/PeriodSheet";
+import { UserAvatar } from "@/components/UserAvatar";
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -17,6 +19,7 @@ import {
 
 export function AppHeader() {
   const { year, month, setPeriod, walletMode } = useFinance();
+  const { isAuthenticated, profile } = useAuth();
   const [periodOpen, setPeriodOpen] = useState(false);
 
   function shift(delta: number) {
@@ -55,10 +58,18 @@ export function AppHeader() {
           </Link>
           <Link
             href="/cuenta"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"
-            aria-label="Cuenta"
+            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"
+            aria-label={
+              isAuthenticated
+                ? `Cuenta de ${profile?.displayName ?? "tu usuario"}`
+                : "Entrar o ver cuenta"
+            }
           >
-            <IconUser className="h-5 w-5" />
+            {isAuthenticated ? (
+              <UserAvatar name={profile?.displayName} />
+            ) : (
+              <IconUser className="h-5 w-5" />
+            )}
           </Link>
         </div>
       </div>

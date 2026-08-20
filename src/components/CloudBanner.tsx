@@ -40,15 +40,15 @@ export function CloudBanner() {
 
   return (
     <Link
-      href="/login"
+      href={sharedEnabled ? "/login?reason=shared" : "/login?reason=account"}
       className="bento block w-full animate-fade-in text-sm text-zinc-500 transition active:opacity-80 md:mx-auto md:max-w-md"
     >
       <span className="font-semibold text-zinc-900 dark:text-white">
-        Iniciá sesión
+        Entrá con tu email
       </span>{" "}
       {sharedEnabled
-        ? "para sync y gastos compartidos →"
-        : "para sincronizar en la nube →"}
+        ? "para crear tu usuario y compartir gastos →"
+        : "para guardar tus movimientos en tu usuario →"}
     </Link>
   );
 }

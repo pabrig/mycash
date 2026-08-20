@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDisplay, formatMoney, formatUsd } from "./format";
+import { formatDisplay, formatMoney, formatUsd, initials } from "./format";
 import { computeAnnualSummary, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth } from "./summary";
 import type { MonthlyRate, Movement } from "./types";
 
@@ -69,6 +69,21 @@ const movements: Movement[] = [
     createdAt: "2026-01-10T00:00:00Z",
   },
 ];
+
+describe("initials", () => {
+  it("uses two letters from a single name", () => {
+    expect(initials("Pablo")).toBe("PA");
+  });
+
+  it("uses first letters of two words", () => {
+    expect(initials("Pablo Rigalli")).toBe("PR");
+  });
+
+  it("falls back when empty", () => {
+    expect(initials("")).toBe("?");
+    expect(initials("   ")).toBe("?");
+  });
+});
 
 describe("formatDisplay", () => {
   it("converts ARS to USD for display", () => {

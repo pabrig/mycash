@@ -90,6 +90,25 @@ function movementToInsert(
   };
 }
 
+export async function updateDisplayName(
+  supabase: SupabaseClient,
+  userId: string,
+  displayName: string,
+): Promise<Profile> {
+  const name = displayName.trim();
+  if (!name) throw new Error("El nombre no puede estar vacío");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ display_name: name })
+    .eq("id", userId)
+    .select("id, display_name")
+    .single();
+
+  if (error) throw error;
+  return { id: data.id, displayName: data.display_name };
+}
+
 export async function fetchProfile(
   supabase: SupabaseClient,
   userId: string,
@@ -466,7 +485,7 @@ export async function deleteOwnAccount(
 
 /**
  * Primera sync: sube solo movimientos personales locales.
- * No sube `shared` (sin household válido / no inventar gastos de pareja).
+ * No sube `shared` (sin household válido / no inventar gastos de grupo).
  * Si ya hay personales en nube, no vuelve a migrar (cloud gana).
  */
 export async function migrateLocalMovements(

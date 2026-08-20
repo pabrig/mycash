@@ -34,7 +34,7 @@ Opcional: corré primero el script estructural [`rls-audit.sql`](./rls-audit.sql
 | El monto resta del disponible de **ambos** | Coherente con el modelo (sin split) |
 | Autor = nombre de A | Visible en la fila |
 
-### 3. Ingresos del partner ocultos
+### 3. Ingresos ajenos ocultos
 
 | Paso | Esperado |
 |------|----------|
