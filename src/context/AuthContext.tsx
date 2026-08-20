@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
 import {
   acceptHouseholdInvite,
   createHouseholdInvite,
@@ -72,18 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<HouseholdInvite[]>([]);
-  // No crear el client en SSR — solo en el browser tras mount
-  const [supabase, setSupabase] = useState<ReturnType<
-    typeof createClient
-  > | null>(null);
-
-  useEffect(() => {
-    if (!configured) {
-      setLoading(false);
-      return;
-    }
-    setSupabase(createClient());
-  }, [configured]);
+  const supabase = useBrowserSupabase();
 
   const loadPendingInvites = useCallback(
     async (householdId: string) => {
@@ -114,10 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const loadUser = useCallback(async () => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
+    if (!supabase) return;
 
     try {
       const {
@@ -148,8 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase, loadHousehold]);
 
   useEffect(() => {
-    void loadUser();
-
     if (!supabase) return;
 
     const {
