@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
@@ -11,25 +11,22 @@ export default function JoinPage() {
   const router = useRouter();
   const code = (params.code ?? "").toUpperCase();
   const { configured, loading, isAuthenticated, acceptInvite } = useAuth();
-  const [status, setStatus] = useState<"idle" | "joining" | "done" | "error">(
-    "idle",
-  );
   const [error, setError] = useState("");
+  const startedForCode = useRef<string | null>(null);
 
   useEffect(() => {
-    if (loading || !configured || !isAuthenticated || status !== "idle") return;
+    if (loading || !configured || !isAuthenticated) return;
+    if (startedForCode.current === code) return;
+    startedForCode.current = code;
 
-    setStatus("joining");
     void acceptInvite(code).then((result) => {
       if (result.error) {
         setError(result.error);
-        setStatus("error");
         return;
       }
-      setStatus("done");
       router.replace("/compartido");
     });
-  }, [loading, configured, isAuthenticated, code, acceptInvite, router, status]);
+  }, [loading, configured, isAuthenticated, code, acceptInvite, router]);
 
   if (!configured) {
     return (
@@ -42,7 +39,7 @@ export default function JoinPage() {
     );
   }
 
-  if (loading || status === "joining") {
+  if (loading) {
     return <LoadingScreen variant="auth" />;
   }
 
@@ -71,7 +68,7 @@ export default function JoinPage() {
     );
   }
 
-  if (status === "error") {
+  if (error) {
     return (
       <div className="card space-y-4 p-6 text-center">
         <p className="font-medium text-red-500">{error}</p>

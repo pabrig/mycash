@@ -66,7 +66,12 @@ export function loadRates(): MonthlyRate[] {
     RATES_KEY,
     [],
   );
-  return rates.map(({ usdtToArs: _, ...rate }) => rate);
+  return rates.map(({ year, month, usdToArs, updatedAt }) => ({
+    year,
+    month,
+    usdToArs,
+    updatedAt,
+  }));
 }
 
 export function saveRates(rates: MonthlyRate[]): void {

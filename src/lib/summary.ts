@@ -103,11 +103,18 @@ export function computeMonthlySummary(
   movements: Movement[],
   rate: MonthlyRate,
 ): MonthlySummary {
-  const { movementCount: _, ...summary } = aggregateMovements(
-    movements,
-    () => rate,
-  );
-  return summary;
+  const aggregated = aggregateMovements(movements, () => rate);
+  return {
+    passiveIncome: aggregated.passiveIncome,
+    activeIncome: aggregated.activeIncome,
+    personalExpenses: aggregated.personalExpenses,
+    personalFixed: aggregated.personalFixed,
+    personalVariable: aggregated.personalVariable,
+    totalIncome: aggregated.totalIncome,
+    sharedExpenses: aggregated.sharedExpenses,
+    totalExpenses: aggregated.totalExpenses,
+    disponible: aggregated.disponible,
+  };
 }
 
 export function computeAnnualSummary(
