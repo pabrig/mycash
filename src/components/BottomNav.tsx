@@ -5,9 +5,16 @@ import { usePathname } from "next/navigation";
 import { Fab } from "@/components/Fab";
 import { useFinance } from "@/context/FinanceContext";
 import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
-import { IconHome, IconUsers } from "@/components/ui/Icons";
+import { IconHome, IconSplit, IconUsers } from "@/components/ui/Icons";
 
 const HIDE_NAV_PREFIXES = ["/nuevo", "/compartido/nuevo", "/editar", "/login", "/join"];
+
+type NavItem = {
+  href: string;
+  label: string;
+  active: boolean;
+  icon: "home" | "shared" | "split";
+};
 
 /** Solo mobile — oculto desde md (lo reemplaza DesktopSidebar). */
 export function BottomNav() {
@@ -17,37 +24,42 @@ export function BottomNav() {
 
   if (hideNav) return null;
 
-  const homeActive = pathname === "/" || pathname === "/mes";
-  const sharedActive = pathname.startsWith("/compartido");
+  const home: NavItem = {
+    href: "/",
+    label: "Inicio",
+    active: pathname === "/" || pathname === "/mes",
+    icon: "home",
+  };
+  const shared: NavItem = {
+    href: "/compartido",
+    label: "Compartido",
+    active: pathname.startsWith("/compartido"),
+    icon: "shared",
+  };
+  const split: NavItem = {
+    href: "/dividir",
+    label: "Dividir",
+    active: pathname.startsWith("/dividir"),
+    icon: "split",
+  };
 
   return (
     <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[var(--app-bottom-gap)] md:hidden">
       <div className="pointer-events-auto relative mx-auto max-w-lg px-4">
         {usdEnabled && <RatePill />}
-        <div className="relative mt-2 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
+        <div className="relative mt-5 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
           <Fab />
-          {sharedEnabled ? (
-            <ul className="grid grid-cols-3 items-end px-4 pt-3 pb-2.5">
-              <li>
-                <NavLink href="/" label="Inicio" active={homeActive} icon="home" />
-              </li>
-              <li aria-hidden className="h-12" />
-              <li>
-                <NavLink
-                  href="/compartido"
-                  label="Compartido"
-                  active={sharedActive}
-                  icon="shared"
-                />
-              </li>
-            </ul>
-          ) : (
-            <ul className="flex items-end justify-center px-4 pt-3 pb-2.5">
-              <li>
-                <NavLink href="/" label="Inicio" active={homeActive} icon="home" />
-              </li>
-            </ul>
-          )}
+          <ul className="grid grid-cols-3 items-end px-2 pt-3.5 pb-3.5">
+            <li className="flex justify-center">
+              <NavLink {...home} />
+            </li>
+            <li className="flex justify-center">
+              {sharedEnabled ? <NavLink {...shared} /> : null}
+            </li>
+            <li className="flex justify-center">
+              <NavLink {...split} />
+            </li>
+          </ul>
         </div>
       </div>
     </nav>
@@ -60,7 +72,7 @@ function RatePill() {
   const updatedLabel = formatRateUpdatedAt(rate.updatedAt);
 
   return (
-    <div className="mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl bg-[var(--card)]/90 px-4 py-2.5 text-[11px] shadow-[var(--surface-elevated)] backdrop-blur-md">
+    <div className="mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl bg-[var(--card)]/90 px-4 py-2 text-[11px] shadow-[var(--surface-elevated)] backdrop-blur-md">
       <div className="min-w-0">
         <p className="font-semibold text-zinc-500">
           Dólar oficial
@@ -92,24 +104,14 @@ function RatePill() {
   );
 }
 
-function NavLink({
-  href,
-  label,
-  active,
-  icon,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-  icon: "home" | "shared";
-}) {
+function NavLink({ href, label, active, icon }: NavItem) {
   const color = active ? "text-zinc-900 dark:text-white" : "text-zinc-400";
-  const Icon = icon === "home" ? IconHome : IconUsers;
+  const Icon = icon === "home" ? IconHome : icon === "shared" ? IconUsers : IconSplit;
 
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-semibold ${
+      className={`flex flex-col items-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold whitespace-nowrap ${
         active ? "text-zinc-900 dark:text-white" : "text-zinc-400"
       }`}
     >

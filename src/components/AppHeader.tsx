@@ -6,7 +6,6 @@ import { useFinance } from "@/context/FinanceContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatMonth, shiftPeriod } from "@/lib/format";
 import { AmountsToggle } from "@/components/AmountsToggle";
-import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { PeriodSheet } from "@/components/PeriodSheet";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
@@ -14,12 +13,11 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconMyCash,
-  IconSplit,
   IconUser,
 } from "@/components/ui/Icons";
 
 export function AppHeader() {
-  const { year, month, setPeriod, walletMode } = useFinance();
+  const { year, month, setPeriod } = useFinance();
   const { isAuthenticated, profile } = useAuth();
   const [periodOpen, setPeriodOpen] = useState(false);
 
@@ -30,7 +28,7 @@ export function AppHeader() {
 
   return (
     <header className="mb-4 animate-fade-in md:mb-2">
-      {/* Mobile */}
+      {/* Mobile: fecha a la izquierda, acciones cortas a la derecha */}
       <div className="flex items-center justify-between gap-3 md:hidden">
         <div className="flex min-w-0 items-center gap-2.5">
           <IconMyCash className="h-8 w-8 shrink-0" />
@@ -49,15 +47,7 @@ export function AppHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {walletMode === "unified" && <CurrencyToggle />}
           <AmountsToggle />
-          <Link
-            href="/dividir"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"
-            aria-label="Dividir cuenta"
-          >
-            <IconSplit className="h-5 w-5" />
-          </Link>
           <Link
             href="/cuenta"
             className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"

@@ -54,7 +54,7 @@ export function Providers({ children }: { children: ReactNode }) {
             className={`mx-auto flex min-h-full w-full max-w-lg flex-col px-5 ${
               hideChrome
                 ? "pb-12 pt-8"
-                : "pb-40 pt-4 md:max-w-7xl md:px-8 md:pb-12 md:pt-8 lg:px-10"
+                : "pb-44 pt-4 md:max-w-7xl md:px-8 md:pb-12 md:pt-8 lg:px-10"
             }`}
           >
             <main className="mx-auto w-full flex-1 md:mx-0">

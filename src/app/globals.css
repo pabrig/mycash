@@ -93,6 +93,67 @@ textarea {
   }
 }
 
+@keyframes fab-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fab-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  75%,
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+.fab-add {
+  animation: fab-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fab-add::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px currentColor;
+  animation: fab-ping 2.2s cubic-bezier(0, 0, 0.2, 1) 0.7s infinite;
+  pointer-events: none;
+}
+
+.fab-add-icon {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fab-add:active {
+  transform: scale(0.9);
+}
+
+.fab-add:active .fab-add-icon {
+  transform: rotate(90deg) scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fab-add,
+  .fab-add::after {
+    animation: none;
+  }
+
+  .fab-add-icon {
+    transition: none;
+  }
+}
+
 .animate-slide-up {
   animation: slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
