@@ -23,6 +23,7 @@ import {
   revokeHouseholdInvite,
 } from "@/lib/supabase/data";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { friendlyError } from "@/lib/errors";
 import type {
   Household,
   HouseholdInvite,
@@ -56,20 +57,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function friendlyAuthError(e: unknown, fallback: string): string {
-  const msg = e instanceof Error ? e.message : String(e);
-  if (/Invalid or expired invite/i.test(msg)) {
-    return "Código inválido o vencido";
-  }
-  if (/Not authenticated|JWT|session/i.test(msg)) {
-    return "Se venció el acceso. Entrá de nuevo.";
-  }
-  if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
-    return "Sin conexión. Probá de nuevo en un rato.";
-  }
-  return msg || fallback;
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const configured = isSupabaseConfigured();
@@ -155,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = useCallback(
     async (email: string, next = "/", displayName?: string) => {
       if (!supabase) {
-        return { error: "Supabase no configurado" };
+        return { error: "No se puede entrar ahora." };
       }
 
       const siteUrl =
@@ -173,21 +160,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      return { error: error?.message };
+      if (error) {
+        return { error: friendlyError(error, "No se pudo enviar el link.") };
+      }
+      return {};
     },
     [supabase],
   );
 
   const updateDisplayName = useCallback(
     async (name: string) => {
-      if (!supabase || !user) return { error: "Entrá de nuevo" };
+      if (!supabase || !user) return { error: "Entrá de nuevo." };
       try {
         const profile = await saveDisplayName(supabase, user.id, name);
         setProfile(profile);
         await loadHousehold(user.id);
         return {};
       } catch (e) {
-        return { error: friendlyAuthError(e, "No se pudo guardar el nombre") };
+        return { error: friendlyError(e, "No se pudo guardar el nombre") };
       }
     },
     [supabase, user, loadHousehold],
@@ -218,13 +208,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await loadPendingInvites(household.id);
       return { code };
     } catch (e) {
-      return { error: friendlyAuthError(e, "No se pudo crear el código") };
+      return { error: friendlyError(e, "No se pudo crear el código") };
     }
   }, [supabase, user, household, loadPendingInvites]);
 
   const acceptInvite = useCallback(
     async (code: string) => {
-      if (!supabase) return { error: "Supabase no configurado" };
+      if (!supabase) return { error: "Esto no está disponible ahora." };
 
       try {
         await acceptHouseholdInvite(supabase, code);
@@ -232,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {};
       } catch (e) {
         return {
-          error: friendlyAuthError(e, "Ese código no sirve"),
+          error: friendlyError(e, "Ese código no sirve"),
         };
       }
     },
@@ -241,31 +231,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const revokeInvite = useCallback(
     async (inviteId: string) => {
-      if (!supabase) return { error: "Supabase no configurado" };
+      if (!supabase) return { error: "Esto no está disponible ahora." };
       try {
         await revokeHouseholdInvite(supabase, inviteId);
         if (household) await loadPendingInvites(household.id);
         return {};
       } catch (e) {
-        return { error: friendlyAuthError(e, "No se pudo cancelar") };
+        return { error: friendlyError(e, "No se pudo cancelar") };
       }
     },
     [supabase, household, loadPendingInvites],
   );
 
   const leaveCurrentHousehold = useCallback(async () => {
-    if (!supabase) return { error: "Supabase no configurado" };
+    if (!supabase) return { error: "Esto no está disponible ahora." };
     try {
       await leaveHousehold(supabase);
       await refreshHousehold();
       return {};
     } catch (e) {
-      return { error: friendlyAuthError(e, "No se pudo salir del grupo") };
+      return { error: friendlyError(e, "No se pudo salir del grupo") };
     }
   }, [supabase, refreshHousehold]);
 
   const deleteAccount = useCallback(async () => {
-    if (!supabase) return { error: "Supabase no configurado" };
+    if (!supabase) return { error: "Esto no está disponible ahora." };
     try {
       await deleteOwnAccount(supabase);
       await supabase.auth.signOut();
@@ -277,7 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPendingInvites([]);
       return {};
     } catch (e) {
-      return { error: friendlyAuthError(e, "No se pudo borrar la cuenta") };
+      return { error: friendlyError(e, "No se pudo borrar la cuenta") };
     }
   }, [supabase]);
 

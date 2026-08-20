@@ -23,6 +23,7 @@ import {
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
 import { affectsUserBalance } from "@/lib/movement-access";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
+import { friendlyError } from "@/lib/errors";
 import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
 import { useIsClient } from "@/hooks/useIsClient";
 import {
@@ -102,14 +103,9 @@ interface FinanceContextValue {
 }
 
 function friendlySyncError(e: unknown): string {
-  const msg = e instanceof Error ? e.message : String(e);
-  if (/JWT|session|not authenticated|Invalid Refresh Token/i.test(msg)) {
-    return "Se venció el acceso. Entrá de nuevo.";
-  }
-  if (/Failed to fetch|NetworkError|fetch/i.test(msg)) {
-    return "Sin conexión. Estamos mostrando lo de este celular.";
-  }
-  return msg || "No se pudo guardar en la nube.";
+  return friendlyError(e, "No se pudo guardar en la nube.", {
+    offline: "Sin conexión. Estamos mostrando lo de este celular.",
+  });
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);

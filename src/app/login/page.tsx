@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { loginQueryError } from "@/lib/errors";
 import { safeNextPath } from "@/lib/movement-access";
 import { IconMyCash } from "@/components/ui/Icons";
 
@@ -27,12 +28,6 @@ function loginCopy(next: string, reason: string | null) {
   };
 }
 
-function authErrorCopy(code: string | null): string | null {
-  if (code === "auth") return "El link expiró o no es válido. Pedí uno nuevo.";
-  if (code === "supabase") return "No se puede entrar en esta instalación.";
-  return null;
-}
-
 function LoginForm() {
   const searchParams = useSearchParams();
   const next = safeNextPath(searchParams.get("next"));
@@ -42,7 +37,7 @@ function LoginForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState(authErrorCopy(searchParams.get("error")) ?? "");
+  const [error, setError] = useState(loginQueryError(searchParams.get("error")) ?? "");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {

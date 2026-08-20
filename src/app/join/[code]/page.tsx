@@ -45,7 +45,7 @@ export default function JoinPage() {
   if (!configured) {
     return (
       <div className="card space-y-4 p-6 text-center text-sm text-zinc-500">
-        Supabase no configurado.
+        Esto no está disponible ahora.
         <Link href="/" className="block text-teal-600">
           Volver
         </Link>
