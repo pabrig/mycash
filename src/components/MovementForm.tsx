@@ -4,7 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
-import { todayIso } from "@/lib/format";
+import { currentPeriod, formatMonth, todayIso } from "@/lib/format";
+import {
+  addDaysIso,
+  defaultDateForPeriod,
+  expandMonthlyDates,
+  installmentLabel,
+  MAX_REPEAT_COUNT,
+  notesInPeriodLabel,
+  seriesPreview,
+  type RepeatMode,
+} from "@/lib/schedule";
 import {
   EXPENSE_CATEGORIES,
   INCOME_SOURCES,
@@ -21,6 +31,7 @@ import {
   INCOME_KIND_LABELS,
   expenseCategoryLabel,
   incomeSourceLabel,
+  normalizeIncomeSource,
 } from "@/lib/labels";
 
 const CURRENCIES: Currency[] = ["ARS", "USD"];
@@ -128,14 +139,25 @@ export function MovementForm({
   };
 }) {
   const router = useRouter();
-  const { addMovement, updateMovement, walletMode, sharedEnabled, usdEnabled } =
-    useFinance();
+  const {
+    addMovement,
+    addMovements,
+    updateMovement,
+    walletMode,
+    sharedEnabled,
+    usdEnabled,
+    year,
+    month,
+    setPeriod,
+  } = useFinance();
   const isEdit = Boolean(initial);
 
   const [type, setType] = useState<MovementType>(
     initial?.type ?? "expense",
   );
-  const [date, setDate] = useState(initial?.date ?? todayIso());
+  const [date, setDate] = useState(
+    initial?.date ?? defaultDateForPeriod(year, month),
+  );
   const [amount, setAmount] = useState(
     initial ? String(initial.amount) : (prefill?.amount ?? ""),
   );
@@ -159,47 +181,103 @@ export function MovementForm({
   const [incomeKind, setIncomeKind] = useState<IncomeKind>(
     initial?.incomeKind ?? "active",
   );
-  const [source, setSource] = useState(initial?.source ?? "otros");
+  const [source, setSource] = useState(
+    normalizeIncomeSource(initial?.source ?? "otros"),
+  );
   const [walletChoice, setWalletChoice] = useState<WalletChoice>(
     initial?.wallet ?? "auto",
   );
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>("once");
+  const [repeatCount, setRepeatCount] = useState(12);
+  const [firstInstallment, setFirstInstallment] = useState(1);
+  const [totalInstallments, setTotalInstallments] = useState(12);
   const [showMore, setShowMore] = useState(Boolean(initial));
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const isSharedMode = mode === "shared";
+  const canRepeat = !isEdit;
+  const effectiveRepeat: RepeatMode =
+    !canRepeat || (type === "income" && repeatMode === "installments")
+      ? "once"
+      : repeatMode;
+  const seriesCount =
+    effectiveRepeat === "once"
+      ? 1
+      : effectiveRepeat === "installments"
+        ? Math.max(1, totalInstallments - firstInstallment + 1)
+        : repeatCount;
+  const repeating = effectiveRepeat !== "once";
+  const preview = repeating
+    ? seriesPreview({
+        mode: effectiveRepeat,
+        startIso: date,
+        count: seriesCount,
+        firstInstallment,
+        totalInstallments,
+      })
+    : "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parseFloat(amount.replace(",", "."));
     if (!parsed || parsed <= 0 || !description.trim()) return;
+    if (seriesCount > MAX_REPEAT_COUNT) return;
 
-    const payload = buildPayload({
-      mode,
-      type,
-      date,
-      amount: parsed,
-      currency: usdEnabled ? currency : (initial?.currency ?? "ARS"),
-      description: description.trim(),
-      scope,
-      kind,
-      category,
-      incomeKind,
-      source,
-      walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
+    const effectiveKind: ExpenseKind = repeating ? "fixed" : kind;
+    const dates = repeating
+      ? expandMonthlyDates(date, seriesCount)
+      : [date];
+
+    const payloads = dates.map((entryDate, index) => {
+      const label =
+        effectiveRepeat === "installments"
+          ? installmentLabel(
+              description.trim(),
+              firstInstallment + index,
+              totalInstallments,
+            )
+          : description.trim();
+      return buildPayload({
+        mode,
+        type,
+        date: entryDate,
+        amount: parsed,
+        currency: usdEnabled ? currency : (initial?.currency ?? "ARS"),
+        description: label,
+        scope,
+        kind: effectiveKind,
+        category,
+        incomeKind,
+        source,
+        walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
+      });
     });
 
     setSubmitting(true);
+    setError("");
     try {
       if (initial) {
-        await updateMovement(initial.id, payload);
+        await updateMovement(initial.id, payloads[0]);
+      } else if (payloads.length === 1) {
+        await addMovement(payloads[0]);
       } else {
-        await addMovement(payload);
+        await addMovements(payloads);
       }
+      const now = currentPeriod();
+      setPeriod(now.year, now.month);
       router.push(redirectTo);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar");
     } finally {
       setSubmitting(false);
     }
   }
 
-  const isSharedMode = mode === "shared";
+  const hasMore =
+    ((type === "expense" || isSharedMode) && !repeating) ||
+    type === "income" ||
+    (walletMode === "split" && usdEnabled);
 
   return (
     <form onSubmit={handleSubmit} className="animate-slide-up space-y-6">
@@ -327,28 +405,36 @@ export function MovementForm({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setShowMore(!showMore)}
-        className="w-full text-center text-sm text-zinc-500"
-      >
-        {showMore ? "Menos" : "Fecha y más"}
-      </button>
+      <DateField date={date} onChange={setDate} year={year} month={month} />
 
-      {showMore && (
+      {canRepeat && (
+        <RepeatField
+          type={type}
+          repeatMode={repeatMode}
+          onRepeatMode={setRepeatMode}
+          repeatCount={repeatCount}
+          onRepeatCount={setRepeatCount}
+          firstInstallment={firstInstallment}
+          onFirstInstallment={setFirstInstallment}
+          totalInstallments={totalInstallments}
+          onTotalInstallments={setTotalInstallments}
+          preview={preview}
+        />
+      )}
+
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setShowMore(!showMore)}
+          className="w-full text-center text-sm text-zinc-500"
+        >
+          {showMore ? "Menos" : "Más opciones"}
+        </button>
+      )}
+
+      {hasMore && showMore && (
         <div className="card space-y-4 p-4 animate-fade-in">
-          <div>
-            <label className="mb-1 block text-xs text-zinc-500">Fecha</label>
-            <input
-              type="date"
-              required
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="input-field"
-            />
-          </div>
-
-          {(type === "expense" || isSharedMode) && (
+          {(type === "expense" || isSharedMode) && !repeating && (
             <div className="flex gap-2">
               {(["fixed", "variable"] as const).map((k) => (
                 <button
@@ -408,12 +494,20 @@ export function MovementForm({
         </div>
       )}
 
+      {error && <p className="text-xs text-rose-500">{error}</p>}
+
       <button type="submit" disabled={submitting} className="btn-primary w-full">
         {submitting
           ? "Guardando…"
-            : isEdit
+          : isEdit
             ? "Guardar cambios"
-            : "Cargar"}
+            : repeating && effectiveRepeat === "installments"
+              ? seriesCount === 1
+                ? "Cargar 1 cuota"
+                : `Cargar ${seriesCount} cuotas`
+              : repeating
+                ? `Cargar ${seriesCount} meses`
+                : "Cargar"}
       </button>
 
       <Link
@@ -423,5 +517,188 @@ export function MovementForm({
         Cancelar
       </Link>
     </form>
+  );
+}
+
+function DateField({
+  date,
+  onChange,
+  year,
+  month,
+}: {
+  date: string;
+  onChange: (value: string) => void;
+  year: number;
+  month: number;
+}) {
+  const today = todayIso();
+  const periodStart = defaultDateForPeriod(year, month, today);
+  const chips = [
+    ...(periodStart !== today && year > 0
+      ? [{ label: formatMonth(year, month), value: periodStart }]
+      : []),
+    { label: "Ayer", value: addDaysIso(today, -1) },
+    { label: "Hoy", value: today },
+    { label: "Mañana", value: addDaysIso(today, 1) },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium uppercase tracking-wide text-zinc-400">
+        Fecha
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <button
+            key={chip.label}
+            type="button"
+            onClick={() => onChange(chip.value)}
+            className={`chip ${date === chip.value ? "chip-active" : "chip-inactive"}`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      <input
+        type="date"
+        required
+        value={date}
+        onChange={(e) => onChange(e.target.value)}
+        className="input-field"
+      />
+      <p className="text-xs text-zinc-400">{notesInPeriodLabel(date)}</p>
+    </div>
+  );
+}
+
+function RepeatField({
+  type,
+  repeatMode,
+  onRepeatMode,
+  repeatCount,
+  onRepeatCount,
+  firstInstallment,
+  onFirstInstallment,
+  totalInstallments,
+  onTotalInstallments,
+  preview,
+}: {
+  type: MovementType;
+  repeatMode: RepeatMode;
+  onRepeatMode: (mode: RepeatMode) => void;
+  repeatCount: number;
+  onRepeatCount: (count: number) => void;
+  firstInstallment: number;
+  onFirstInstallment: (n: number) => void;
+  totalInstallments: number;
+  onTotalInstallments: (n: number) => void;
+  preview: string;
+}) {
+  const modes: { id: RepeatMode; label: string }[] =
+    type === "income"
+      ? [
+          { id: "once", label: "Una vez" },
+          { id: "monthly", label: "Todos los meses" },
+        ]
+      : [
+          { id: "once", label: "Una vez" },
+          { id: "monthly", label: "Todos los meses" },
+          { id: "installments", label: "En cuotas" },
+        ];
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400">
+          ¿Se repite?
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {modes.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onRepeatMode(id)}
+              className={`chip ${repeatMode === id ? "chip-active" : "chip-inactive"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+          {repeatMode === "monthly"
+            ? type === "income"
+              ? "Sueldo u otra entrada que llega todos los meses."
+              : "Luz, internet, impuestos, alquiler. Se carga un gasto por mes."
+            : repeatMode === "installments"
+              ? "Tarjeta o crédito. Se carga cada cuota en su mes, con 3/12, 4/12…"
+              : "Solo esta fecha. Puede ser pasado o futuro."}
+        </p>
+      </div>
+
+      {repeatMode === "monthly" && (
+        <div>
+          <p className="mb-2 text-xs text-zinc-500">¿Cuántos meses?</p>
+          <div className="flex flex-wrap gap-2">
+            {[3, 6, 12, 24].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onRepeatCount(n)}
+                className={`chip ${repeatCount === n ? "chip-active" : "chip-inactive"}`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {repeatMode === "installments" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs text-zinc-500">Cuotas en total</label>
+            <input
+              type="number"
+              min={2}
+              max={MAX_REPEAT_COUNT}
+              value={totalInstallments}
+              onChange={(e) => {
+                const next = Math.min(
+                  MAX_REPEAT_COUNT,
+                  Math.max(2, Number(e.target.value) || 2),
+                );
+                onTotalInstallments(next);
+                if (firstInstallment > next) onFirstInstallment(1);
+              }}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-zinc-500">Esta es la n°</label>
+            <input
+              type="number"
+              min={1}
+              max={totalInstallments}
+              value={firstInstallment}
+              onChange={(e) =>
+                onFirstInstallment(
+                  Math.min(
+                    totalInstallments,
+                    Math.max(1, Number(e.target.value) || 1),
+                  ),
+                )
+              }
+              className="input-field"
+            />
+          </div>
+        </div>
+      )}
+
+      {preview && (
+        <p className="text-xs font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">
+          {preview}
+        </p>
+      )}
+    </div>
   );
 }
