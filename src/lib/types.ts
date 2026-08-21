@@ -112,7 +112,7 @@ export interface MonthSnapshot {
   movementCount: number;
 }
 
-/** Totales del año en USD. Cada movimiento se convierte al TC de su mes. */
+/** Totales del año. Cada movimiento se convierte al TC de su mes (USD o ARS). */
 export interface AnnualSummary {
   year: number;
   passiveIncome: number;

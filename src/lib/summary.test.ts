@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatDisplay, formatMoney, formatUsd, initials } from "./format";
 import { affectsUserBalance } from "./movement-access";
-import { computeAnnualSummary, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth, monthlySummaryToUsd } from "./summary";
+import { computeAnnualSummary, computeAnnualSummaryArs, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth, monthlySummaryToUsd } from "./summary";
 import type { MonthlyRate, Movement } from "./types";
 
 const rate: MonthlyRate = {
@@ -157,6 +157,23 @@ describe("computeAnnualSummary", () => {
     expect(annual.totalExpenses).toBe(
       annual.personalExpenses + annual.sharedExpenses,
     );
+    expect(annual.disponible).toBe(annual.totalIncome - annual.totalExpenses);
+  });
+});
+
+describe("computeAnnualSummaryArs", () => {
+  it("aggregates all months in ARS using each month's rate", () => {
+    const janRate: MonthlyRate = { year: 2026, month: 1, usdToArs: 1000 };
+    const annual = computeAnnualSummaryArs(movements, 2026, [janRate, rate]);
+
+    expect(annual.movementCount).toBe(5);
+    expect(annual.activeMonths).toBe(2);
+    expect(annual.passiveIncome).toBe(3500 * 1200);
+    expect(annual.activeIncome).toBe(500000);
+    expect(annual.personalExpenses).toBe(280000 + 50000);
+    expect(annual.sharedExpenses).toBe(100 * 1200);
+    expect(annual.totalIncome).toBe(3500 * 1200 + 500000);
+    expect(annual.totalExpenses).toBe(280000 + 100 * 1200 + 50000);
     expect(annual.disponible).toBe(annual.totalIncome - annual.totalExpenses);
   });
 });

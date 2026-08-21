@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import {
   useDisplayAmount,
@@ -8,12 +8,22 @@ import {
   useFormatUsd,
 } from "@/hooks/useDisplayAmount";
 import { formatMoney, todayIso } from "@/lib/format";
+import { computeSplitMonthlyBreakdown } from "@/lib/wallet";
 import type { SummaryScope } from "@/lib/types";
 import { IconChevronDown } from "@/components/ui/Icons";
 
 export function DisponibleHero({ scope }: { scope: SummaryScope }) {
-  const { walletMode, summary, annualSummary, sharedEnabled } = useFinance();
+  const {
+    walletMode,
+    summary,
+    annualSummary,
+    annualSummaryArs,
+    sharedEnabled,
+    usdEnabled,
+    displayCurrency,
+  } = useFinance();
   const fmt = useDisplayAmount();
+  const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -22,18 +32,33 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
   }
 
   const isYear = scope === "year";
-  const disponible = isYear ? annualSummary.disponible : summary.disponible;
+  const preferUsd = isYear && usdEnabled && displayCurrency === "USD";
+  const yearPrimary = preferUsd ? annualSummary : annualSummaryArs;
+  const yearSecondary = preferUsd ? annualSummaryArs : annualSummary;
+  const yearFmt = preferUsd ? formatUsd : formatArs;
+  const yearOtherFmt = preferUsd ? formatArs : formatUsd;
+
+  const disponible = isYear ? yearPrimary.disponible : summary.disponible;
   const positive = disponible >= 0;
-  const show = isYear ? formatUsd : fmt;
+  const show = isYear ? yearFmt : fmt;
 
   const monthLabel =
     annualSummary.activeMonths === 1
       ? "1 mes"
       : `${annualSummary.activeMonths} meses`;
 
-  const income = isYear ? annualSummary.totalIncome : summary.totalIncome;
-  const expenses = isYear ? annualSummary.totalExpenses : summary.totalExpenses;
-  const shared = isYear ? annualSummary.sharedExpenses : summary.sharedExpenses;
+  const income = isYear ? yearPrimary.totalIncome : summary.totalIncome;
+  const expenses = isYear ? yearPrimary.totalExpenses : summary.totalExpenses;
+  const shared = isYear ? yearPrimary.sharedExpenses : summary.sharedExpenses;
+  const incomeDetail = isYear ? yearOtherFmt(yearSecondary.totalIncome) : null;
+  const expensesDetail = isYear ? yearOtherFmt(yearSecondary.totalExpenses) : null;
+  const sharedDetail = isYear ? yearOtherFmt(yearSecondary.sharedExpenses) : null;
+
+  const yearCaption = isYear
+    ? preferUsd
+      ? `${formatArs(annualSummaryArs.disponible)} en pesos · ${monthLabel} · al dólar de cada mes`
+      : `${formatUsd(annualSummary.disponible)} · ${monthLabel} · al dólar de cada mes`
+    : null;
 
   return (
     <section className="animate-slide-up space-y-3">
@@ -49,11 +74,7 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
           >
             {show(disponible)}
           </p>
-          {isYear && (
-            <p className="meta mt-2">
-              Total del año · {monthLabel} · al dólar de cada mes
-            </p>
-          )}
+          {yearCaption && <p className="meta mt-2">{yearCaption}</p>}
 
           <button
             type="button"
@@ -69,12 +90,23 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
 
         {detailsOpen && (
           <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4 sm:grid-cols-3">
-            <MacroStat label="Ingresos" value={show(income)} tone="income" />
-            <MacroStat label="Gastos" value={show(expenses)} tone="expense" />
+            <MacroStat
+              label="Ingresos"
+              value={show(income)}
+              detail={incomeDetail}
+              tone="income"
+            />
+            <MacroStat
+              label="Gastos"
+              value={show(expenses)}
+              detail={expensesDetail}
+              tone="expense"
+            />
             {sharedEnabled && (
               <MacroStat
                 label="Compartido"
                 value={show(shared)}
+                detail={sharedDetail}
                 tone="shared"
                 className="col-span-2 sm:col-span-1"
               />
@@ -89,11 +121,13 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
 function MacroStat({
   label,
   value,
+  detail,
   tone,
-  className = ""
+  className = "",
 }: {
   label: string;
   value: string;
+  detail?: string | null;
   tone: "income" | "expense" | "shared";
   className?: string;
 }) {
@@ -110,12 +144,16 @@ function MacroStat({
       <p className={`mt-1 text-base font-bold tabular-nums ${color}`}>
         {value}
       </p>
+      {detail && (
+        <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">{detail}</p>
+      )}
     </div>
   );
 }
 
 function SplitHero({ scope }: { scope: SummaryScope }) {
-  const { splitSummary, splitAnnualSummary, year, rate } = useFinance();
+  const { splitSummary, splitAnnualSummary, year, rate, ownMovements, rates } =
+    useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
   const isYear = scope === "year";
@@ -126,38 +164,66 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
   const ahorro = isYear ? splitAnnualSummary.ahorro : splitSummary.ahorro;
   const showCotidiano = isYear ? formatUsd : formatArs;
   const ahorroArs = isYear ? null : ahorro.disponible * rate.usdToArs;
-  const positive = cotidiano.disponible >= 0;
+  const splitBreakdown = useMemo(
+    () =>
+      isYear ? computeSplitMonthlyBreakdown(ownMovements, year, rates) : [],
+    [isYear, ownMovements, year, rates],
+  );
+  const vidaArsYear = useMemo(
+    () =>
+      splitBreakdown.reduce(
+        (acc, snap) => ({
+          income: acc.income + snap.split.vida.income,
+          expenses: acc.expenses + snap.split.vida.expenses,
+          disponible: acc.disponible + snap.split.vida.disponible,
+        }),
+        { income: 0, expenses: 0, disponible: 0 },
+      ),
+    [splitBreakdown],
+  );
+  const positive = isYear
+    ? vidaArsYear.disponible >= 0
+    : cotidiano.disponible >= 0;
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento !p-0 overflow-hidden">
         <div className="px-6 pt-7 pb-5">
           <p className="text-sm font-medium text-zinc-400">
-            Cotidiano · {isYear ? "USD" : "ARS"}
-            {isYear && ` · ${year}`}
+            Cotidiano · {isYear ? `${year}` : "ARS"}
           </p>
           <p
             className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums ${
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
-            {showCotidiano(cotidiano.disponible)}
+            {isYear
+              ? formatArs(vidaArsYear.disponible)
+              : showCotidiano(cotidiano.disponible)}
           </p>
           <p className="meta mt-2">
             {isYear
-              ? "Total del año · al dólar de cada mes"
+              ? `${formatUsd(cotidiano.disponible)} · al dólar de cada mes`
               : "Lo que te queda este mes"}
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4">
           <MacroStat
             label="Ingresos"
-            value={showCotidiano(cotidiano.income)}
+            value={
+              isYear ? formatArs(vidaArsYear.income) : showCotidiano(cotidiano.income)
+            }
+            detail={isYear ? formatUsd(cotidiano.income) : null}
             tone="income"
           />
           <MacroStat
             label="Gastos"
-            value={showCotidiano(cotidiano.expenses)}
+            value={
+              isYear
+                ? formatArs(vidaArsYear.expenses)
+                : showCotidiano(cotidiano.expenses)
+            }
+            detail={isYear ? formatUsd(cotidiano.expenses) : null}
             tone="expense"
           />
         </div>

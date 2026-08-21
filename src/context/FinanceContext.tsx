@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getRateForMonth } from "@/lib/storage";
 import {
   computeAnnualSummary,
+  computeAnnualSummaryArs,
   computeMonthlySummary,
   filterByMonth,
 } from "@/lib/summary";
@@ -97,6 +98,7 @@ interface FinanceContextValue {
   summary: MonthlySummary;
   splitSummary: SplitMonthlySummary;
   annualSummary: AnnualSummary;
+  annualSummaryArs: AnnualSummary;
   splitAnnualSummary: SplitAnnualSummary;
   rate: MonthlyRate;
   refreshData: () => Promise<void>;
@@ -535,6 +537,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [ownMovements, year, rates],
   );
 
+  const annualSummaryArs = useMemo(
+    () => computeAnnualSummaryArs(ownMovements, year, rates),
+    [ownMovements, year, rates],
+  );
+
   const splitSummary = useMemo(
     () => computeSplitMonthlySummary(monthMovements, rate),
     [monthMovements, rate],
@@ -582,6 +589,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       summary,
       splitSummary,
       annualSummary,
+      annualSummaryArs,
       splitAnnualSummary,
       rate,
       refreshData,
@@ -617,6 +625,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       summary,
       splitSummary,
       annualSummary,
+      annualSummaryArs,
       splitAnnualSummary,
       rate,
       refreshData,

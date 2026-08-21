@@ -113,18 +113,18 @@ export function computeMonthlySummary(
   };
 }
 
-export function computeAnnualSummary(
+function buildAnnualSummary(
   movements: Movement[],
   year: number,
   rates: MonthlyRate[],
+  convert: AmountConverter,
 ): AnnualSummary {
   const yearMovements = filterByYear(movements, year);
   const aggregated = aggregateMovements(
     yearMovements,
     (y, m) => getRateForMonth(rates, y, m),
-    toUsd,
+    convert,
   );
-  const activeMonths = countActiveMonths(yearMovements, year);
 
   return {
     year,
@@ -138,8 +138,26 @@ export function computeAnnualSummary(
     totalExpenses: aggregated.totalExpenses,
     disponible: aggregated.disponible,
     movementCount: aggregated.movementCount,
-    activeMonths,
+    activeMonths: countActiveMonths(yearMovements, year),
   };
+}
+
+/** Totales del año en USD. Cada movimiento se convierte al TC de su mes. */
+export function computeAnnualSummary(
+  movements: Movement[],
+  year: number,
+  rates: MonthlyRate[],
+): AnnualSummary {
+  return buildAnnualSummary(movements, year, rates, toUsd);
+}
+
+/** Totales del año en pesos. Cada movimiento se convierte al TC de su mes. */
+export function computeAnnualSummaryArs(
+  movements: Movement[],
+  year: number,
+  rates: MonthlyRate[],
+): AnnualSummary {
+  return buildAnnualSummary(movements, year, rates, toArs);
 }
 
 export function monthlySummaryToUsd(
