@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Fab } from "@/components/Fab";
 import { useFinance } from "@/context/FinanceContext";
 import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
+import { showOfficialRate } from "@/lib/money-profile";
 import { IconHome, IconSplit, IconUsers } from "@/components/ui/Icons";
 
 const HIDE_NAV_PREFIXES = [
@@ -26,7 +27,7 @@ type NavItem = {
 /** Solo mobile — oculto desde md (lo reemplaza DesktopSidebar). */
 export function BottomNav() {
   const pathname = usePathname();
-  const { sharedEnabled, usdEnabled } = useFinance();
+  const { sharedEnabled, usdEnabled, walletMode } = useFinance();
   const hideNav = HIDE_NAV_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (hideNav) return null;
@@ -53,7 +54,7 @@ export function BottomNav() {
   return (
     <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[var(--app-bottom-gap)] md:hidden">
       <div className="pointer-events-auto relative mx-auto max-w-lg px-4">
-        {usdEnabled && <RatePill />}
+        {showOfficialRate(usdEnabled, walletMode) && <RatePill />}
         <div className="relative mt-5 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
           <Fab />
           <ul className="grid grid-cols-3 items-end px-2 pt-3.5 pb-3.5">

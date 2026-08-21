@@ -10,7 +10,7 @@ export type ExpenseKind = "fixed" | "variable";
 
 export type IncomeKind = "passive" | "active";
 
-/** Bolsa mental: cotidiano (ARS) vs ahorro USD. Id interno "vida" = Cotidiano. */
+/** Bolsa mental: diario (ARS) vs ahorro USD. Id interno "vida" = Diario. */
 export type Wallet = "vida" | "ahorro";
 
 export type WalletMode = "unified" | "split";
@@ -34,15 +34,12 @@ export interface SplitMonthlySummary {
 
 export interface SplitAnnualSummary {
   year: number;
+  /** Totales del año en USD (cotidiano convertido al TC de cada mes) */
   vida: WalletBucketSummary;
   ahorro: WalletBucketSummary;
   equivalentTotalArs: number;
   movementCount: number;
   activeMonths: number;
-  averages: {
-    vida: Pick<WalletBucketSummary, "income" | "expenses" | "disponible">;
-    ahorro: Pick<WalletBucketSummary, "income" | "expenses" | "disponible">;
-  };
 }
 
 export interface Movement {
@@ -108,18 +105,6 @@ export interface MonthlySummary {
   disponible: number;
 }
 
-export interface AnnualAverages {
-  disponible: number;
-  totalIncome: number;
-  totalExpenses: number;
-  sharedExpenses: number;
-  passiveIncome: number;
-  activeIncome: number;
-  personalExpenses: number;
-  personalFixed: number;
-  personalVariable: number;
-}
-
 export interface MonthSnapshot {
   year: number;
   month: number;
@@ -127,6 +112,7 @@ export interface MonthSnapshot {
   movementCount: number;
 }
 
+/** Totales del año. Cada movimiento se convierte al TC de su mes (USD o ARS). */
 export interface AnnualSummary {
   year: number;
   passiveIncome: number;
@@ -141,7 +127,6 @@ export interface AnnualSummary {
   movementCount: number;
   /** Meses del año con al menos un movimiento */
   activeMonths: number;
-  averages: AnnualAverages;
 }
 
 export type SummaryScope = "month" | "year";

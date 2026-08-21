@@ -8,6 +8,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
+import { showOfficialRate } from "@/lib/money-profile";
 import {
   IconHome,
   IconPlus,
@@ -91,7 +92,7 @@ export function DesktopSidebar() {
           </div>
         )}
 
-        {usdEnabled && <SidebarRate />}
+        {showOfficialRate(usdEnabled, walletMode) && <SidebarRate />}
 
         <div className="flex items-center justify-between px-1">
           <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">

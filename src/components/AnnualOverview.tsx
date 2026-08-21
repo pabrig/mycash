@@ -1,24 +1,38 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useFinance } from "@/context/FinanceContext";
-import { useDisplayAmount, useFormatMoney, useFormatUsd, useFormatUsdShort } from "@/hooks/useDisplayAmount";
-import { currentPeriod } from "@/lib/format";
-import { computeMonthlyBreakdown } from "@/lib/summary";
-import { computeSplitMonthlyBreakdown } from "@/lib/wallet";
+import {
+  useFormatMoney,
+  useFormatUsd,
+} from "@/hooks/useDisplayAmount";
+import { currentPeriod, formatMoney } from "@/lib/format";
+import { computeMonthlyBreakdown, getRateForMonth, monthlySummaryToUsd } from "@/lib/summary";
+import { computeSplitMonthlyBreakdown, walletBucketToUsd } from "@/lib/wallet";
 import { MONTH_NAMES } from "@/lib/types";
+import type { MonthlyRate } from "@/lib/types";
 
 export function AnnualOverview({
   onOpenMonth,
 }: {
   onOpenMonth: (month: number) => void;
 }) {
-  const { walletMode, year, month, ownMovements, rates, annualSummary, splitAnnualSummary, setPeriod } =
-    useFinance();
-  const fmt = useDisplayAmount();
-  const formatMoney = useFormatMoney();
+  const {
+    walletMode,
+    year,
+    month,
+    ownMovements,
+    rates,
+    annualSummary,
+    annualSummaryArs,
+    splitAnnualSummary,
+    setPeriod,
+    usdEnabled,
+    displayCurrency,
+  } = useFinance();
+  const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
-  const formatUsdShort = useFormatUsdShort();
+  const preferUsd = usdEnabled && displayCurrency === "USD";
 
   const breakdown = useMemo(
     () => computeMonthlyBreakdown(ownMovements, year, rates),
@@ -30,46 +44,49 @@ export function AnnualOverview({
     [ownMovements, year, rates],
   );
 
+  const vidaArsYear = useMemo(
+    () =>
+      splitBreakdown.reduce(
+        (acc, snap) => ({
+          income: acc.income + snap.split.vida.income,
+          expenses: acc.expenses + snap.split.vida.expenses,
+        }),
+        { income: 0, expenses: 0 },
+      ),
+    [splitBreakdown],
+  );
+
   const now = currentPeriod();
+  const mixSummary = preferUsd ? annualSummary : annualSummaryArs;
+  const mixFmt = preferUsd ? formatUsd : formatArs;
+  const mixHint = preferUsd
+    ? "Al dólar de cierre de cada mes"
+    : "En pesos de cada mes";
 
   if (walletMode === "split") {
-    const { averages, activeMonths } = splitAnnualSummary;
+    const { vida, ahorro, activeMonths } = splitAnnualSummary;
 
     return (
       <section className="animate-slide-up space-y-4">
-        <div>
-          <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-            Mes a mes · {year}
-          </h2>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Promedio de {activeMonths}{" "}
-            {activeMonths === 1 ? "mes con algo anotado" : "meses con algo anotado"}
-          </p>
-        </div>
+        <YearHeader year={year} activeMonths={activeMonths} />
 
         <div className="space-y-3">
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-              Cotidiano · ARS
+              Diario · ARS
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <AvgPill
                 label="↑ Ingresos"
-                value={averages.vida.income}
-                formatter={formatMoney}
+                primary={formatArs(vidaArsYear.income)}
+                secondary={formatUsd(vida.income)}
                 tone="income"
               />
               <AvgPill
                 label="↓ Gastos"
-                value={averages.vida.expenses}
-                formatter={formatMoney}
+                primary={formatArs(vidaArsYear.expenses)}
+                secondary={formatUsd(vida.expenses)}
                 tone="expense"
-              />
-              <AvgPill
-                label="Te queda"
-                value={averages.vida.disponible}
-                formatter={formatMoney}
-                tone="balance"
               />
             </div>
           </div>
@@ -78,36 +95,32 @@ export function AnnualOverview({
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
               Ahorro · USD
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <AvgPill
                 label="↑ Entradas"
-                value={averages.ahorro.income}
-                formatter={formatUsd}
+                primary={formatUsd(ahorro.income)}
                 tone="income"
               />
               <AvgPill
                 label="↓ Salidas"
-                value={averages.ahorro.expenses}
-                formatter={formatUsd}
+                primary={formatUsd(ahorro.expenses)}
                 tone="expense"
-              />
-              <AvgPill
-                label="Te queda"
-                value={averages.ahorro.disponible}
-                formatter={formatUsd}
-                tone="balance"
               />
             </div>
           </div>
         </div>
 
-        <IncomeMixCard averages={annualSummary.averages} fmt={fmt} />
+        <IncomeMixCard
+          summary={mixSummary}
+          fmt={mixFmt}
+          hint={mixHint}
+        />
 
         <div className="bento overflow-hidden !p-0">
-          <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <div className="grid grid-cols-[4.75rem_1fr_1fr] gap-x-3 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
             <span>Mes</span>
-            <span className="text-right">Cotidiano</span>
-            <span className="text-right">Ahorro</span>
+            <span className="text-right">Ingresos</span>
+            <span className="text-right">Gastos</span>
           </div>
 
           <ul className="space-y-0.5 px-1.5 pb-2">
@@ -118,8 +131,8 @@ export function AnnualOverview({
                 year === now.year;
               const isSelected = snap.month === month && year === snap.year;
               const hasActivity = snap.movementCount > 0;
-              const vidaPositive = snap.split.vida.disponible >= 0;
-              const ahorroPositive = snap.split.ahorro.disponible >= 0;
+              const rate = getRateForMonth(rates, snap.year, snap.month);
+              const vidaUsd = walletBucketToUsd(snap.split.vida, rate);
 
               return (
                 <li key={snap.month}>
@@ -129,45 +142,74 @@ export function AnnualOverview({
                       setPeriod(year, snap.month);
                       onOpenMonth(snap.month);
                     }}
-                    className={`grid w-full grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 rounded-2xl px-2.5 py-3 text-left transition ${
+                    className={`w-full rounded-2xl px-3 py-3 text-left transition ${
                       isSelected
                         ? "bg-[var(--card-muted)]"
                         : "active:bg-[var(--card-muted)]"
                     }`}
                   >
-                    <span
-                      className={`self-center text-sm ${hasActivity ? "font-semibold" : "text-zinc-400"}`}
-                    >
-                      {MONTH_NAMES[snap.month - 1].slice(0, 3)}
-                      {isCurrent && (
-                        <span className="ml-1 text-[10px] font-medium text-teal-600">
-                          hoy
+                    <div className="flex items-start justify-between gap-3">
+                      <MonthLabel
+                        month={snap.month}
+                        isCurrent={isCurrent}
+                        hasActivity={hasActivity}
+                        rate={null}
+                      />
+                      {hasActivity ? (
+                        <span className="pt-0.5 text-[10px] tabular-nums text-zinc-400">
+                          {isCurrent ? "dólar" : "cierre"}{" "}
+                          {formatMoney(rate.usdToArs)}
+                        </span>
+                      ) : (
+                        <span className="self-center text-xs text-zinc-300 dark:text-zinc-600">
+                          Sin nada
                         </span>
                       )}
-                    </span>
+                    </div>
 
-                    {hasActivity ? (
-                      <>
-                        <MonthBucketCell
-                          disponible={snap.split.vida.disponible}
-                          income={snap.split.vida.income}
-                          expenses={snap.split.vida.expenses}
-                          format={formatMoney}
-                          positive={vidaPositive}
+                    {hasActivity && (
+                      <div className="mt-3 space-y-2.5">
+                        <PocketRow
+                          label="Diario"
+                          income={
+                            <FlowAmount
+                              ars={snap.split.vida.income}
+                              usd={vidaUsd.income}
+                              preferUsd={false}
+                              formatArs={formatArs}
+                              formatUsd={formatUsd}
+                              tone="income"
+                            />
+                          }
+                          expenses={
+                            <FlowAmount
+                              ars={snap.split.vida.expenses}
+                              usd={vidaUsd.expenses}
+                              preferUsd={false}
+                              formatArs={formatArs}
+                              formatUsd={formatUsd}
+                              tone="expense"
+                            />
+                          }
                         />
-                        <MonthBucketCell
-                          disponible={snap.split.ahorro.disponible}
-                          income={snap.split.ahorro.income}
-                          expenses={snap.split.ahorro.expenses}
-                          format={formatUsd}
-                          formatFlow={formatUsdShort}
-                          positive={ahorroPositive}
+                        <PocketRow
+                          label="Ahorro"
+                          income={
+                            <UsdAmount
+                              amount={snap.split.ahorro.income}
+                              formatUsd={formatUsd}
+                              tone="income"
+                            />
+                          }
+                          expenses={
+                            <UsdAmount
+                              amount={snap.split.ahorro.expenses}
+                              formatUsd={formatUsd}
+                              tone="expense"
+                            />
+                          }
                         />
-                      </>
-                    ) : (
-                      <span className="col-span-2 self-center text-right text-xs text-zinc-300 dark:text-zinc-600">
-                        Sin nada
-                      </span>
+                      </div>
                     )}
                   </button>
                 </li>
@@ -175,27 +217,54 @@ export function AnnualOverview({
             })}
           </ul>
 
-          <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 bg-[var(--card-muted)] px-4 py-3.5 text-sm">
-            <span className="self-center font-semibold text-zinc-500">
-              Promedio
-            </span>
-            <MonthBucketCell
-              disponible={averages.vida.disponible}
-              income={averages.vida.income}
-              expenses={averages.vida.expenses}
-              format={formatMoney}
-              positive={averages.vida.disponible >= 0}
-              bold
-            />
-            <MonthBucketCell
-              disponible={averages.ahorro.disponible}
-              income={averages.ahorro.income}
-              expenses={averages.ahorro.expenses}
-              format={formatUsd}
-              formatFlow={formatUsdShort}
-              positive={averages.ahorro.disponible >= 0}
-              bold
-            />
+          <div className="bg-[var(--card-muted)] px-4 py-3.5">
+            <p className="text-sm font-semibold text-zinc-500">Año</p>
+            <div className="mt-3 space-y-2.5">
+              <PocketRow
+                label="Diario"
+                income={
+                  <FlowAmount
+                    ars={vidaArsYear.income}
+                    usd={vida.income}
+                    preferUsd={false}
+                    formatArs={formatArs}
+                    formatUsd={formatUsd}
+                    tone="income"
+                    bold
+                  />
+                }
+                expenses={
+                  <FlowAmount
+                    ars={vidaArsYear.expenses}
+                    usd={vida.expenses}
+                    preferUsd={false}
+                    formatArs={formatArs}
+                    formatUsd={formatUsd}
+                    tone="expense"
+                    bold
+                  />
+                }
+              />
+              <PocketRow
+                label="Ahorro"
+                income={
+                  <UsdAmount
+                    amount={ahorro.income}
+                    formatUsd={formatUsd}
+                    tone="income"
+                    bold
+                  />
+                }
+                expenses={
+                  <UsdAmount
+                    amount={ahorro.expenses}
+                    formatUsd={formatUsd}
+                    tone="expense"
+                    bold
+                  />
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -206,34 +275,42 @@ export function AnnualOverview({
     );
   }
 
-  const { averages, activeMonths } = annualSummary;
+  const { activeMonths } = annualSummary;
+  const primary = preferUsd ? annualSummary : annualSummaryArs;
+  const secondary = preferUsd ? annualSummaryArs : annualSummary;
+  const primaryFmt = preferUsd ? formatUsd : formatArs;
+  const secondaryFmt = preferUsd ? formatArs : formatUsd;
 
   return (
     <section className="animate-slide-up space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-          Mes a mes · {year}
-        </h2>
-        <p className="mt-0.5 text-xs text-zinc-400">
-          Promedio de {activeMonths}{" "}
-          {activeMonths === 1 ? "mes con algo anotado" : "meses con algo anotado"}
-        </p>
+      <YearHeader year={year} activeMonths={activeMonths} />
+
+      <div className="grid grid-cols-2 gap-2">
+        <AvgPill
+          label="Ingresos"
+          primary={primaryFmt(primary.totalIncome)}
+          secondary={secondaryFmt(secondary.totalIncome)}
+          tone="income"
+        />
+        <AvgPill
+          label="Gastos"
+          primary={primaryFmt(primary.totalExpenses)}
+          secondary={secondaryFmt(secondary.totalExpenses)}
+          tone="expense"
+        />
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <AvgPill label="Ingresos" value={averages.totalIncome} fmt={fmt} tone="income" />
-        <AvgPill label="Gastos" value={averages.totalExpenses} fmt={fmt} tone="expense" />
-        <AvgPill label="Te queda" value={averages.disponible} fmt={fmt} tone="balance" />
-      </div>
-
-      <IncomeMixCard averages={averages} fmt={fmt} />
+      <IncomeMixCard
+        summary={mixSummary}
+        fmt={mixFmt}
+        hint={mixHint}
+      />
 
       <div className="bento overflow-hidden !p-0">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+        <div className="grid grid-cols-[minmax(3.5rem,1fr)_1fr_1fr] gap-x-3 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
           <span>Mes</span>
-          <span className="text-right amount-positive">Ingresos</span>
-          <span className="text-right amount-negative">Gastos</span>
-          <span className="text-right">Te queda</span>
+          <span className="text-right">Ingresos</span>
+          <span className="text-right">Gastos</span>
         </div>
 
         <ul className="space-y-0.5 px-1.5 pb-2">
@@ -244,7 +321,8 @@ export function AnnualOverview({
               year === now.year;
             const isSelected = snap.month === month && year === snap.year;
             const hasActivity = snap.movementCount > 0;
-            const positive = snap.summary.disponible >= 0;
+            const rate = getRateForMonth(rates, snap.year, snap.month);
+            const usd = monthlySummaryToUsd(snap.summary, rate);
 
             return (
               <li key={snap.month}>
@@ -254,7 +332,7 @@ export function AnnualOverview({
                     setPeriod(year, snap.month);
                     onOpenMonth(snap.month);
                   }}
-                  className={`grid w-full grid-cols-[1fr_auto_auto_auto] gap-x-3 rounded-2xl px-3 py-3 text-left transition ${
+                  className={`grid w-full grid-cols-[minmax(3.5rem,1fr)_1fr_1fr] gap-x-3 rounded-2xl px-3 py-3 text-left transition ${
                     isSelected
                       ? "bg-[var(--card-muted)]"
                       : isCurrent
@@ -262,33 +340,34 @@ export function AnnualOverview({
                         : "active:bg-[var(--card-muted)]"
                   }`}
                 >
-                  <span
-                    className={`text-sm ${hasActivity ? "font-semibold" : "text-zinc-400"}`}
-                  >
-                    {MONTH_NAMES[snap.month - 1].slice(0, 3)}
-                    {isCurrent && (
-                      <span className="ml-1.5 text-[10px] font-medium text-teal-600">
-                        actual
-                      </span>
-                    )}
-                  </span>
+                  <MonthLabel
+                    month={snap.month}
+                    isCurrent={isCurrent}
+                    hasActivity={hasActivity}
+                    rate={hasActivity ? rate : null}
+                  />
 
                   {hasActivity ? (
                     <>
-                      <span className="text-right text-sm tabular-nums amount-positive">
-                        {fmt(snap.summary.totalIncome)}
-                      </span>
-                      <span className="text-right text-sm tabular-nums amount-negative">
-                        {fmt(snap.summary.totalExpenses)}
-                      </span>
-                      <span
-                        className={`text-right text-sm font-bold tabular-nums ${positive ? "amount-positive" : "amount-negative"}`}
-                      >
-                        {fmt(snap.summary.disponible)}
-                      </span>
+                      <FlowAmount
+                        ars={snap.summary.totalIncome}
+                        usd={usd.totalIncome}
+                        preferUsd={preferUsd}
+                        formatArs={formatArs}
+                        formatUsd={formatUsd}
+                        tone="income"
+                      />
+                      <FlowAmount
+                        ars={snap.summary.totalExpenses}
+                        usd={usd.totalExpenses}
+                        preferUsd={preferUsd}
+                        formatArs={formatArs}
+                        formatUsd={formatUsd}
+                        tone="expense"
+                      />
                     </>
                   ) : (
-                    <span className="col-span-3 text-right text-xs text-zinc-300 dark:text-zinc-600">
+                    <span className="col-span-2 self-center text-right text-xs text-zinc-300 dark:text-zinc-600">
                       Sin nada
                     </span>
                   )}
@@ -298,21 +377,26 @@ export function AnnualOverview({
           })}
         </ul>
 
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 bg-[var(--card-muted)] px-4 py-3.5 text-sm">
-          <span className="font-semibold text-zinc-500">
-            Promedio
-          </span>
-          <span className="text-right font-bold tabular-nums amount-positive">
-            {fmt(averages.totalIncome)}
-          </span>
-          <span className="text-right font-bold tabular-nums amount-negative">
-            {fmt(averages.totalExpenses)}
-          </span>
-          <span
-            className={`text-right font-extrabold tabular-nums ${averages.disponible >= 0 ? "amount-positive" : "amount-negative"}`}
-          >
-            {fmt(averages.disponible)}
-          </span>
+        <div className="grid grid-cols-[minmax(3.5rem,1fr)_1fr_1fr] gap-x-3 bg-[var(--card-muted)] px-4 py-3.5">
+          <span className="self-center text-sm font-semibold text-zinc-500">Año</span>
+          <FlowAmount
+            ars={annualSummaryArs.totalIncome}
+            usd={annualSummary.totalIncome}
+            preferUsd={preferUsd}
+            formatArs={formatArs}
+            formatUsd={formatUsd}
+            tone="income"
+            bold
+          />
+          <FlowAmount
+            ars={annualSummaryArs.totalExpenses}
+            usd={annualSummary.totalExpenses}
+            preferUsd={preferUsd}
+            formatArs={formatArs}
+            formatUsd={formatUsd}
+            tone="expense"
+            bold
+          />
         </div>
       </div>
 
@@ -323,19 +407,110 @@ export function AnnualOverview({
   );
 }
 
-function IncomeMixCard({
-  averages,
-  fmt,
+function YearHeader({
+  year,
+  activeMonths,
 }: {
-  averages: {
+  year: number;
+  activeMonths: number;
+}) {
+  const monthLabel =
+    activeMonths === 1 ? "mes con algo anotado" : "meses con algo anotado";
+
+  return (
+    <div>
+      <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        Mes a mes · {year}
+      </h2>
+      <p className="mt-0.5 text-xs text-zinc-400">
+        {activeMonths} {monthLabel} · pesos de cada mes, dólares al cierre
+      </p>
+    </div>
+  );
+}
+
+function MonthLabel({
+  month,
+  isCurrent,
+  hasActivity,
+  rate,
+}: {
+  month: number;
+  isCurrent: boolean;
+  hasActivity: boolean;
+  rate: MonthlyRate | null;
+}) {
+  return (
+    <span className="min-w-0 self-center">
+      <span
+        className={`block text-sm ${hasActivity ? "font-semibold" : "text-zinc-400"}`}
+      >
+        {MONTH_NAMES[month - 1].slice(0, 3)}
+        {isCurrent && (
+          <span className="ml-1.5 text-[10px] font-medium text-teal-600">
+            actual
+          </span>
+        )}
+      </span>
+      {rate && (
+        <span className="mt-0.5 block text-[10px] tabular-nums text-zinc-400">
+          {isCurrent ? "dólar" : "cierre"} {formatMoney(rate.usdToArs)}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function FlowAmount({
+  ars,
+  usd,
+  preferUsd,
+  formatArs,
+  formatUsd,
+  tone,
+  bold = false,
+}: {
+  ars: number;
+  usd: number;
+  preferUsd: boolean;
+  formatArs: (n: number) => string;
+  formatUsd: (n: number) => string;
+  tone: "income" | "expense";
+  bold?: boolean;
+}) {
+  const primary = preferUsd ? formatUsd(usd) : formatArs(ars);
+  const secondary = preferUsd ? formatArs(ars) : formatUsd(usd);
+  const color = tone === "income" ? "amount-positive" : "amount-negative";
+
+  return (
+    <span className="min-w-0 text-right">
+      <span
+        className={`block truncate tabular-nums ${bold ? "font-bold" : "font-semibold"} text-sm ${color}`}
+      >
+        {primary}
+      </span>
+      <span className="mt-0.5 block truncate text-[10px] tabular-nums text-zinc-400">
+        {secondary}
+      </span>
+    </span>
+  );
+}
+
+function IncomeMixCard({
+  summary,
+  fmt,
+  hint,
+}: {
+  summary: {
     passiveIncome: number;
     activeIncome: number;
     totalIncome: number;
     totalExpenses: number;
   };
   fmt: (n: number) => string;
+  hint: string;
 }) {
-  const { passiveIncome, activeIncome, totalIncome, totalExpenses } = averages;
+  const { passiveIncome, activeIncome, totalIncome, totalExpenses } = summary;
   const hasIncome = totalIncome > 0;
   const gap = passiveIncome - activeIncome;
   const passiveShare = hasIncome ? (passiveIncome / totalIncome) * 100 : 0;
@@ -349,9 +524,7 @@ function IncomeMixCard({
         <p className="text-sm font-semibold tracking-tight">
           De dónde sale tu plata
         </p>
-        <p className="meta mt-0.5 text-xs">
-          Promedio por mes: trabajo y rentas
-        </p>
+        <p className="meta mt-0.5 text-xs">{hint}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -389,11 +562,11 @@ function IncomeMixCard({
           aria-hidden
         >
           <div
-            className="bg-teal-600 transition-all"
+            className="bg-cyan-400 transition-all"
             style={{ width: `${passiveShare}%` }}
           />
           <div
-            className="bg-zinc-400 transition-all"
+            className="bg-teal-600 transition-all"
             style={{ width: `${activeShare}%` }}
           />
         </div>
@@ -432,64 +605,64 @@ function IncomeMixCard({
   );
 }
 
-function MonthBucketCell({
-  disponible,
+function PocketRow({
+  label,
   income,
   expenses,
-  format,
-  formatFlow,
-  positive,
+}: {
+  label: string;
+  income: ReactNode;
+  expenses: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[4.75rem_1fr_1fr] items-start gap-x-3">
+      <span className="pt-0.5 text-[11px] font-semibold text-zinc-500">
+        {label}
+      </span>
+      {income}
+      {expenses}
+    </div>
+  );
+}
+
+function UsdAmount({
+  amount,
+  formatUsd,
+  tone,
   bold = false,
 }: {
-  disponible: number;
-  income: number;
-  expenses: number;
-  format: (n: number) => string;
-  formatFlow?: (n: number) => string;
-  positive: boolean;
+  amount: number;
+  formatUsd: (n: number) => string;
+  tone: "income" | "expense";
   bold?: boolean;
 }) {
-  const flow = formatFlow ?? format;
+  const color = tone === "income" ? "amount-positive" : "amount-negative";
   return (
-    <span className="text-right">
-      <span
-        className={`block tabular-nums ${bold ? "font-bold" : "font-semibold"} text-sm ${positive ? "text-teal-600 dark:text-teal-400" : "text-red-500"}`}
-      >
-        {format(disponible)}
-      </span>
-      <span className="mt-0.5 block text-[10px] tabular-nums text-zinc-400">
-        <span className="text-teal-600/80 dark:text-teal-400/80">↑{flow(income)}</span>
-        {" · "}
-        <span className="text-red-500/80">↓{flow(expenses)}</span>
-      </span>
+    <span
+      className={`block truncate text-right text-sm tabular-nums ${bold ? "font-bold" : "font-semibold"} ${color}`}
+    >
+      {formatUsd(amount)}
     </span>
   );
 }
 
 function AvgPill({
   label,
-  value,
-  fmt,
-  formatter,
+  primary,
+  secondary,
   tone,
 }: {
   label: string;
-  value: number;
-  fmt?: (n: number) => string;
-  formatter?: (n: number) => string;
-  tone?: "income" | "expense" | "balance";
+  primary: string;
+  secondary?: string | null;
+  tone?: "income" | "expense";
 }) {
-  const format = fmt ?? formatter ?? String;
   const colors =
-    tone === "balance"
-      ? value >= 0
-        ? "text-teal-600 dark:text-teal-400"
-        : "text-red-500"
-      : tone === "income"
-        ? "text-teal-600 dark:text-teal-400"
-        : tone === "expense"
-          ? "text-red-500"
-          : "text-zinc-800 dark:text-zinc-100";
+    tone === "income"
+      ? "text-teal-600 dark:text-teal-400"
+      : tone === "expense"
+        ? "text-red-500"
+        : "text-zinc-800 dark:text-zinc-100";
 
   return (
     <div className="bento px-3 py-3 text-center">
@@ -497,8 +670,13 @@ function AvgPill({
         {label}
       </p>
       <p className={`mt-1 text-sm font-bold tabular-nums ${colors}`}>
-        {format(value)}
+        {primary}
       </p>
+      {secondary && (
+        <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">
+          {secondary}
+        </p>
+      )}
     </div>
   );
 }
