@@ -73,7 +73,7 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
             <MacroStat label="Gastos" value={show(expenses)} tone="expense" />
             {sharedEnabled && (
               <MacroStat
-                label="Con otros"
+                label="Compartido"
                 value={show(shared)}
                 tone="shared"
                 className="col-span-2 sm:col-span-1"

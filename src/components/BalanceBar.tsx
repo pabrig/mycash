@@ -49,7 +49,7 @@ export function BalanceBar() {
           <Detail label="Trabajo" value={summary.activeIncome} fmt={fmt} tone="income" />
           <Detail label="Míos" value={summary.personalExpenses} fmt={fmt} tone="expense" />
           {sharedEnabled && (
-            <Detail label="Con otros" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
+            <Detail label="Compartido" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
           )}
           <Detail label="Todos los meses" value={summary.personalFixed} fmt={fmt} />
           <Detail label="Una vez" value={summary.personalVariable} fmt={fmt} />

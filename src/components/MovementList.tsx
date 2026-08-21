@@ -27,7 +27,7 @@ const ALL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
   { id: "income", label: "Ingresos" },
   { id: "personal", label: "Míos" },
-  { id: "shared", label: "Con otros" },
+  { id: "shared", label: "Compartido" },
 ];
 
 const PERSONAL_FILTERS: { id: Filter; label: string }[] = [
@@ -73,8 +73,8 @@ function groupByDate(movements: Movement[]): Map<string, Movement[]> {
 function tagLabel(movement: Movement): string {
   if (movement.scope === "shared") {
     return movement.createdByName
-      ? `${movement.createdByName} · Con otros`
-      : "Con otros";
+      ? `${movement.createdByName} · Compartido`
+      : "Compartido";
   }
   if (movement.type === "income") return "Ingreso";
   return "Mío";
@@ -205,7 +205,7 @@ function MovementDetail({
       <div>
         <p className="text-sm font-medium text-zinc-400">
           {isIncome ? "Ingreso" : "Gasto"}
-          {movement.scope === "shared" ? " · Con otros" : ""}
+          {movement.scope === "shared" ? " · Compartido" : ""}
         </p>
         <p
           className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${
