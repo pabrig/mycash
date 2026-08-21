@@ -1,15 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
-import { useDisplayAmount, useFormatMoney, useFormatUsd } from "@/hooks/useDisplayAmount";
+import {
+  useDisplayAmount,
+  useFormatMoney,
+  useFormatUsd,
+} from "@/hooks/useDisplayAmount";
 import { formatMoney, todayIso } from "@/lib/format";
+import { computeSplitMonthlyBreakdown } from "@/lib/wallet";
 import type { SummaryScope } from "@/lib/types";
 import { IconChevronDown } from "@/components/ui/Icons";
 
 export function DisponibleHero({ scope }: { scope: SummaryScope }) {
-  const { walletMode, summary, annualSummary, sharedEnabled } = useFinance();
+  const {
+    walletMode,
+    summary,
+    annualSummary,
+    annualSummaryArs,
+    sharedEnabled,
+    usdEnabled,
+    displayCurrency,
+  } = useFinance();
   const fmt = useDisplayAmount();
+  const formatArs = useFormatMoney();
+  const formatUsd = useFormatUsd();
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   if (walletMode === "split") {
@@ -17,47 +32,49 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
   }
 
   const isYear = scope === "year";
-  const disponible = isYear
-    ? annualSummary.averages.disponible
-    : summary.disponible;
+  const preferUsd = isYear && usdEnabled && displayCurrency === "USD";
+  const yearPrimary = preferUsd ? annualSummary : annualSummaryArs;
+  const yearSecondary = preferUsd ? annualSummaryArs : annualSummary;
+  const yearFmt = preferUsd ? formatUsd : formatArs;
+  const yearOtherFmt = preferUsd ? formatArs : formatUsd;
+
+  const disponible = isYear ? yearPrimary.disponible : summary.disponible;
   const positive = disponible >= 0;
+  const show = isYear ? yearFmt : fmt;
 
   const monthLabel =
     annualSummary.activeMonths === 1
       ? "1 mes"
       : `${annualSummary.activeMonths} meses`;
 
-  const income = isYear
-    ? annualSummary.averages.totalIncome
-    : summary.totalIncome;
-  const expenses = isYear
-    ? annualSummary.averages.totalExpenses
-    : summary.totalExpenses;
-  const shared = isYear
-    ? annualSummary.averages.sharedExpenses
-    : summary.sharedExpenses;
+  const income = isYear ? yearPrimary.totalIncome : summary.totalIncome;
+  const expenses = isYear ? yearPrimary.totalExpenses : summary.totalExpenses;
+  const shared = isYear ? yearPrimary.sharedExpenses : summary.sharedExpenses;
+  const incomeDetail = isYear ? yearOtherFmt(yearSecondary.totalIncome) : null;
+  const expensesDetail = isYear ? yearOtherFmt(yearSecondary.totalExpenses) : null;
+  const sharedDetail = isYear ? yearOtherFmt(yearSecondary.sharedExpenses) : null;
+
+  const yearCaption = isYear
+    ? preferUsd
+      ? `${formatArs(annualSummaryArs.disponible)} en pesos · ${monthLabel} · al dólar de cada mes`
+      : `${formatUsd(annualSummary.disponible)} · ${monthLabel} · al dólar de cada mes`
+    : null;
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento overflow-hidden !p-0">
         <div className="px-6 pt-7 pb-6">
           <p className="text-sm font-medium text-zinc-400">
-            {isYear
-              ? `Por mes, en ${annualSummary.year}`
-              : "Te queda este mes"}
+            {isYear ? `En ${annualSummary.year}` : "Te queda este mes"}
           </p>
           <p
             className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
-            {fmt(disponible)}
+            {show(disponible)}
           </p>
-          {isYear && (
-            <p className="meta mt-2">
-              En el año {fmt(annualSummary.disponible)} · {monthLabel}
-            </p>
-          )}
+          {yearCaption && <p className="meta mt-2">{yearCaption}</p>}
 
           <button
             type="button"
@@ -73,12 +90,23 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
 
         {detailsOpen && (
           <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4 sm:grid-cols-3">
-            <MacroStat label="Ingresos" value={fmt(income)} tone="income" />
-            <MacroStat label="Gastos" value={fmt(expenses)} tone="expense" />
+            <MacroStat
+              label="Ingresos"
+              value={show(income)}
+              detail={incomeDetail}
+              tone="income"
+            />
+            <MacroStat
+              label="Gastos"
+              value={show(expenses)}
+              detail={expensesDetail}
+              tone="expense"
+            />
             {sharedEnabled && (
               <MacroStat
-                label="Con otros"
-                value={fmt(shared)}
+                label="Compartido"
+                value={show(shared)}
+                detail={sharedDetail}
                 tone="shared"
                 className="col-span-2 sm:col-span-1"
               />
@@ -93,11 +121,13 @@ export function DisponibleHero({ scope }: { scope: SummaryScope }) {
 function MacroStat({
   label,
   value,
+  detail,
   tone,
   className = "",
 }: {
   label: string;
   value: string;
+  detail?: string | null;
   tone: "income" | "expense" | "shared";
   className?: string;
 }) {
@@ -111,48 +141,91 @@ function MacroStat({
   return (
     <div className={`rounded-2xl bg-[var(--card)] px-3.5 py-3 ${className}`}>
       <p className="text-[11px] font-medium text-zinc-400">{label}</p>
-      <p className={`mt-1 text-base font-bold tabular-nums ${color}`}>{value}</p>
+      <p className={`mt-1 text-base font-bold tabular-nums ${color}`}>
+        {value}
+      </p>
+      {detail && (
+        <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">{detail}</p>
+      )}
     </div>
   );
 }
 
 function SplitHero({ scope }: { scope: SummaryScope }) {
-  const { splitSummary, splitAnnualSummary, year, rate } = useFinance();
+  const { splitSummary, splitAnnualSummary, year, rate, ownMovements, rates } =
+    useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
   const isYear = scope === "year";
   const [ahorroOpen, setAhorroOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
 
-  const cotidiano = isYear ? splitAnnualSummary.averages.vida : splitSummary.vida;
-  const ahorro = isYear ? splitAnnualSummary.averages.ahorro : splitSummary.ahorro;
-  const ahorroArs = ahorro.disponible * rate.usdToArs;
-  const positive = cotidiano.disponible >= 0;
+  const cotidiano = isYear ? splitAnnualSummary.vida : splitSummary.vida;
+  const ahorro = isYear ? splitAnnualSummary.ahorro : splitSummary.ahorro;
+  const showCotidiano = isYear ? formatUsd : formatArs;
+  const ahorroArs = isYear ? null : ahorro.disponible * rate.usdToArs;
+  const splitBreakdown = useMemo(
+    () =>
+      isYear ? computeSplitMonthlyBreakdown(ownMovements, year, rates) : [],
+    [isYear, ownMovements, year, rates],
+  );
+  const vidaArsYear = useMemo(
+    () =>
+      splitBreakdown.reduce(
+        (acc, snap) => ({
+          income: acc.income + snap.split.vida.income,
+          expenses: acc.expenses + snap.split.vida.expenses,
+          disponible: acc.disponible + snap.split.vida.disponible,
+        }),
+        { income: 0, expenses: 0, disponible: 0 },
+      ),
+    [splitBreakdown],
+  );
+  const positive = isYear
+    ? vidaArsYear.disponible >= 0
+    : cotidiano.disponible >= 0;
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento !p-0 overflow-hidden">
         <div className="px-6 pt-7 pb-5">
           <p className="text-sm font-medium text-zinc-400">
-            Cotidiano · ARS
-            {isYear && ` · prom. ${year}`}
+            Cotidiano · {isYear ? `${year}` : "ARS"}
           </p>
           <p
             className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums ${
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
-            {formatArs(cotidiano.disponible)}
+            {isYear
+              ? formatArs(vidaArsYear.disponible)
+              : showCotidiano(cotidiano.disponible)}
           </p>
           <p className="meta mt-2">
             {isYear
-              ? "Promedio para el día a día"
+              ? `${formatUsd(cotidiano.disponible)} · al dólar de cada mes`
               : "Lo que te queda este mes"}
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4">
-          <MacroStat label="Ingresos" value={formatArs(cotidiano.income)} tone="income" />
-          <MacroStat label="Gastos" value={formatArs(cotidiano.expenses)} tone="expense" />
+          <MacroStat
+            label="Ingresos"
+            value={
+              isYear ? formatArs(vidaArsYear.income) : showCotidiano(cotidiano.income)
+            }
+            detail={isYear ? formatUsd(cotidiano.income) : null}
+            tone="income"
+          />
+          <MacroStat
+            label="Gastos"
+            value={
+              isYear
+                ? formatArs(vidaArsYear.expenses)
+                : showCotidiano(cotidiano.expenses)
+            }
+            detail={isYear ? formatUsd(cotidiano.expenses) : null}
+            tone="expense"
+          />
         </div>
       </div>
 
@@ -167,12 +240,14 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
-              Ahorro USD{isYear && " · prom."}
+              Ahorro USD{isYear && ` · ${year}`}
             </p>
             <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums">
               {formatUsd(ahorro.disponible)}
             </p>
-            <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
+            {ahorroArs !== null && (
+              <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
+            )}
           </div>
           <IconChevronDown
             className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform ${ahorroOpen ? "rotate-180" : ""}`}
@@ -182,8 +257,16 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
         {ahorroOpen && (
           <div className="space-y-3 bg-[var(--card-muted)] px-4 py-4">
             <div className="grid grid-cols-2 gap-2">
-              <MacroStat label="Entradas" value={formatUsd(ahorro.income)} tone="income" />
-              <MacroStat label="Salidas" value={formatUsd(ahorro.expenses)} tone="expense" />
+              <MacroStat
+                label="Entradas"
+                value={formatUsd(ahorro.income)}
+                tone="income"
+              />
+              <MacroStat
+                label="Salidas"
+                value={formatUsd(ahorro.expenses)}
+                tone="expense"
+              />
             </div>
             <p className="text-xs leading-relaxed text-zinc-400">
               Reserva en dólares · oficial{" "}
@@ -260,7 +343,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
       await addConversion({
         direction,
         amount: parsed,
-        date: todayIso(),
+        date: todayIso()
       });
       setAmount("");
       onDone();
@@ -272,7 +355,10 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-[var(--card)] p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-3 rounded-2xl bg-[var(--card)] p-4"
+    >
       <p className="text-xs leading-relaxed text-zinc-400">
         Pasás plata de un bolsillo al otro, al dólar oficial.
       </p>

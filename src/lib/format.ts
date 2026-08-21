@@ -112,33 +112,21 @@ export function buildAnnualBrief(
     disponible: number;
     movementCount: number;
     activeMonths: number;
-    averages: {
-      totalIncome: number;
-      totalExpenses: number;
-      disponible: number;
-    };
   },
-  fmt: (amountArs: number) => string,
+  fmt: (amountUsd: number) => string,
 ): string {
   if (summary.movementCount === 0) {
     return `No hay nada anotado en ${year}.`;
   }
 
-  const parts: string[] = [];
   const monthLabel =
     summary.activeMonths === 1 ? "1 mes" : `${summary.activeMonths} meses`;
 
-  parts.push(
-    `Ingresos ${fmt(summary.totalIncome)} (${fmt(summary.averages.totalIncome)}/mes): ${fmt(summary.passiveIncome)} rentas y ${fmt(summary.activeIncome)} trabajo.`,
-  );
-  parts.push(
-    `Gastos ${fmt(summary.totalExpenses)} (${fmt(summary.averages.totalExpenses)}/mes): ${fmt(summary.personalExpenses)} tuyos y ${fmt(summary.sharedExpenses)} con otros.`,
-  );
-  parts.push(
-    `Te quedó ${fmt(summary.disponible)} en el año · ${fmt(summary.averages.disponible)} por mes (${monthLabel}).`,
-  );
-
-  return parts.join(" ");
+  return [
+    `Ingresos ${fmt(summary.totalIncome)}: ${fmt(summary.passiveIncome)} rentas y ${fmt(summary.activeIncome)} trabajo.`,
+    `Gastos ${fmt(summary.totalExpenses)}: ${fmt(summary.personalExpenses)} tuyos y ${fmt(summary.sharedExpenses)} con otros.`,
+    `Te quedó ${fmt(summary.disponible)} en el año (${monthLabel}).`,
+  ].join(" ");
 }
 
 /** Iniciales para avatares (1 palabra → 2 letras; 2+ → primera de cada una). */
