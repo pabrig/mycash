@@ -17,9 +17,9 @@ const movements: Movement[] = [
     date: "2026-02-10",
     amount: 3500,
     currency: "USD",
-    description: "Itti",
+    description: "Sueldo",
     incomeKind: "passive",
-    source: "itti",
+    source: "sueldo",
     createdAt: "2026-02-10T00:00:00Z",
   },
   {

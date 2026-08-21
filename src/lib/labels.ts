@@ -14,11 +14,15 @@ export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
 };
 
 export const INCOME_SOURCE_LABELS: Record<string, string> = {
-  itti: "Itti",
-  alquiler_serena: "Alquiler Serena",
-  alquiler_obispo: "Alquiler Obispo",
   sueldo: "Sueldo",
+  freelance: "Freelance",
+  alquiler: "Alquiler",
+  inversion: "Inversión",
   otros: "Otros",
+  /** Ids viejos: no se ofrecen al cargar, se muestran genéricos. */
+  itti: "Sueldo",
+  alquiler_serena: "Alquiler",
+  alquiler_obispo: "Alquiler",
 };
 
 export const INCOME_KIND_LABELS = {
@@ -39,6 +43,14 @@ export function expenseCategoryLabel(id: string | undefined): string {
 export function incomeSourceLabel(id: string | undefined): string {
   if (!id) return "";
   return INCOME_SOURCE_LABELS[id] ?? humanizeSlug(id);
+}
+
+/** Ids personales viejos → opción genérica del formulario. */
+export function normalizeIncomeSource(id: string): string {
+  if (id === "itti") return "sueldo";
+  if (id === "alquiler_serena" || id === "alquiler_obispo") return "alquiler";
+  if (id in INCOME_SOURCE_LABELS) return id;
+  return "otros";
 }
 
 function humanizeSlug(id: string): string {

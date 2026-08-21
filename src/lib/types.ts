@@ -145,10 +145,10 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 
 export const INCOME_SOURCES = [
-  "itti",
-  "alquiler_serena",
-  "alquiler_obispo",
   "sueldo",
+  "freelance",
+  "alquiler",
+  "inversion",
   "otros",
 ] as const;
 
