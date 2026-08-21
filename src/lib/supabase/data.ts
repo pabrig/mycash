@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isOnboardingDone } from "@/lib/account-setup";
 import type {
   DisplayCurrency,
-  Household,
   HouseholdMember,
+  HouseholdMembership,
   Movement,
   MonthlyRate,
   Profile,
@@ -51,7 +51,11 @@ type DbMovement = {
   created_at: string;
 };
 
-function rowToMovement(row: DbMovement, nameMap: Record<string, string>): Movement {
+function rowToMovement(
+  row: DbMovement,
+  nameMap: Record<string, string>,
+  householdMap: Record<string, string>,
+): Movement {
   return {
     id: row.id,
     type: row.type,
@@ -68,6 +72,10 @@ function rowToMovement(row: DbMovement, nameMap: Record<string, string>): Moveme
     createdAt: row.created_at,
     createdByUserId: row.created_by,
     createdByName: nameMap[row.created_by],
+    householdId: row.household_id ?? undefined,
+    householdName: row.household_id
+      ? householdMap[row.household_id]
+      : undefined,
   };
 }
 
@@ -87,7 +95,21 @@ async function enrichMovements(
     (profiles ?? []).map((p) => [p.id, p.display_name as string]),
   );
 
-  return rows.map((row) => rowToMovement(row, nameMap));
+  const householdIds = [
+    ...new Set(rows.map((r) => r.household_id).filter((id): id is string => Boolean(id))),
+  ];
+  let householdMap: Record<string, string> = {};
+  if (householdIds.length > 0) {
+    const { data: households } = await supabase
+      .from("households")
+      .select("id, name")
+      .in("id", householdIds);
+    householdMap = Object.fromEntries(
+      (households ?? []).map((h) => [h.id as string, h.name as string]),
+    );
+  }
+
+  return rows.map((row) => rowToMovement(row, nameMap, householdMap));
 }
 
 function movementToInsert(
@@ -151,35 +173,45 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-export async function fetchHouseholdContext(
+export async function fetchHouseholdMemberships(
   supabase: SupabaseClient,
   userId: string,
-): Promise<{
-  household: Household | null;
-  members: HouseholdMember[];
-}> {
-  const { data: membership } = await supabase
+): Promise<HouseholdMembership[]> {
+  const { data, error } = await supabase
     .from("household_members")
-    .select("household_id, role, households(id, name)")
+    .select("role, joined_at, households(id, name)")
     .eq("user_id", userId)
-    .maybeSingle();
+    .order("joined_at", { ascending: true });
 
-  const h = unwrapOne(
-    membership?.households as { id: string; name: string } | { id: string; name: string }[] | null,
-  );
+  if (error) throw error;
 
-  if (!h) {
-    return { household: null, members: [] };
-  }
+  return (data ?? []).flatMap((row) => {
+    const h = unwrapOne(
+      row.households as { id: string; name: string } | { id: string; name: string }[] | null,
+    );
+    if (!h) return [];
+    return [
+      {
+        id: h.id,
+        name: h.name,
+        role: row.role as HouseholdMembership["role"],
+      },
+    ];
+  });
+}
 
-  const household: Household = { id: h.id, name: h.name };
-
-  const { data: membersData } = await supabase
+export async function fetchHouseholdMembers(
+  supabase: SupabaseClient,
+  householdId: string,
+): Promise<HouseholdMember[]> {
+  const { data, error } = await supabase
     .from("household_members")
     .select("user_id, role, profiles(display_name)")
-    .eq("household_id", household.id);
+    .eq("household_id", householdId);
 
-  const members: HouseholdMember[] = (membersData ?? []).map((m) => {
+  if (error) throw error;
+
+  return (data ?? []).map((m) => {
     const profile = unwrapOne(
       m.profiles as { display_name: string } | { display_name: string }[] | null,
     );
@@ -189,8 +221,43 @@ export async function fetchHouseholdContext(
       role: m.role as HouseholdMember["role"],
     };
   });
+}
 
-  return { household, members };
+export async function fetchActiveHouseholdId(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("user_settings")
+    .select("active_household_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return (data?.active_household_id as string | null) ?? null;
+}
+
+export async function saveActiveHouseholdId(
+  supabase: SupabaseClient,
+  userId: string,
+  householdId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_settings")
+    .update({ active_household_id: householdId })
+    .eq("user_id", userId);
+
+  if (error) throw error;
+}
+
+export async function createHousehold(
+  supabase: SupabaseClient,
+  name: string,
+): Promise<string> {
+  const { data, error } = await supabase.rpc("create_household", {
+    household_name: name,
+  });
+  if (error) throw error;
+  return data as string;
 }
 
 export async function fetchAllMovementsForUser(
@@ -602,8 +669,11 @@ export async function acceptHouseholdInvite(
 
 export async function leaveHousehold(
   supabase: SupabaseClient,
+  householdId: string,
 ): Promise<void> {
-  const { error } = await supabase.rpc("leave_household");
+  const { error } = await supabase.rpc("leave_household", {
+    target_household_id: householdId,
+  });
   if (error) throw error;
 }
 

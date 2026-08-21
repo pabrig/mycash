@@ -23,6 +23,7 @@ import {
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
 import { affectsUserBalance } from "@/lib/movement-access";
+import { resolveSharedHouseholdId } from "@/lib/household";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
 import { friendlyError } from "@/lib/errors";
 import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
@@ -408,14 +409,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
       if (cloudEnabled && supabase && user) {
         const created = await Promise.all(
-          inputs.map((input) =>
-            insertMovement(
-              supabase,
-              input,
-              user.id,
-              input.scope === "shared" ? (household?.id ?? null) : null,
-            ),
-          ),
+          inputs.map((input) => {
+            const householdId = resolveSharedHouseholdId(
+              input.scope,
+              input.householdId,
+              household?.id ?? null,
+            );
+            if (input.scope === "shared" && !householdId) {
+              throw new Error("Elegí un grupo para este gasto.");
+            }
+            return insertMovement(supabase, input, user.id, householdId);
+          }),
         );
         setMovements((prev) => [...created, ...prev]);
         return;
@@ -538,12 +542,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       >,
     ) => {
       if (cloudEnabled && supabase && user) {
+        const householdId = resolveSharedHouseholdId(
+          input.scope,
+          input.householdId,
+          household?.id ?? null,
+        );
+        if (input.scope === "shared" && !householdId) {
+          throw new Error("Elegí un grupo para este gasto.");
+        }
         const updated = await updateMovementById(
           supabase,
           id,
           input,
           user.id,
-          input.scope === "shared" ? (household?.id ?? null) : null,
+          householdId,
         );
         setMovements((prev) => prev.map((m) => (m.id === id ? updated : m)));
         return;

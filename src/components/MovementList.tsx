@@ -72,6 +72,11 @@ function groupByDate(movements: Movement[]): Map<string, Movement[]> {
 
 function tagLabel(movement: Movement): string {
   if (movement.scope === "shared") {
+    const group = movement.householdName;
+    if (movement.createdByName && group) {
+      return `${movement.createdByName} · ${group}`;
+    }
+    if (group) return group;
     return movement.createdByName
       ? `${movement.createdByName} · Compartido`
       : "Compartido";
