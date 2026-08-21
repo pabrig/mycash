@@ -5,6 +5,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { SharedSetupSheet } from "@/components/SharedSetupSheet";
 import { UserAvatar } from "@/components/UserAvatar";
+import {
+  MAX_HOUSEHOLDS_PER_USER,
+  MAX_MEMBERS_PER_HOUSEHOLD,
+} from "@/lib/household";
 
 function formatExpiry(iso: string): string {
   try {
@@ -22,23 +26,33 @@ export function SharedAccountCard() {
     configured,
     user,
     household,
+    households,
     members,
     pendingInvites,
+    setActiveHousehold,
+    createGroup,
     createInvite,
     acceptInvite,
     revokeInvite,
-    leaveCurrentHousehold,
+    leaveGroup,
   } = useAuth();
   const { sharedEnabled, setSharedEnabled, refreshData } = useFinance();
 
   const [setupOpen, setSetupOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
+  const [newGroupName, setNewGroupName] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const paired = members.length > 1;
+  const isOwner = household?.role === "owner";
+  const canCreateGroup = households.length < MAX_HOUSEHOLDS_PER_USER;
+  const canInvite =
+    Boolean(household) &&
+    isOwner &&
+    members.length < MAX_MEMBERS_PER_HOUSEHOLD;
   const otherNames = members
     .filter((m) => m.userId !== user?.id)
     .map((m) => m.displayName);
@@ -49,6 +63,30 @@ export function SharedAccountCard() {
       return;
     }
     setSetupOpen(true);
+  }
+
+  async function handleCreateGroup(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const result = await createGroup(newGroupName);
+    setBusy(false);
+    if (result.error) setError(result.error);
+    else {
+      setNewGroupName("");
+      setMessage("Grupo creado");
+      await refreshData();
+    }
+  }
+
+  async function handleSelectGroup(id: string) {
+    if (id === household?.id) return;
+    setBusy(true);
+    setError("");
+    setInviteCode(null);
+    const result = await setActiveHousehold(id);
+    setBusy(false);
+    if (result.error) setError(result.error);
   }
 
   async function handleCreateInvite() {
@@ -75,7 +113,7 @@ export function SharedAccountCard() {
     }
     await setSharedEnabled(true);
     await refreshData();
-    setMessage("Listo, ya están juntos");
+    setMessage("Listo, ya estás en el grupo");
     setJoinCode("");
     setBusy(false);
   }
@@ -93,23 +131,25 @@ export function SharedAccountCard() {
   }
 
   async function handleLeave() {
-    if (
-      !confirm(
-        "¿Salir del grupo? Dejás de ver los gastos de los demás. Tu plata sigue igual.",
-      )
-    ) {
-      return;
-    }
+    if (!household) return;
+    const lastMember = members.length <= 1;
+    const ok = confirm(
+      lastMember
+        ? "¿Borrar este grupo? Se van los gastos compartidos de esta lista."
+        : "¿Salir de este grupo? Dejás de ver esos gastos. Los otros grupos siguen igual.",
+    );
+    if (!ok) return;
     setBusy(true);
     setError("");
-    const result = await leaveCurrentHousehold();
+    const result = await leaveGroup(household.id);
     if (result.error) {
       setBusy(false);
       setError(result.error);
       return;
     }
     await refreshData();
-    setMessage("Saliste del grupo");
+    setInviteCode(null);
+    setMessage(lastMember ? "Grupo borrado" : "Saliste del grupo");
     setBusy(false);
   }
 
@@ -123,9 +163,11 @@ export function SharedAccountCard() {
           <div>
             <p className="text-sm font-semibold tracking-tight">Gastos con otros</p>
             <p className="meta mt-1 text-xs leading-relaxed">
-              {paired
-                ? "El grupo ve la lista. El gasto resta solo de quien lo cargó."
-                : "Para anotar gastos de todos. Cada uno sigue con su plata."}
+              {households.length > 1
+                ? "Cada grupo tiene su lista. El gasto resta solo de quien lo cargó."
+                : paired
+                  ? "El grupo ve la lista. El gasto resta solo de quien lo cargó."
+                  : "Para anotar gastos de todos. Cada uno sigue con su plata."}
             </p>
           </div>
           <button
@@ -147,6 +189,24 @@ export function SharedAccountCard() {
           </button>
         </div>
 
+        {sharedEnabled && configured && households.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {households.map((h) => (
+              <button
+                key={h.id}
+                type="button"
+                onClick={() => void handleSelectGroup(h.id)}
+                disabled={busy}
+                className={`chip ${
+                  h.id === household?.id ? "chip-active" : "chip-inactive"
+                }`}
+              >
+                {h.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {sharedEnabled && (
           <SharedStatus
             configured={configured}
@@ -154,63 +214,89 @@ export function SharedAccountCard() {
             householdName={household?.name}
             members={members}
             otherNames={otherNames}
+            groupCount={households.length}
           />
         )}
 
-        {sharedEnabled && configured && !paired && (
+        {sharedEnabled && configured && (
           <div className="space-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
-              Invitar a alguien
-            </p>
-            <div className="space-y-3">
-              <p className="text-sm font-semibold">Invitar</p>
-              <p className="text-xs text-zinc-500">
-                El código dura 7 días.
-              </p>
-              <button
-                type="button"
-                onClick={() => void handleCreateInvite()}
-                disabled={busy}
-                className="btn-primary w-full text-sm"
-              >
-                Crear código
-              </button>
-              {inviteCode && (
-                <div className="rounded-2xl bg-[var(--card-muted)] p-3 text-center">
-                  <p className="text-xl font-bold tracking-widest text-teal-600 sm:text-2xl">
-                    {inviteCode}
-                  </p>
-                  {inviteLink && (
-                    <p className="mt-2 break-all text-xs text-zinc-500">{inviteLink}</p>
-                  )}
+            {canCreateGroup && (
+              <form onSubmit={(e) => void handleCreateGroup(e)} className="space-y-2">
+                <p className="text-sm font-semibold">
+                  {households.length === 0 ? "Crear un grupo" : "Otro grupo"}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Casa, amigos, un viaje. Hasta {MAX_HOUSEHOLDS_PER_USER}.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    className="input-field flex-1"
+                    placeholder="Ej: Casa"
+                    maxLength={40}
+                  />
+                  <button type="submit" disabled={busy} className="btn-primary px-4">
+                    Crear
+                  </button>
                 </div>
-              )}
-              {pendingInvites.length > 0 && (
-                <ul className="space-y-2">
-                  {pendingInvites.map((inv) => (
-                    <li
-                      key={inv.id}
-                      className="flex items-center justify-between gap-2 text-sm"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-mono tracking-wider">{inv.code}</p>
-                        <p className="text-xs text-zinc-400">
-                          vence {formatExpiry(inv.expiresAt)}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void handleRevoke(inv.id)}
-                        className="shrink-0 text-xs text-red-500"
+              </form>
+            )}
+
+            {canInvite && (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold">Invitar</p>
+                <p className="text-xs text-zinc-500">
+                  El código dura 7 días. Hasta {MAX_MEMBERS_PER_HOUSEHOLD} personas
+                  en el grupo.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleCreateInvite()}
+                  disabled={busy}
+                  className="btn-primary w-full text-sm"
+                >
+                  Crear código
+                </button>
+                {inviteCode && (
+                  <div className="rounded-2xl bg-[var(--card-muted)] p-3 text-center">
+                    <p className="text-xl font-bold tracking-widest text-teal-600 sm:text-2xl">
+                      {inviteCode}
+                    </p>
+                    {inviteLink && (
+                      <p className="mt-2 break-all text-xs text-zinc-500">
+                        {inviteLink}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {pendingInvites.length > 0 && (
+                  <ul className="space-y-2">
+                    {pendingInvites.map((inv) => (
+                      <li
+                        key={inv.id}
+                        className="flex items-center justify-between gap-2 text-sm"
                       >
-                        Cancelar
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                        <div className="min-w-0">
+                          <p className="font-mono tracking-wider">{inv.code}</p>
+                          <p className="text-xs text-zinc-400">
+                            vence {formatExpiry(inv.expiresAt)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void handleRevoke(inv.id)}
+                          className="shrink-0 text-xs text-red-500"
+                        >
+                          Cancelar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <p className="text-sm font-semibold">Me invitaron</p>
@@ -231,14 +317,14 @@ export function SharedAccountCard() {
           </div>
         )}
 
-        {sharedEnabled && configured && paired && (
+        {sharedEnabled && configured && household && (
           <button
             type="button"
             onClick={() => void handleLeave()}
             disabled={busy}
             className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
           >
-            Salir del grupo
+            {members.length <= 1 ? "Borrar este grupo" : "Salir de este grupo"}
           </button>
         )}
 
@@ -257,12 +343,14 @@ function SharedStatus({
   householdName,
   members,
   otherNames,
+  groupCount,
 }: {
   configured: boolean;
   paired: boolean;
   householdName?: string;
   members: { userId: string; displayName: string; role: string }[];
   otherNames: string[];
+  groupCount: number;
 }) {
   if (!configured) {
     return (
@@ -273,10 +361,23 @@ function SharedStatus({
     );
   }
 
+  if (groupCount === 0) {
+    return (
+      <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
+        <p className="text-sm font-semibold">Todavía no hay grupo</p>
+        <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+          Creá uno o usá un código para unirte.
+        </p>
+      </div>
+    );
+  }
+
   if (!paired) {
     return (
       <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
-        <p className="text-sm font-semibold">Falta alguien más</p>
+        <p className="text-sm font-semibold">
+          {householdName ? `${householdName}: falta alguien más` : "Falta alguien más"}
+        </p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-400">
           Invitá o usá un código para compartir la lista.
         </p>
@@ -293,7 +394,8 @@ function SharedStatus({
           ))}
         </div>
         <p className="text-sm font-semibold">
-          Con {otherNames.filter(Boolean).join(", ") || householdName || "el grupo"}
+          {householdName ? `${householdName} · ` : ""}
+          Con {otherNames.filter(Boolean).join(", ") || "el grupo"}
         </p>
       </div>
       <ul className="space-y-1 text-sm text-zinc-600 dark:text-zinc-300">

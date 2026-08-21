@@ -14,7 +14,7 @@ Next.js (anon key + JWT del usuario)
         ↓
    Postgres con Row Level Security
         ├── personal → solo tu user_id
-        └── shared  → solo tu household
+        └── shared  → solo los households de los que sos miembro
 ```
 
 **Regla de oro:** nunca pongas la `service_role` en el frontend ni en variables `NEXT_PUBLIC_*`.  
@@ -30,7 +30,7 @@ En la app solo van **URL** + **anon key** (ver [`.env.example`](../.env.example)
 | **service_role** | Clave de admin (bypass RLS) | Solo servidor/Dashboard. **Nunca** en el browser. |
 | **JWT** | Token de sesión tras el magic link | Viaja en cada request; Postgres sabe quién sos (`auth.uid()`). |
 | **RLS** | Políticas por fila en cada tabla | Define qué filas podés SELECT/INSERT/UPDATE/DELETE. |
-| **household** | “Hogar” / grupo compartido | Un usuario ∈ un solo hogar. |
+| **household** | “Hogar” / grupo compartido | Un usuario ∈ **N** hogares (máx. 8). Máx. 8 miembros por grupo. |
 | **scope personal** | Movimiento solo tuyo | El resto del grupo **no** lo ve. |
 | **scope shared** | Gasto compartido | El grupo lo ve (monto + descripción + quién lo cargó). |
 | **RPC security definer** | Función SQL con privilegios elevados | Usada p.ej. para aceptar invitaciones; hay que restringir `GRANT EXECUTE`. |
@@ -39,15 +39,17 @@ En la app solo van **URL** + **anon key** (ver [`.env.example`](../.env.example)
 
 ## Qué ve el resto del grupo (contrato de privacidad)
 
-Si activaste **Gastos compartidos** y vincularon cuentas:
+Si activaste **Gastos con otros** y hay grupos:
 
-**Sí ve**
-- Gastos marcados como **compartidos** (descripción, monto, moneda, categoría, autor).
-- Nombre de display de los miembros del hogar.
+**Sí ve** (solo gente del **mismo** grupo)
+- Gastos marcados como **compartidos de ese grupo** (descripción, monto, moneda, categoría, autor).
+- Nombre de display de los miembros de ese grupo.
 
 **No ve**
 - Tus **ingresos** (sueldo, pasivos, etc.).
 - Tus gastos **personales**.
+- Gastos shared de **otro** grupo tuyo (Casa no ve Proyecto).
+- Que existís en un grupo al que esa persona no pertenece.
 - Tu **tipo de cambio** mensual ni settings (ARS/USD display, bolsillos, flags).
 - Tu bolsillo Ahorro / Cotidiano como “cuenta bancaria” privada.
 
@@ -73,8 +75,9 @@ En **SQL Editor**, ejecutá en orden:
 5. `supabase/migrations/005_usd_enabled.sql` — flag USD  
 6. `supabase/migrations/006_cloud_hardening.sql` — grants RPC + hardening  
 7. `supabase/migrations/007_lifecycle_invites.sql` — revocar invites, salir del hogar, borrar cuenta  
+8. `supabase/migrations/008_multi_household.sql` — un usuario ∈ N grupos, RLS set-based, caps 8/8  
 
-Si el proyecto ya tenía `001`–`006`, solo corré `007`.
+Si el proyecto ya tenía `001`–`007`, solo corré `008`.
 
 ### 3. Variables de entorno
 
@@ -126,9 +129,9 @@ Marcá antes de cargar datos reales:
 
 - [ ] Solo `anon` key en `.env` / hosting; **no** existe `SERVICE_ROLE` en el repo ni en Vercel/env públicas
 - [ ] Redirect URLs allowlist solo localhost + dominio propio
-- [ ] Migraciones `001`→`007` aplicadas
+- [ ] Migraciones `001`→`008` aplicadas
 - [ ] RLS enabled en: `profiles`, `households`, `household_members`, `household_invites`, `movements`, `monthly_rates`, `user_settings`
-- [ ] RPCs `accept_household_invite`, `leave_household`, `delete_own_account` solo para `authenticated`
+- [ ] RPCs `accept_household_invite`, `leave_household`, `create_household`, `delete_own_account` solo para `authenticated`
 - [ ] Probaste login magic link en el dominio real
 - [ ] Probaste aislamiento con 2 usuarios (ver [rls-checklist.md](./rls-checklist.md))
 
@@ -141,7 +144,7 @@ Marcá antes de cargar datos reales:
 3. Si ya hay personales en la nube → **no se re-migra**; la nube manda.
 4. Con sesión → la UI lee/escribe remoto; si falla la red, se muestra aviso y se cae a local temporalmente.
 5. Cerrar sesión → podés seguir en local; no borramos cloud automáticamente.
-6. **Salir del grupo** → perdés acceso a shared del hogar anterior; se crea un hogar solo nuevo.
+6. **Salir de un grupo** → perdés acceso a shared de ese hogar; los otros grupos siguen.
 7. **Borrar cuenta** → elimina el usuario Auth (cascade a profile/movimientos propios).
 
 ---
@@ -150,9 +153,10 @@ Marcá antes de cargar datos reales:
 
 | Acción | Dónde | Notas |
 |--------|--------|------|
-| Código invite | 12 chars, 7 días, máx. 5 pendientes | Owner puede **Revocar** |
-| Aceptar invite | Unir o `/join/CODE` | Invalida otros códigos abiertos del hogar |
-| Salir del grupo | Cuenta (si hay 2+ miembros) | RPC `leave_household` |
+| Crear grupo | Cuenta | RPC `create_household`. Máx. 8 por user |
+| Código invite | 12 chars, 7 días, máx. 5 pendientes | Owner puede **Revocar**. 1 código = 1 uso; no borra los otros |
+| Aceptar invite | Unir o `/join/CODE` | **Suma** membresía (no te saca de otros grupos). Máx. 8 miembros |
+| Salir / borrar grupo | Cuenta (grupo activo) | RPC `leave_household(id)`. Si quedás solo, borra el grupo |
 | Exportar | Cuenta → JSON | Backup personal |
 | Borrar cuenta | Cuenta (doble confirm) | RPC `delete_own_account` |
 
@@ -181,3 +185,4 @@ Marcá antes de cargar datos reales:
 4. ~~UX consentimiento + migrate personal-only~~  
 5. ~~Invites fuertes / salir / borrar / export~~  
 6. ~~Errores sync visibles + regla cloud gana + tests scope~~  
+7. Multi-household (`008`) — un usuario ∈ N grupos  

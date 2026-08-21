@@ -12,7 +12,8 @@ import { useFinance } from "@/context/FinanceContext";
 
 export default function CompartidoPage() {
   const router = useRouter();
-  const { loading, members, user } = useAuth();
+  const { loading, members, user, households, household, setActiveHousehold } =
+    useAuth();
   const { ready, sharedEnabled, walletMode } = useFinance();
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function CompartidoPage() {
       <div className="animate-fade-in flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-            Compartido
+            {household?.name ?? "Compartido"}
           </h2>
           <p className="meta mt-1">
             {paired
@@ -49,6 +50,23 @@ export default function CompartidoPage() {
           </div>
         )}
       </div>
+
+      {households.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {households.map((h) => (
+            <button
+              key={h.id}
+              type="button"
+              onClick={() => void setActiveHousehold(h.id)}
+              className={`chip ${
+                h.id === household?.id ? "chip-active" : "chip-inactive"
+              }`}
+            >
+              {h.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!paired && (
         <div className="bento space-y-3 md:max-w-md">

@@ -60,6 +60,9 @@ export interface Movement {
   /** Usuario que cargó el movimiento (compartidos) */
   createdByUserId?: string;
   createdByName?: string;
+  /** Grupo al que pertenece un gasto shared */
+  householdId?: string;
+  householdName?: string;
 }
 
 export interface Profile {
@@ -70,6 +73,10 @@ export interface Profile {
 export interface Household {
   id: string;
   name: string;
+}
+
+export interface HouseholdMembership extends Household {
+  role: "owner" | "member";
 }
 
 export interface HouseholdMember {

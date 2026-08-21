@@ -77,9 +77,11 @@ function SharedRow({
             <p className="truncate font-semibold tracking-tight">
               {movement.description}
             </p>
-            <p className="meta mt-0.5 text-xs md:hidden">
+        <p className="meta mt-0.5 text-xs md:hidden">
               {movement.createdByName ? `${movement.createdByName} · ` : ""}
-              {expenseCategoryLabel(movement.category) || "Compartido"}
+              {movement.householdName
+                ? `${movement.householdName}`
+                : expenseCategoryLabel(movement.category) || "Compartido"}
             </p>
           </div>
         </div>
@@ -159,6 +161,12 @@ function SharedDetail({
             </dd>
           </div>
         )}
+        {movement.householdName && (
+          <div className="flex justify-between gap-4">
+            <dt className="text-zinc-400">Grupo</dt>
+            <dd className="text-right font-medium">{movement.householdName}</dd>
+          </div>
+        )}
         {movement.createdByName && (
           <div className="flex justify-between gap-4">
             <dt className="text-zinc-400">Lo cargó</dt>
@@ -195,19 +203,21 @@ function SharedDetail({
 }
 
 export function SharedMovementList() {
-  const { user, members } = useAuth();
+  const { user, members, household } = useAuth();
   const { sharedMovements, year, month, rate, deleteMovement, cloudEnabled } =
     useFinance();
   const fmt = useDisplayAmount();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const monthShared = useMemo(
-    () =>
-      filterByMonth(sharedMovements, year, month).sort((a, b) =>
-        b.date.localeCompare(a.date),
-      ),
-    [sharedMovements, year, month],
-  );
+  const monthShared = useMemo(() => {
+    const ofMonth = filterByMonth(sharedMovements, year, month).sort((a, b) =>
+      b.date.localeCompare(a.date),
+    );
+    if (!cloudEnabled || !household) return ofMonth;
+    return ofMonth.filter(
+      (m) => !m.householdId || m.householdId === household.id,
+    );
+  }, [sharedMovements, year, month, cloudEnabled, household]);
 
   const total = useMemo(
     () =>

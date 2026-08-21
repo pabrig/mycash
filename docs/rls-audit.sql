@@ -1,7 +1,7 @@
 -- Auditoría estructural RLS / grants — Myca$h
 -- Correr en SQL Editor (rol postgres / service). NO simula auth.uid();
--- el aislamiento real se valida con 2 users en la app (docs/rls-checklist.md).
--- Requiere migraciones 001 → 007 aplicadas.
+-- el aislamiento real se valida con 3 users en la app (docs/rls-checklist.md).
+-- Requiere migraciones 001 → 008 aplicadas.
 
 -- 1) RLS enabled en todas las tablas de producto
 select relname as table_name, relrowsecurity as rls_enabled
@@ -43,8 +43,12 @@ where specific_schema = 'public'
   and routine_name in (
     'accept_household_invite',
     'leave_household',
+    'create_household',
     'delete_own_account',
-    'my_household_id'
+    'my_household_id',
+    'my_household_ids',
+    'is_household_member',
+    'is_household_owner'
   )
 order by routine_name, grantee;
 -- Esperado: authenticated (y roles internos). NO anon / PUBLIC con EXECUTE.
@@ -59,19 +63,26 @@ where n.nspname = 'public'
   and p.proname in (
     'accept_household_invite',
     'leave_household',
+    'create_household',
     'delete_own_account',
     'my_household_id',
+    'my_household_ids',
+    'is_household_member',
+    'is_household_owner',
     'handle_new_user'
   )
 order by p.proname;
--- Esperado: security_definer = true en RPCs de invite/leave/delete/my_household_id
+-- Esperado: security_definer = true en RPCs de invite/leave/create/delete/helpers
 
--- 5) Unicidad: un hogar por usuario
+-- 5) Unicidad: un user puede estar en N hogares (unique household+user)
 select conname, contype, pg_get_constraintdef(oid) as def
 from pg_constraint
 where conrelid = 'public.household_members'::regclass
   and contype in ('u', 'p');
--- Esperado: unique (user_id)
+select indexname, indexdef
+from pg_indexes
+where tablename = 'household_members';
+-- Esperado: unique (household_id, user_id). NO unique (user_id) solo.
 
 -- 6) Cascade de borrado de cuenta (profile → movements)
 select

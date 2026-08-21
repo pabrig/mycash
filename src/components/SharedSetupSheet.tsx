@@ -27,18 +27,18 @@ export function SharedSetupSheet({
         <ol className="space-y-3 text-sm">
           <Step
             n="1"
+            title="Un grupo"
+            body="Casa, amigos, un viaje. Cada lista es aparte: el resto no se entera."
+          />
+          <Step
+            n="2"
             title="Invitar"
             body="Mandás un código o usás el de alguien. Ahí ven la misma lista."
           />
           <Step
-            n="2"
+            n="3"
             title="La plata es de cada uno"
             body="Si vos cargás un gasto, resta de tu plata. Los demás lo ven, pero no les descuenta."
-          />
-          <Step
-            n="3"
-            title="Tu nombre"
-            body="Así te van a ver cuando cargues un gasto."
           />
         </ol>
         <button

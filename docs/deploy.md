@@ -13,7 +13,7 @@ Tené a mano:
 
 1. Cuenta en [GitHub](https://github.com) con acceso al repo `pabrig/mycash`.
 2. Cuenta en [Vercel](https://vercel.com) (podés entrar con GitHub).
-3. Proyecto Supabase **mycash** ya creado, con migraciones `001`→`007` aplicadas ([cloud.md](./cloud.md)).
+3. Proyecto Supabase **mycash** ya creado, con migraciones `001`→`008` aplicadas ([cloud.md](./cloud.md)).
 4. De Supabase → **Project Settings → API**:
    - **Project URL** (`https://….supabase.co`)
    - **anon public** key (JWT que empieza con `eyJ…` — **no** uses `service_role` ni `sb_publishable` si ves ambas).
@@ -205,7 +205,7 @@ Para Preview con login: mismas tres env en entorno **Preview** (mismo Supabase =
 [ ] Redeploy después de las env
 [ ] Supabase Site URL = misma URL
 [ ] Redirect: https://…/auth/callback (+ localhost)
-[ ] Migraciones 001–007 aplicadas
+[ ] Migraciones 001–008 aplicadas
 [ ] Login + sync OK en celular
 [ ] Pareja puede unirse / ver shared
 [ ] App en pantalla de inicio
