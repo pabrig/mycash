@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatDisplay, formatMoney, formatUsd, initials } from "./format";
 import { affectsUserBalance } from "./movement-access";
-import { computeAnnualSummary, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth } from "./summary";
+import { computeAnnualSummary, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth, monthlySummaryToUsd } from "./summary";
 import type { MonthlyRate, Movement } from "./types";
 
 const rate: MonthlyRate = {
@@ -143,23 +143,21 @@ describe("computeMonthlySummary", () => {
 });
 
 describe("computeAnnualSummary", () => {
-  it("aggregates all months in the year", () => {
-    const annual = computeAnnualSummary(movements, 2026, [rate]);
+  it("aggregates all months in USD using each month's rate", () => {
+    const janRate: MonthlyRate = { year: 2026, month: 1, usdToArs: 1000 };
+    const annual = computeAnnualSummary(movements, 2026, [janRate, rate]);
 
     expect(annual.movementCount).toBe(5);
-    expect(annual.personalExpenses).toBe(280000 + 50000);
-    expect(annual.disponible).toBe(
-      annual.totalIncome - annual.totalExpenses,
-    );
-  });
-
-  it("computes monthly averages over active months", () => {
-    const annual = computeAnnualSummary(movements, 2026, [rate]);
-
     expect(annual.activeMonths).toBe(2);
-    expect(annual.averages.totalIncome).toBe(annual.totalIncome / 2);
-    expect(annual.averages.totalExpenses).toBe(annual.totalExpenses / 2);
-    expect(annual.averages.disponible).toBe(annual.disponible / 2);
+    expect(annual.personalExpenses).toBe(280000 / 1200 + 50000 / 1000);
+    expect(annual.passiveIncome).toBe(3500);
+    expect(annual.activeIncome).toBe(500000 / 1200);
+    expect(annual.sharedExpenses).toBe(100);
+    expect(annual.totalIncome).toBe(annual.passiveIncome + annual.activeIncome);
+    expect(annual.totalExpenses).toBe(
+      annual.personalExpenses + annual.sharedExpenses,
+    );
+    expect(annual.disponible).toBe(annual.totalIncome - annual.totalExpenses);
   });
 });
 
@@ -173,5 +171,28 @@ describe("computeMonthlyBreakdown", () => {
     expect(breakdown[1].movementCount).toBe(4);
     expect(breakdown[2].movementCount).toBe(0);
     expect(breakdown[2].summary.disponible).toBe(0);
+  });
+});
+
+describe("monthlySummaryToUsd", () => {
+  it("converts an ARS monthly summary with that month's rate", () => {
+    const usd = monthlySummaryToUsd(
+      {
+        passiveIncome: 2400,
+        activeIncome: 1200,
+        personalExpenses: 600,
+        personalFixed: 300,
+        personalVariable: 300,
+        totalIncome: 3600,
+        sharedExpenses: 1200,
+        totalExpenses: 1800,
+        disponible: 1800,
+      },
+      rate,
+    );
+
+    expect(usd.totalIncome).toBe(3);
+    expect(usd.totalExpenses).toBe(1.5);
+    expect(usd.disponible).toBe(1.5);
   });
 });

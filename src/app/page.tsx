@@ -29,7 +29,7 @@ export default function HomePage() {
           <div className="min-w-0 flex-1">
             <PeriodToggle scope={scope} onChange={setScope} />
           </div>
-          {walletMode === "unified" && (
+          {walletMode === "unified" && scope === "month" && (
             <div className="shrink-0 md:hidden">
               <CurrencyToggle />
             </div>
