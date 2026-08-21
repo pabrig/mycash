@@ -80,6 +80,7 @@ export type OnboardingStep =
   | "shared"
   | "howto_movements"
   | "howto_period"
+  | "howto_split"
   | "howto_shared"
   | "done";
 
@@ -90,6 +91,10 @@ export const HOWTO_MOVEMENTS = {
     {
       title: "El botón +",
       body: "Está abajo, en el medio. Tocá ahí para cargar un movimiento.",
+    },
+    {
+      title: "Hoy, antes o después",
+      body: "No tiene que ser de hoy. Podés anotar un gasto o un cobro que ya pasó, o uno que viene.",
     },
     {
       title: "Lo que entra",
@@ -121,21 +126,40 @@ export const HOWTO_PERIOD = {
   ],
 } as const;
 
-export const HOWTO_SHARED = {
-  title: "Cómo se ven los gastos con otros",
-  sub: "Aparece una pestaña que se llama Compartido. Ahí hay una lista que ven todos.",
+export const HOWTO_SPLIT = {
+  title: "Dividir una cuenta",
+  sub: "Abajo está la pestaña Dividir. Sirve para un asado, un viaje o un finde. No es la plata del mes.",
   items: [
     {
-      title: "Cada uno anota lo suyo",
-      body: "Si vos pagaste el súper, lo cargás vos. Resta de tu plata.",
+      title: "Armás el evento",
+      body: "Le ponés un nombre y quiénes están. Después cargás lo que vaya pagando cada uno.",
     },
     {
-      title: "Los demás lo ven",
-      body: "El otro lo ve en la lista, pero no le descuenta. No se mezclan las cuentas.",
+      title: "Partes iguales",
+      body: "Al final te dice quién le tiene que pasar a quién, para que queden parejos.",
+    },
+    {
+      title: "Tu parte, si querés",
+      body: "Cuando termina, podés anotar tu parte en tu mes. El resto no se mezcla con tu cuenta.",
+    },
+  ],
+} as const;
+
+export const HOWTO_SHARED = {
+  title: "Gastos con otras personas",
+  sub: "Aparece la pestaña Compartido. Podés tener más de un grupo: casa, amigos, un viaje. Cada uno tiene su lista.",
+  items: [
+    {
+      title: "Elegís el grupo",
+      body: "Cuando cargás un gasto compartido, decís a qué grupo va. Casa no se mezcla con amigos.",
+    },
+    {
+      title: "Resta de quien pagó",
+      body: "Si vos pagaste el súper, lo cargás vos. Sale de tu plata. Los otros lo ven, pero no les descuenta.",
     },
     {
       title: "Invitar",
-      body: "Desde Cuenta mandás un código. Cuando la otra persona entra, ven la misma lista.",
+      body: "Desde Cuenta creás un grupo y mandás un código. Quien entra ve esa lista, no las otras.",
     },
   ],
 } as const;
@@ -149,7 +173,7 @@ export function onboardingSteps(input: {
   const steps: OnboardingStep[] = ["welcome", "money"];
   if (input.moneyProfile === "dual") steps.push("view");
   if (input.askShared) steps.push("shared");
-  steps.push("howto_movements", "howto_period");
+  steps.push("howto_movements", "howto_period", "howto_split");
   if (input.showSharedHowTo) steps.push("howto_shared");
   steps.push("done");
   return steps;
@@ -235,6 +259,7 @@ export function canContinueOnboarding(
     case "welcome":
     case "howto_movements":
     case "howto_period":
+    case "howto_split":
     case "howto_shared":
     case "done":
       return true;

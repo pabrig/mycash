@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   canContinueOnboarding,
   greetingName,
+  HOWTO_MOVEMENTS,
+  HOWTO_SHARED,
+  HOWTO_SPLIT,
   isOnboardingDone,
   onboardingSteps,
   resolveOnboardingCompleted,
@@ -23,6 +26,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_split",
       "done",
     ]);
     expect(
@@ -37,6 +41,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_split",
       "done",
     ]);
   });
@@ -55,6 +60,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_split",
       "howto_shared",
       "done",
     ]);
@@ -72,6 +78,7 @@ describe("onboardingSteps", () => {
       "money",
       "howto_movements",
       "howto_period",
+      "howto_split",
       "howto_shared",
       "done",
     ]);
@@ -90,6 +97,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_split",
       "done",
     ]);
   });
@@ -102,6 +110,50 @@ describe("onboardingSteps", () => {
         showSharedHowTo: false,
       }),
     ).not.toContain("howto_shared");
+  });
+
+  it("always explains how to split a bill", () => {
+    expect(
+      onboardingSteps({
+        moneyProfile: "ars_only",
+        askShared: false,
+        showSharedHowTo: false,
+      }),
+    ).toContain("howto_split");
+  });
+});
+
+describe("HOWTO_MOVEMENTS", () => {
+  it("explains that movements can be in the past or the future", () => {
+    const text = [
+      HOWTO_MOVEMENTS.sub,
+      ...HOWTO_MOVEMENTS.items.map((item) => `${item.title} ${item.body}`),
+    ].join(" ");
+    expect(text).toMatch(/ya pasó/i);
+    expect(text).toMatch(/viene/i);
+  });
+});
+
+describe("HOWTO_SPLIT", () => {
+  it("explains equal shares without mixing it with the monthly budget", () => {
+    const text = [
+      HOWTO_SPLIT.sub,
+      ...HOWTO_SPLIT.items.map((item) => `${item.title} ${item.body}`),
+    ].join(" ");
+    expect(text).toMatch(/dividir/i);
+    expect(text).toMatch(/partes iguales/i);
+    expect(text).toMatch(/no es la plata del mes/i);
+  });
+});
+
+describe("HOWTO_SHARED", () => {
+  it("explains that shared expenses can go to more than one group", () => {
+    const text = [
+      HOWTO_SHARED.sub,
+      ...HOWTO_SHARED.items.map((item) => `${item.title} ${item.body}`),
+    ].join(" ");
+    expect(text).toMatch(/más de un grupo/i);
+    expect(text).toMatch(/elegís el grupo/i);
   });
 });
 

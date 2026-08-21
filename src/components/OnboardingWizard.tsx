@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChoiceOption } from "@/components/ChoiceOption";
-import { IconCheck, IconChevronLeft, IconMyCash, IconPlus } from "@/components/ui/Icons";
+import { IconCheck, IconChevronLeft, IconMyCash, IconPlus, IconSplit } from "@/components/ui/Icons";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import {
@@ -12,6 +12,7 @@ import {
   HOWTO_MOVEMENTS,
   HOWTO_PERIOD,
   HOWTO_SHARED,
+  HOWTO_SPLIT,
   isSetupQuestionStep,
   MONEY_PROFILE_OPTIONS,
   onboardingSteps,
@@ -172,11 +173,19 @@ export function OnboardingWizard() {
             items={HOWTO_PERIOD.items}
             preview={<PeriodPreview />}
           />
+        ) : current === "howto_split" ? (
+          <HowToStep
+            title={HOWTO_SPLIT.title}
+            sub={HOWTO_SPLIT.sub}
+            items={HOWTO_SPLIT.items}
+            preview={<SplitPreview />}
+          />
         ) : current === "howto_shared" ? (
           <HowToStep
             title={HOWTO_SHARED.title}
             sub={HOWTO_SHARED.sub}
             items={HOWTO_SHARED.items}
+            preview={<GroupsPreview />}
           />
         ) : (
           <DoneStep
@@ -224,7 +233,7 @@ function WelcomeStep({ name }: { name: string }) {
         </h1>
         <p className="mx-auto max-w-sm text-base leading-relaxed text-zinc-500">
           Primero acomodamos la app a cómo usás la plata. Después te mostramos
-          cómo anotar movimientos, y la diferencia entre mes y año.
+          cómo anotar, cómo mirar el mes y el año, y cómo dividir una cuenta.
         </p>
       </div>
       <p className="text-sm leading-relaxed text-zinc-400">
@@ -407,6 +416,33 @@ function PlusPreview() {
         <IconPlus className="h-6 w-6" />
       </span>
       <p className="text-sm font-semibold text-zinc-500">Cargar un movimiento</p>
+    </div>
+  );
+}
+
+function SplitPreview() {
+  return (
+    <div
+      className="flex items-center justify-center gap-3 rounded-2xl bg-[var(--card)] px-4 py-5"
+      aria-hidden
+    >
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900">
+        <IconSplit className="h-6 w-6" />
+      </span>
+      <p className="text-sm font-semibold text-zinc-500">Dividir</p>
+    </div>
+  );
+}
+
+function GroupsPreview() {
+  return (
+    <div
+      className="flex flex-wrap gap-2 rounded-2xl bg-[var(--card)] px-4 py-4"
+      aria-hidden
+    >
+      <span className="chip chip-active">Casa</span>
+      <span className="chip chip-inactive">Amigos</span>
+      <span className="chip chip-inactive">Viaje</span>
     </div>
   );
 }
