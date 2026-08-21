@@ -9,6 +9,8 @@ import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AccountIdentity } from "@/components/AccountIdentity";
 import { SharedAccountCard } from "@/components/SharedAccountCard";
 import { MoneySettings } from "@/components/MoneySettings";
+import { ExportStatementSheet } from "@/components/ExportStatementSheet";
+import { downloadBlob } from "@/lib/download";
 
 export default function CuentaPage() {
   const {
@@ -24,6 +26,7 @@ export default function CuentaPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   if (!ready || (configured && loading)) {
     return <LoadingScreen variant="account" />;
@@ -48,22 +51,19 @@ export default function CuentaPage() {
     else router.replace("/login");
   }
 
-  function handleExport() {
+  function handleBackup() {
     const payload = {
       exportedAt: new Date().toISOString(),
       email: user?.email ?? null,
       movements,
       rates,
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `mycash-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(
+      new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      }),
+      `mycash-export-${new Date().toISOString().slice(0, 10)}.json`,
+    );
     setMessage("Listo, se descargó");
   }
 
@@ -83,29 +83,49 @@ export default function CuentaPage() {
       <SharedAccountCard />
       <MoneySettings />
 
-      {isAuthenticated && (
-        <section className="bento space-y-3 p-4">
-          <p className="text-sm font-semibold">Tus datos</p>
-          <button
-            type="button"
-            onClick={handleExport}
-            className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
-          >
-            Descargar mis datos
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleDeleteAccount()}
-            disabled={busy}
-            className="w-full rounded-xl border border-red-200 py-2.5 text-sm text-red-600 dark:border-red-900/50"
-          >
-            Borrar cuenta
-          </button>
-        </section>
-      )}
+      <section className="bento space-y-3 p-4">
+        <p className="text-sm font-semibold">Tus datos</p>
+        <p className="text-xs leading-relaxed text-zinc-500">
+          {isAuthenticated
+            ? "El resumen es para imprimir o abrir en Excel. La copia JSON guarda todo, por las dudas."
+            : "Un archivo para imprimir o abrir en Excel, con el mes o el año."}
+        </p>
+        <button
+          type="button"
+          onClick={() => setExportOpen(true)}
+          className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
+        >
+          Exportar resumen
+        </button>
+        {isAuthenticated && (
+          <>
+            <button
+              type="button"
+              onClick={handleBackup}
+              className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
+            >
+              Descargar copia JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDeleteAccount()}
+              disabled={busy}
+              className="w-full rounded-xl border border-red-200 py-2.5 text-sm text-red-600 dark:border-red-900/50"
+            >
+              Borrar cuenta
+            </button>
+          </>
+        )}
+      </section>
 
       {message && <p className="text-sm text-teal-600">{message}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <ExportStatementSheet
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        initialScope="month"
+      />
     </div>
   );
 }
