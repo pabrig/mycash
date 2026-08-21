@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
-import { formatMonth, todayIso } from "@/lib/format";
+import { currentPeriod, formatMonth, todayIso } from "@/lib/format";
 import {
   addDaysIso,
   defaultDateForPeriod,
@@ -12,7 +12,6 @@ import {
   installmentLabel,
   MAX_REPEAT_COUNT,
   notesInPeriodLabel,
-  parseIsoDate,
   seriesPreview,
   type RepeatMode,
 } from "@/lib/schedule";
@@ -265,8 +264,8 @@ export function MovementForm({
       } else {
         await addMovements(payloads);
       }
-      const landed = parseIsoDate(date);
-      if (landed) setPeriod(landed.year, landed.month);
+      const now = currentPeriod();
+      setPeriod(now.year, now.month);
       router.push(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
