@@ -83,6 +83,12 @@ interface FinanceContextValue {
   addMovement: (
     movement: Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName">,
   ) => Promise<void>;
+  addMovements: (
+    movements: Omit<
+      Movement,
+      "id" | "createdAt" | "createdByUserId" | "createdByName"
+    >[],
+  ) => Promise<void>;
   updateMovement: (
     id: string,
     movement: Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName">,
@@ -351,6 +357,45 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, [ready, year, month, saveRate]);
 
+  const addMovements = useCallback(
+    async (
+      inputs: Omit<
+        Movement,
+        "id" | "createdAt" | "createdByUserId" | "createdByName"
+      >[],
+    ) => {
+      if (inputs.length === 0) return;
+
+      if (cloudEnabled && supabase && user) {
+        const created = await Promise.all(
+          inputs.map((input) =>
+            insertMovement(
+              supabase,
+              input,
+              user.id,
+              input.scope === "shared" ? (household?.id ?? null) : null,
+            ),
+          ),
+        );
+        setMovements((prev) => [...created, ...prev]);
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const created: Movement[] = inputs.map((input) => ({
+        ...input,
+        id: crypto.randomUUID(),
+        createdAt: now,
+      }));
+      setMovements((prev) => {
+        const next = [...created, ...prev];
+        storage.saveMovements(next);
+        return next;
+      });
+    },
+    [cloudEnabled, supabase, user, household],
+  );
+
   const addMovement = useCallback(
     async (
       input: Omit<
@@ -358,29 +403,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         "id" | "createdAt" | "createdByUserId" | "createdByName"
       >,
     ) => {
-      if (cloudEnabled && supabase && user) {
-        const created = await insertMovement(
-          supabase,
-          input,
-          user.id,
-          input.scope === "shared" ? (household?.id ?? null) : null,
-        );
-        setMovements((prev) => [created, ...prev]);
-        return;
-      }
-
-      const movement: Movement = {
-        ...input,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      };
-      setMovements((prev) => {
-        const next = [movement, ...prev];
-        storage.saveMovements(next);
-        return next;
-      });
+      await addMovements([input]);
     },
-    [cloudEnabled, supabase, user, household],
+    [addMovements],
   );
 
   const addConversion = useCallback(
@@ -579,6 +604,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setAmountsHidden,
       setPeriod,
       addMovement,
+      addMovements,
       updateMovement,
       addConversion,
       deleteMovement,
@@ -615,6 +641,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setAmountsHidden,
       setPeriod,
       addMovement,
+      addMovements,
       updateMovement,
       addConversion,
       deleteMovement,
