@@ -282,7 +282,7 @@ export function MovementForm({
                   : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
               }`}
             >
-              {s === "personal" ? "Mío" : "Con otros"}
+              {s === "personal" ? "Mío" : "Compartido"}
             </button>
           ))}
         </div>

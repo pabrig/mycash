@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  computeSplitAnnualSummary,
   computeSplitMonthlySummary,
   resolveWallet,
+  walletBucketToUsd,
 } from "./wallet";
 import type { MonthlyRate, Movement } from "./types";
 
@@ -89,5 +91,63 @@ describe("computeSplitMonthlySummary", () => {
     expect(split.equivalentTotalArs).toBe(
       split.vida.disponible + split.ahorro.disponible * 1200,
     );
+  });
+});
+
+describe("computeSplitAnnualSummary", () => {
+  it("converts cotidiano to USD with each month's rate and keeps ahorro in USD", () => {
+    const janRate: MonthlyRate = { year: 2026, month: 1, usdToArs: 1000 };
+    const yearMovements: Movement[] = [
+      ...movements,
+      {
+        id: "5",
+        type: "expense",
+        date: "2026-01-10",
+        amount: 50000,
+        currency: "ARS",
+        description: "Enero",
+        scope: "personal",
+        kind: "variable",
+        category: "otros",
+        createdAt: "2026-01-10T00:00:00Z",
+      },
+    ];
+
+    const annual = computeSplitAnnualSummary(yearMovements, 2026, [
+      janRate,
+      rate,
+    ]);
+
+    expect(annual.activeMonths).toBe(2);
+    expect(annual.vida.currency).toBe("USD");
+    expect(annual.vida.income).toBe(500000 / 1200);
+    expect(annual.vida.expenses).toBeCloseTo(
+      280000 / 1200 + 100 + 50000 / 1000,
+    );
+    expect(annual.ahorro.income).toBe(3500);
+    expect(annual.ahorro.expenses).toBe(0);
+  });
+});
+
+describe("walletBucketToUsd", () => {
+  it("converts an ARS bucket using the month rate", () => {
+    const usd = walletBucketToUsd(
+      {
+        wallet: "vida",
+        currency: "ARS",
+        income: 1200,
+        expenses: 600,
+        disponible: 600,
+      },
+      rate,
+    );
+
+    expect(usd).toEqual({
+      wallet: "vida",
+      currency: "USD",
+      income: 1,
+      expenses: 0.5,
+      disponible: 0.5,
+    });
   });
 });

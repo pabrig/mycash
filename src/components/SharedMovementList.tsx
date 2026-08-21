@@ -79,7 +79,7 @@ function SharedRow({
             </p>
             <p className="meta mt-0.5 text-xs md:hidden">
               {movement.createdByName ? `${movement.createdByName} · ` : ""}
-              {expenseCategoryLabel(movement.category) || "Con otros"}
+              {expenseCategoryLabel(movement.category) || "Compartido"}
             </p>
           </div>
         </div>

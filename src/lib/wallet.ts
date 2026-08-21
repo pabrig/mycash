@@ -1,4 +1,4 @@
-import { toArs } from "./currency";
+import { toArs, toUsd } from "./currency";
 import { filterByMonth, filterByYear } from "./summary";
 import type {
   MonthlyRate,
@@ -101,14 +101,15 @@ export function computeSplitAnnualSummary(
   const vida = emptyBucket("vida");
   const ahorro = emptyBucket("ahorro");
   let equivalentTotalArs = 0;
+  vida.currency = "USD";
 
   for (let month = 1; month <= 12; month++) {
     const monthMovements = filterByMonth(yearMovements, year, month);
     if (monthMovements.length === 0) continue;
     const rate = getRate(year, month);
     const monthSplit = computeSplitMonthlySummary(monthMovements, rate);
-    vida.income += monthSplit.vida.income;
-    vida.expenses += monthSplit.vida.expenses;
+    vida.income += toUsd(monthSplit.vida.income, "ARS", rate);
+    vida.expenses += toUsd(monthSplit.vida.expenses, "ARS", rate);
     ahorro.income += monthSplit.ahorro.income;
     ahorro.expenses += monthSplit.ahorro.expenses;
     equivalentTotalArs += monthSplit.equivalentTotalArs;
@@ -117,28 +118,27 @@ export function computeSplitAnnualSummary(
   vida.disponible = vida.income - vida.expenses;
   ahorro.disponible = ahorro.income - ahorro.expenses;
 
-  const activeMonths = countActiveMonths(yearMovements, year);
-  const divisor = activeMonths > 0 ? activeMonths : 1;
-
   return {
     year,
     vida,
     ahorro,
     equivalentTotalArs,
     movementCount: yearMovements.length,
-    activeMonths,
-    averages: {
-      vida: {
-        income: vida.income / divisor,
-        expenses: vida.expenses / divisor,
-        disponible: vida.disponible / divisor,
-      },
-      ahorro: {
-        income: ahorro.income / divisor,
-        expenses: ahorro.expenses / divisor,
-        disponible: ahorro.disponible / divisor,
-      },
-    },
+    activeMonths: countActiveMonths(yearMovements, year),
+  };
+}
+
+export function walletBucketToUsd(
+  bucket: WalletBucketSummary,
+  rate: MonthlyRate,
+): WalletBucketSummary {
+  if (bucket.currency === "USD") return bucket;
+  return {
+    ...bucket,
+    currency: "USD",
+    income: toUsd(bucket.income, "ARS", rate),
+    expenses: toUsd(bucket.expenses, "ARS", rate),
+    disponible: toUsd(bucket.disponible, "ARS", rate),
   };
 }
 
