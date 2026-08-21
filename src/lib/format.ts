@@ -82,6 +82,13 @@ export function currentPeriod(): { year: number; month: number } {
   return { year: d.getFullYear(), month: d.getMonth() + 1 };
 }
 
+/** "21 de agosto" — copy de “hasta hoy” sin Intl. */
+export function formatDayAndMonth(date: Date = new Date()): string {
+  const month = MONTH_NAMES[date.getMonth()];
+  if (!month) return "";
+  return `${date.getDate()} de ${month.toLowerCase()}`;
+}
+
 export function isCurrentPeriod(year: number, month: number): boolean {
   if (year === 0 || month === 0) return true;
   const now = currentPeriod();

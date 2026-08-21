@@ -5,7 +5,7 @@ import { useFinance } from "@/context/FinanceContext";
 import { AppHeader } from "@/components/AppHeader";
 import { DisponibleHero } from "@/components/DisponibleHero";
 import { BalanceBar } from "@/components/BalanceBar";
-import { AnnualOverview } from "@/components/AnnualOverview";
+import { YearReview } from "@/components/YearReview";
 import { MovementList } from "@/components/MovementList";
 import { CloudBanner } from "@/components/CloudBanner";
 import { PeriodToggle } from "@/components/PeriodToggle";
@@ -29,7 +29,7 @@ export default function HomePage() {
           <div className="min-w-0 flex-1">
             <PeriodToggle scope={scope} onChange={setScope} />
           </div>
-          {walletMode === "unified" && (
+          {walletMode === "unified" && scope === "month" && (
             <div className="shrink-0 md:hidden">
               <CurrencyToggle />
             </div>
@@ -38,15 +38,11 @@ export default function HomePage() {
       </div>
 
       {scope === "year" ? (
-        <div className="mx-auto grid w-full max-w-5xl gap-4 md:gap-6">
-          <DisponibleHero scope={scope} />
-          <AnnualOverview onOpenMonth={() => setScope("month")} />
-        </div>
+        <YearReview onOpenMonth={() => setScope("month")} />
       ) : (
         <div className="mx-auto grid w-full grid-cols-1 items-start gap-4 md:grid-cols-12 md:gap-6">
-          {/* Macro */}
           <div className="flex flex-col gap-4 md:col-span-7 lg:col-span-8">
-            <DisponibleHero scope={scope} />
+            <DisponibleHero />
             <BalanceBar />
             <div className="md:hidden">
               <MovementList />
