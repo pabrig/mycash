@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAuthShellPath, isPublicPath } from "@/lib/auth-routes";
+import { isAuthShellPath, isOnboardingPath, isPublicPath } from "@/lib/auth-routes";
 
 describe("isPublicPath", () => {
   it("allows login, auth callback and join links", () => {
@@ -11,16 +11,26 @@ describe("isPublicPath", () => {
   it("protects the app shell", () => {
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/cuenta")).toBe(false);
+    expect(isPublicPath("/onboarding")).toBe(false);
     expect(isPublicPath("/compartido")).toBe(false);
     expect(isPublicPath("/join")).toBe(false);
   });
 });
 
 describe("isAuthShellPath", () => {
-  it("hides chrome on login and join", () => {
+  it("hides chrome on login, join and onboarding", () => {
     expect(isAuthShellPath("/login")).toBe(true);
     expect(isAuthShellPath("/join/ABCD1234EFGH")).toBe(true);
+    expect(isAuthShellPath("/onboarding")).toBe(true);
     expect(isAuthShellPath("/")).toBe(false);
     expect(isAuthShellPath("/cuenta")).toBe(false);
+  });
+});
+
+describe("isOnboardingPath", () => {
+  it("matches only the account setup route", () => {
+    expect(isOnboardingPath("/onboarding")).toBe(true);
+    expect(isOnboardingPath("/cuenta")).toBe(false);
+    expect(isOnboardingPath("/login")).toBe(false);
   });
 });

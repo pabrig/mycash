@@ -165,3 +165,11 @@ export function IconClose({ className = "h-5 w-5" }: IconProps) {
     </svg>
   );
 }
+
+export function IconCheck({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12.5 10 17.5 19 7" />
+    </svg>
+  );
+}

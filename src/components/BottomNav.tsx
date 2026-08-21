@@ -14,6 +14,7 @@ const HIDE_NAV_PREFIXES = [
   "/editar",
   "/login",
   "/join",
+  "/onboarding",
   "/dividir/nuevo",
 ];
 

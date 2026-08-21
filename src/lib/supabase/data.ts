@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isOnboardingDone } from "@/lib/account-setup";
 import type {
   DisplayCurrency,
   Household,
@@ -300,6 +301,114 @@ export async function upsertRate(
   if (error) throw error;
 }
 
+export type UserSettings = {
+  displayCurrency: DisplayCurrency;
+  walletMode: WalletMode;
+  sharedEnabled: boolean;
+  usdEnabled: boolean;
+  onboardingCompleted: boolean;
+  /** False si la columna todavía no existe en la base. */
+  onboardingTracked: boolean;
+};
+
+export function isMissingOnboardingColumn(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("onboarding_completed")
+  );
+}
+
+export function parseUserSettings(
+  data: {
+    display_currency?: string | null;
+    wallet_mode?: string | null;
+    shared_enabled?: boolean | null;
+    usd_enabled?: boolean | null;
+    onboarding_completed?: boolean | null;
+  } | null,
+): UserSettings {
+  return {
+    displayCurrency: data?.display_currency === "USD" ? "USD" : "ARS",
+    walletMode: data?.wallet_mode === "split" ? "split" : "unified",
+    sharedEnabled: data?.shared_enabled === true,
+    usdEnabled: data?.usd_enabled !== false,
+    onboardingCompleted: isOnboardingDone(data?.onboarding_completed),
+    onboardingTracked:
+      data != null && Object.prototype.hasOwnProperty.call(data, "onboarding_completed"),
+  };
+}
+
+const SETTINGS_COLUMNS =
+  "display_currency, wallet_mode, shared_enabled, usd_enabled";
+
+export async function fetchUserSettings(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<UserSettings> {
+  const withColumn = await supabase
+    .from("user_settings")
+    .select(`${SETTINGS_COLUMNS}, onboarding_completed`)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!withColumn.error) {
+    return parseUserSettings(withColumn.data);
+  }
+
+  if (!isMissingOnboardingColumn(withColumn.error)) {
+    throw withColumn.error;
+  }
+
+  const fallback = await supabase
+    .from("user_settings")
+    .select(SETTINGS_COLUMNS)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (fallback.error) throw fallback.error;
+  return parseUserSettings(fallback.data);
+}
+
+export async function saveAccountSetupRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  settings: {
+    displayCurrency: DisplayCurrency;
+    walletMode: WalletMode;
+    sharedEnabled: boolean;
+    usdEnabled: boolean;
+    onboardingCompleted: boolean;
+  },
+): Promise<void> {
+  const payload = {
+    user_id: userId,
+    display_currency: settings.displayCurrency,
+    wallet_mode: settings.walletMode,
+    shared_enabled: settings.sharedEnabled,
+    usd_enabled: settings.usdEnabled,
+    onboarding_completed: settings.onboardingCompleted,
+  };
+
+  const first = await supabase.from("user_settings").upsert(payload);
+  if (!first.error) return;
+  if (!isMissingOnboardingColumn(first.error)) throw first.error;
+
+  const retry = await supabase.from("user_settings").upsert({
+    user_id: payload.user_id,
+    display_currency: payload.display_currency,
+    wallet_mode: payload.wallet_mode,
+    shared_enabled: payload.shared_enabled,
+    usd_enabled: payload.usd_enabled,
+  });
+  if (retry.error) throw retry.error;
+}
+
 export async function fetchWalletMode(
   supabase: SupabaseClient,
   userId: string,
@@ -565,12 +674,25 @@ export async function migrateLocalIfEmpty(
     if (error) throw error;
   }
 
-  const { error: settingsError } = await supabase.from("user_settings").upsert({
+  const settingsPayload = {
     user_id: userId,
     display_currency: local.displayCurrency,
     wallet_mode: local.walletMode,
     shared_enabled: local.sharedEnabled,
     usd_enabled: local.usdEnabled,
-  });
-  if (settingsError) throw settingsError;
+    onboarding_completed: true,
+  };
+  const firstSettings = await supabase.from("user_settings").upsert(settingsPayload);
+  if (firstSettings.error && isMissingOnboardingColumn(firstSettings.error)) {
+    const retry = await supabase.from("user_settings").upsert({
+      user_id: settingsPayload.user_id,
+      display_currency: settingsPayload.display_currency,
+      wallet_mode: settingsPayload.wallet_mode,
+      shared_enabled: settingsPayload.shared_enabled,
+      usd_enabled: settingsPayload.usd_enabled,
+    });
+    if (retry.error) throw retry.error;
+  } else if (firstSettings.error) {
+    throw firstSettings.error;
+  }
 }

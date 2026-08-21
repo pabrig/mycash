@@ -7,7 +7,15 @@ export function isPublicPath(pathname: string): boolean {
   );
 }
 
-/** Login / join: sin sidebar ni nav. */
+/** Login / join / primer armado de cuenta: sin sidebar ni nav. */
 export function isAuthShellPath(pathname: string): boolean {
-  return pathname === "/login" || pathname.startsWith("/join/");
+  return (
+    pathname === "/login" ||
+    pathname.startsWith("/join/") ||
+    pathname === "/onboarding"
+  );
+}
+
+export function isOnboardingPath(pathname: string): boolean {
+  return pathname === "/onboarding";
 }

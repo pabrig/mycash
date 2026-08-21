@@ -27,22 +27,22 @@ import { fetchLiveRatesClient } from "@/lib/rates-client";
 import { friendlyError } from "@/lib/errors";
 import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
 import { useIsClient } from "@/hooks/useIsClient";
+import { settingsForMoneyProfile, type MoneyProfile } from "@/lib/money-profile";
+import { resolveOnboardingCompleted } from "@/lib/account-setup";
 import {
   deleteMovementById,
   fetchAllMovementsForUser,
-  fetchDisplayCurrency,
   fetchRates,
-  fetchWalletMode,
+  fetchUserSettings,
   insertMovement,
   migrateLocalIfEmpty,
+  saveAccountSetupRemote,
   saveDisplayCurrencyRemote,
   saveSharedEnabledRemote,
   saveUsdEnabledRemote,
   saveWalletModeRemote,
   updateMovementById,
   upsertRate,
-  fetchSharedEnabled,
-  fetchUsdEnabled,
 } from "@/lib/supabase/data";
 import type {
   AnnualSummary,
@@ -77,6 +77,12 @@ interface FinanceContextValue {
   setSharedEnabled: (enabled: boolean) => void;
   usdEnabled: boolean;
   setUsdEnabled: (enabled: boolean) => void;
+  onboardingCompleted: boolean;
+  completeAccountSetup: (input: {
+    profile: MoneyProfile;
+    walletMode: WalletMode;
+    sharedEnabled: boolean;
+  }) => Promise<void>;
   amountsHidden: boolean;
   setAmountsHidden: (hidden: boolean) => void;
   setPeriod: (year: number, month: number) => void;
@@ -130,6 +136,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [walletMode, setWalletModeState] = useState<WalletMode>("unified");
   const [sharedEnabled, setSharedEnabledState] = useState(false);
   const [usdEnabled, setUsdEnabledState] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [amountsHidden, setAmountsHiddenState] = useState(false);
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
 
@@ -147,6 +154,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setWalletModeState(storage.loadWalletMode());
     setSharedEnabledState(storage.loadSharedEnabled());
     setUsdEnabledState(storage.loadUsdEnabled());
+    setOnboardingCompleted(!storage.loadOnboardingReplay());
     setAmountsHiddenState(storage.loadAmountsHidden());
   }, []);
 
@@ -155,28 +163,25 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
     await migrateLocalIfEmpty(supabase, user.id, storage.loadLocalSnapshot());
 
-    const [
-      remoteMovements,
-      remoteRates,
-      remoteDisplay,
-      remoteWalletMode,
-      remoteShared,
-      remoteUsd,
-    ] = await Promise.all([
+    const [remoteMovements, remoteRates, remoteSettings] = await Promise.all([
       fetchAllMovementsForUser(supabase),
       fetchRates(supabase, user.id),
-      fetchDisplayCurrency(supabase, user.id),
-      fetchWalletMode(supabase, user.id),
-      fetchSharedEnabled(supabase, user.id),
-      fetchUsdEnabled(supabase, user.id),
+      fetchUserSettings(supabase, user.id),
     ]);
 
     setMovements(remoteMovements);
     setRates(remoteRates);
-    setDisplayCurrencyState(remoteDisplay);
-    setWalletModeState(remoteWalletMode);
-    setSharedEnabledState(remoteShared);
-    setUsdEnabledState(remoteUsd);
+    setDisplayCurrencyState(remoteSettings.displayCurrency);
+    setWalletModeState(remoteSettings.walletMode);
+    setSharedEnabledState(remoteSettings.sharedEnabled);
+    setUsdEnabledState(remoteSettings.usdEnabled);
+    setOnboardingCompleted(
+      resolveOnboardingCompleted({
+        tracked: remoteSettings.onboardingTracked,
+        completed: remoteSettings.onboardingCompleted,
+        replay: storage.loadOnboardingReplay(),
+      }),
+    );
     storage.clearSyncedLocalFinance();
     setSyncError(null);
   }, [supabase, user]);
@@ -213,6 +218,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setWalletModeState("unified");
         setSharedEnabledState(false);
         setUsdEnabledState(true);
+        setOnboardingCompleted(true);
         if (!cancelled) setReady(true);
         return;
       }
@@ -313,6 +319,40 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
     },
     [cloudEnabled, supabase, user, persistDisplayCurrency],
+  );
+
+  const completeAccountSetup = useCallback(
+    async (input: {
+      profile: MoneyProfile;
+      walletMode: WalletMode;
+      sharedEnabled: boolean;
+    }) => {
+      const settings = settingsForMoneyProfile(input.profile, input.walletMode);
+      const displayCurrency: DisplayCurrency = "ARS";
+
+      if (cloudEnabled && supabase && user) {
+        await saveAccountSetupRemote(supabase, user.id, {
+          displayCurrency,
+          walletMode: settings.walletMode,
+          sharedEnabled: input.sharedEnabled,
+          usdEnabled: settings.usdEnabled,
+          onboardingCompleted: true,
+        });
+      } else {
+        storage.saveUsdEnabled(settings.usdEnabled);
+        storage.saveWalletMode(settings.walletMode);
+        storage.saveSharedEnabled(input.sharedEnabled);
+        storage.saveDisplayCurrency(displayCurrency);
+      }
+
+      setUsdEnabledState(settings.usdEnabled);
+      setWalletModeState(settings.walletMode);
+      setSharedEnabledState(input.sharedEnabled);
+      setDisplayCurrencyState(displayCurrency);
+      setOnboardingCompleted(true);
+      storage.saveOnboardingReplay(false);
+    },
+    [cloudEnabled, supabase, user],
   );
 
   const setAmountsHidden = useCallback((hidden: boolean) => {
@@ -600,6 +640,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedEnabled,
       usdEnabled,
       setUsdEnabled,
+      onboardingCompleted,
+      completeAccountSetup,
       amountsHidden,
       setAmountsHidden,
       setPeriod,
@@ -637,6 +679,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedEnabled,
       usdEnabled,
       setUsdEnabled,
+      onboardingCompleted,
+      completeAccountSetup,
       amountsHidden,
       setAmountsHidden,
       setPeriod,

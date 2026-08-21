@@ -9,6 +9,7 @@ const WALLET_MODE_KEY = "mycash_wallet_mode";
 const SHARED_ENABLED_KEY = "mycash_shared_enabled";
 const USD_ENABLED_KEY = "mycash_usd_enabled";
 const AMOUNTS_HIDDEN_KEY = "mycash_amounts_hidden";
+const ONBOARDING_REPLAY_KEY = "mycash_onboarding_replay";
 
 const LEGACY_KEYS = [
   ["pagapp_movements", MOVEMENTS_KEY],
@@ -143,6 +144,18 @@ export function loadAmountsHidden(): boolean {
 
 export function saveAmountsHidden(hidden: boolean): void {
   localStorage.setItem(AMOUNTS_HIDDEN_KEY, hidden ? "true" : "false");
+}
+
+/** Sin la columna en la nube: al cerrar sesión se puede volver a ver el wizard. */
+export function loadOnboardingReplay(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ONBOARDING_REPLAY_KEY) === "true";
+}
+
+export function saveOnboardingReplay(replay: boolean): void {
+  if (typeof window === "undefined") return;
+  if (replay) localStorage.setItem(ONBOARDING_REPLAY_KEY, "true");
+  else localStorage.removeItem(ONBOARDING_REPLAY_KEY);
 }
 
 const SPLIT_EVENTS_KEY = "mycash_split_events";

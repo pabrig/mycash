@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { hasLocalToMigrate, type LocalSnapshot } from "@/lib/supabase/data";
+import {
+  hasLocalToMigrate,
+  isMissingOnboardingColumn,
+  parseUserSettings,
+  type LocalSnapshot,
+} from "@/lib/supabase/data";
 import type { Movement } from "@/lib/types";
 
 function snapshot(partial: Partial<LocalSnapshot> = {}): LocalSnapshot {
@@ -53,5 +58,38 @@ describe("hasLocalToMigrate", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("parseUserSettings", () => {
+  it("marks a new account as pending onboarding", () => {
+    const settings = parseUserSettings({
+      display_currency: "ARS",
+      wallet_mode: "unified",
+      shared_enabled: false,
+      usd_enabled: true,
+      onboarding_completed: false,
+    });
+    expect(settings.onboardingCompleted).toBe(false);
+    expect(settings.onboardingTracked).toBe(true);
+  });
+
+  it("does not trap older rows without the column", () => {
+    expect(parseUserSettings(null).onboardingTracked).toBe(false);
+    expect(parseUserSettings({}).onboardingTracked).toBe(false);
+    expect(parseUserSettings({}).onboardingCompleted).toBe(true);
+  });
+});
+
+describe("isMissingOnboardingColumn", () => {
+  it("detects postgres and postgrest missing-column errors", () => {
+    expect(isMissingOnboardingColumn({ code: "42703" })).toBe(true);
+    expect(isMissingOnboardingColumn({ code: "PGRST204" })).toBe(true);
+    expect(
+      isMissingOnboardingColumn({
+        message: "Could not find the 'onboarding_completed' column",
+      }),
+    ).toBe(true);
+    expect(isMissingOnboardingColumn({ code: "42501" })).toBe(false);
   });
 });
