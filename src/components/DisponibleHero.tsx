@@ -134,7 +134,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
       <div className="bento !p-0 overflow-hidden">
         <div className="px-6 pt-7 pb-5">
           <p className="text-sm font-medium text-zinc-400">
-            Cotidiano · ARS
+            Diario · ARS
             {isYear && ` · prom. ${year}`}
           </p>
           <p
@@ -199,7 +199,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
                   onClick={() => setConvertOpen((v) => !v)}
                   className="btn-primary w-full text-sm"
                 >
-                  {convertOpen ? "Cerrar" : "Pasar plata"}
+                  {convertOpen ? "Cerrar" : "Ahorrar o usar"}
                 </button>
                 {convertOpen && (
                   <WalletConvertForm onDone={() => setConvertOpen(false)} />
@@ -219,7 +219,7 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
               }}
               className="w-full text-center text-xs font-semibold text-zinc-400 transition active:text-zinc-700"
             >
-              Pasar plata entre bolsillos
+              Ahorrar o usar dólares
             </button>
           </div>
         )}
@@ -228,28 +228,33 @@ function SplitHero({ scope }: { scope: SummaryScope }) {
   );
 }
 
-type ConvertDirection = "to_usd" | "to_ars";
+type ConvertAction = "to_usd" | "to_ars" | "spend_usd";
 
 function WalletConvertForm({ onDone }: { onDone: () => void }) {
-  const { rate, addConversion } = useFinance();
+  const { rate, addConversion, addMovement } = useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
-  const [direction, setDirection] = useState<ConvertDirection>("to_usd");
+  const [action, setAction] = useState<ConvertAction>("to_usd");
   const [amount, setAmount] = useState("");
+  const [spendWhat, setSpendWhat] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   const parsed = parseFloat(amount.replace(",", "."));
-  const valid = parsed > 0 && rate.usdToArs > 0;
+  const valid = parsed > 0 && (action === "spend_usd" || rate.usdToArs > 0);
 
   const preview =
-    direction === "to_usd"
+    action === "to_usd"
       ? valid
         ? `Van a ahorro ≈ ${formatUsd(parsed / rate.usdToArs)}`
-        : "¿Cuántos pesos?"
-      : valid
-        ? `Van a cotidiano ≈ ${formatArs(parsed * rate.usdToArs)}`
-        : "¿Cuántos dólares?";
+        : "¿Cuántos pesos te sobran?"
+      : action === "to_ars"
+        ? valid
+          ? `Van a diario ≈ ${formatArs(parsed * rate.usdToArs)}`
+          : "¿Cuántos dólares?"
+        : valid
+          ? `Sale del ahorro ${formatUsd(parsed)}`
+          : "¿Cuántos dólares gastás?";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -257,54 +262,68 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError("");
     try {
-      await addConversion({
-        direction,
-        amount: parsed,
-        date: todayIso(),
-      });
+      if (action === "spend_usd") {
+        await addMovement({
+          type: "expense",
+          amount: parsed,
+          currency: "USD",
+          description: spendWhat.trim() || "Gasté del ahorro",
+          scope: "personal",
+          kind: "variable",
+          category: "extras",
+          wallet: "ahorro",
+          date: todayIso(),
+        });
+      } else {
+        await addConversion({
+          direction: action,
+          amount: parsed,
+          date: todayIso(),
+        });
+      }
       setAmount("");
+      setSpendWhat("");
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo convertir");
+      setError(err instanceof Error ? err.message : "No se pudo guardar");
     } finally {
       setBusy(false);
     }
   }
 
+  const actions: { id: ConvertAction; label: string }[] = [
+    { id: "to_usd", label: "Ahorrar" },
+    { id: "to_ars", label: "Volver a pesos" },
+    { id: "spend_usd", label: "Gastar USD" },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-[var(--card)] p-4">
       <p className="text-xs leading-relaxed text-zinc-400">
-        Pasás plata de un bolsillo al otro, al dólar oficial.
+        Lo que te sobra va a dólares. Si un mes lo necesitás, lo volvés a pesos o
+        lo gastás del ahorro.
       </p>
 
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setDirection("to_usd")}
-          className={`rounded-2xl py-3 text-xs font-semibold ${
-            direction === "to_usd"
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-              : "bg-[var(--card-muted)] text-zinc-500"
-          }`}
-        >
-          ARS → USD
-        </button>
-        <button
-          type="button"
-          onClick={() => setDirection("to_ars")}
-          className={`rounded-2xl py-3 text-xs font-semibold ${
-            direction === "to_ars"
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-              : "bg-[var(--card-muted)] text-zinc-500"
-          }`}
-        >
-          USD → ARS
-        </button>
+      <div className="grid grid-cols-3 gap-1.5">
+        {actions.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setAction(id)}
+            className={`rounded-2xl px-1 py-3 text-[11px] font-semibold leading-tight ${
+              action === id
+                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                : "bg-[var(--card-muted)] text-zinc-500"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div>
         <label className="mb-1.5 block text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
-          {direction === "to_usd" ? "Monto en ARS" : "Monto en USD"}
+          {action === "to_usd" ? "Monto en ARS" : "Monto en USD"}
         </label>
         <input
           type="text"
@@ -318,6 +337,21 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
         <p className="meta mt-1.5 text-xs">{preview}</p>
       </div>
 
+      {action === "spend_usd" && (
+        <div>
+          <label className="mb-1.5 block text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+            ¿Qué fue?
+          </label>
+          <input
+            type="text"
+            value={spendWhat}
+            onChange={(e) => setSpendWhat(e.target.value)}
+            placeholder="Ej: pasaje, trámite…"
+            className="input-field"
+          />
+        </div>
+      )}
+
       {error && <p className="text-xs text-rose-500">{error}</p>}
 
       <button
@@ -327,9 +361,11 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
       >
         {busy
           ? "Guardando…"
-          : direction === "to_usd"
+          : action === "to_usd"
             ? "Pasar a ahorro"
-            : "Pasar a cotidiano"}
+            : action === "to_ars"
+              ? "Pasar a diario"
+              : "Gastar del ahorro"}
       </button>
     </form>
   );

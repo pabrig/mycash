@@ -287,10 +287,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const setWalletMode = useCallback(
     async (mode: WalletMode) => {
-      if (mode === "split" && !usdEnabled) return;
       await persistWalletMode(mode);
     },
-    [usdEnabled, persistWalletMode],
+    [persistWalletMode],
   );
 
   const setUsdEnabled = useCallback(
@@ -303,10 +302,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
       if (!enabled) {
         await persistDisplayCurrency("ARS");
-        await persistWalletMode("unified");
       }
     },
-    [cloudEnabled, supabase, user, persistDisplayCurrency, persistWalletMode],
+    [cloudEnabled, supabase, user, persistDisplayCurrency],
   );
 
   const setAmountsHidden = useCallback((hidden: boolean) => {
@@ -412,7 +410,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 type: "income" as const,
                 amount: input.amount / currentRate.usdToArs,
                 currency: "USD" as const,
-                description: "Saqué de cotidiano",
+                description: "Saqué de diario",
                 incomeKind: "active" as const,
                 source: "otros",
                 wallet: "ahorro" as const,
@@ -424,7 +422,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 type: "expense" as const,
                 amount: input.amount,
                 currency: "USD" as const,
-                description: "Pasé a cotidiano",
+                description: "Pasé a diario",
                 scope: "personal" as const,
                 kind: "variable" as const,
                 category: "extras",
@@ -546,7 +544,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const effectiveWalletMode: WalletMode =
-    usdEnabled && walletMode === "split" ? "split" : "unified";
+    walletMode === "split" ? "split" : "unified";
   const effectiveDisplayCurrency: DisplayCurrency =
     usdEnabled && displayCurrency === "USD" ? "USD" : "ARS";
 

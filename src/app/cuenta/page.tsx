@@ -8,117 +8,160 @@ import { useFinance } from "@/context/FinanceContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AccountIdentity } from "@/components/AccountIdentity";
 import { SharedAccountCard } from "@/components/SharedAccountCard";
+import {
+  resolveMoneyProfile,
+  settingsForMoneyProfile,
+  type MoneyProfile,
+} from "@/lib/money-profile";
 
-function UsdSettings() {
-  const { usdEnabled, setUsdEnabled } = useFinance();
+const MONEY_PROFILES: {
+  id: MoneyProfile;
+  title: string;
+  description: string;
+}[] = [
+  {
+    id: "ars_only",
+    title: "Solo pesos",
+    description: "Ingresos y gastos en ARS. Un solo número.",
+  },
+  {
+    id: "ars_savings",
+    title: "Pesos, y ahorro en dólares",
+    description:
+      "Cobrás en pesos. A fin de mes pasás lo que te sobra a dólares. Si un mes lo necesitás, lo usás o lo volvés a pesos.",
+  },
+  {
+    id: "dual",
+    title: "Pesos y dólares",
+    description: "Cargás ingresos y gastos en las dos monedas.",
+  },
+];
 
+function ProfileOption({
+  title,
+  description,
+  selected,
+  onSelect,
+}: {
+  title: string;
+  description: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <section className="bento space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold tracking-tight">Dólares (USD)</p>
-          <p className="meta mt-1 text-xs leading-relaxed">
-            Activá si usás dólares. Si solo usás pesos, dejalo apagado.
-          </p>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={usdEnabled}
-          onClick={() => void setUsdEnabled(!usdEnabled)}
-          className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
-            usdEnabled
-              ? "bg-zinc-900 dark:bg-white"
-              : "bg-zinc-200 dark:bg-zinc-700"
-          }`}
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
-              usdEnabled ? "translate-x-5" : "translate-x-0"
-            }`}
-          />
-        </button>
-      </div>
-      {usdEnabled ? (
-        <p className="text-xs leading-relaxed text-zinc-400">
-          Vas a poder ver en dólares, cargar en USD y usar dos bolsillos.
-        </p>
-      ) : (
-        <p className="text-xs leading-relaxed text-zinc-400">
-          Todo queda en pesos. Lo que ya cargaste en dólares se sigue contando.
-        </p>
-      )}
-    </section>
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded-2xl p-3.5 text-left transition-all active:scale-[0.99] ${
+        selected
+          ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+          : "bg-[var(--card-muted)]"
+      }`}
+    >
+      <p className="text-sm font-semibold">{title}</p>
+      <p
+        className={`mt-0.5 text-xs leading-relaxed ${
+          selected
+            ? "text-white/70 dark:text-zinc-600"
+            : "text-zinc-400"
+        }`}
+      >
+        {description}
+      </p>
+    </button>
   );
 }
 
-function WalletSettings() {
-  const { walletMode, setWalletMode, sharedEnabled, usdEnabled } = useFinance();
+function MoneySettings() {
+  const {
+    usdEnabled,
+    setUsdEnabled,
+    walletMode,
+    setWalletMode,
+    sharedEnabled,
+  } = useFinance();
+  const profile = resolveMoneyProfile(usdEnabled, walletMode);
 
-  if (!usdEnabled) return null;
+  async function selectProfile(next: MoneyProfile) {
+    const settings = settingsForMoneyProfile(next, walletMode);
+    await setUsdEnabled(settings.usdEnabled);
+    await setWalletMode(settings.walletMode);
+  }
 
   return (
-    <section className="bento space-y-4">
-      <div>
-        <p className="text-sm font-semibold tracking-tight">¿Cómo querés ver tu plata?</p>
-        <p className="meta mt-1 text-xs">
-          Un número o dos bolsillos: día a día y ahorro.
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <button
-          type="button"
-          onClick={() => void setWalletMode("unified")}
-          className={`w-full rounded-2xl p-3.5 text-left transition-all active:scale-[0.99] ${
-            walletMode === "unified"
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-              : "bg-[var(--card-muted)]"
-          }`}
-        >
-          <p className="text-sm font-semibold">Todo junto</p>
-          <p
-            className={`mt-0.5 text-xs leading-relaxed ${
-              walletMode === "unified"
-                ? "text-white/70 dark:text-zinc-600"
-                : "text-zinc-400"
-            }`}
-          >
-            Un solo número. Toda tu plata junta.
+    <>
+      <section className="bento space-y-4">
+        <div>
+          <p className="text-sm font-semibold tracking-tight">¿Cómo es tu plata?</p>
+          <p className="meta mt-1 text-xs">
+            Elegí cómo cobrás y si apartás dólares.
           </p>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => void setWalletMode("split")}
-          className={`w-full rounded-2xl p-3.5 text-left transition-all active:scale-[0.99] ${
-            walletMode === "split"
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-              : "bg-[var(--card-muted)]"
-          }`}
-        >
-          <p className="text-sm font-semibold">Dos bolsillos</p>
-          <p
-            className={`mt-0.5 text-xs leading-relaxed ${
-              walletMode === "split"
-                ? "text-white/70 dark:text-zinc-600"
-                : "text-zinc-400"
-            }`}
-          >
-            Cotidiano en pesos. Ahorro en dólares, para lo que no tocás.
+        <div className="space-y-2">
+          {MONEY_PROFILES.map((option) => (
+            <ProfileOption
+              key={option.id}
+              title={option.title}
+              description={option.description}
+              selected={profile === option.id}
+              onSelect={() => void selectProfile(option.id)}
+            />
+          ))}
+        </div>
+
+        {profile === "ars_savings" && (
+          <p className="text-xs leading-relaxed text-zinc-400">
+            En inicio ves Diario (pesos) y Ahorro (dólares). No hace falta
+            cargar ingresos en USD: pasás el sobrante, y si hace falta lo
+            gastás del ahorro o lo volvés a diario.
           </p>
-        </button>
-      </div>
+        )}
+        {profile === "ars_only" && (
+          <p className="text-xs leading-relaxed text-zinc-400">
+            Todo queda en pesos. Lo que ya cargaste en dólares se sigue contando.
+          </p>
+        )}
+      </section>
 
-      {walletMode === "split" && (
-        <p className="text-xs leading-relaxed text-zinc-400">
-          Lo que entra en pesos va a Cotidiano. Lo que entra en dólares, a Ahorro.
-          {sharedEnabled
-            ? " Los gastos con otros que cargás cuentan como Cotidiano."
-            : ""}
-        </p>
+      {profile === "dual" && (
+        <section className="bento space-y-4">
+          <div>
+            <p className="text-sm font-semibold tracking-tight">
+              ¿Cómo querés verla?
+            </p>
+            <p className="meta mt-1 text-xs">
+              Un número o dos bolsillos: día a día y ahorro.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <ProfileOption
+              title="Todo junto"
+              description="Un solo número. Toda tu plata junta."
+              selected={walletMode === "unified"}
+              onSelect={() => void setWalletMode("unified")}
+            />
+            <ProfileOption
+              title="Dos bolsillos"
+              description="Diario en pesos. Ahorro en dólares, para lo que no tocás."
+              selected={walletMode === "split"}
+              onSelect={() => void setWalletMode("split")}
+            />
+          </div>
+
+          {walletMode === "split" && (
+            <p className="text-xs leading-relaxed text-zinc-400">
+              Lo que entra en pesos va a Diario. Lo que entra en dólares, a
+              Ahorro.
+              {sharedEnabled
+                ? " Los gastos con otros que cargás cuentan como Diario."
+                : ""}
+            </p>
+          )}
+        </section>
       )}
-    </section>
+    </>
   );
 }
 
@@ -193,8 +236,7 @@ export default function CuentaPage() {
 
       <AccountIdentity />
       <SharedAccountCard />
-      <UsdSettings />
-      <WalletSettings />
+      <MoneySettings />
 
       {isAuthenticated && (
         <section className="bento space-y-3 p-4">

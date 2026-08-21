@@ -176,14 +176,14 @@ export function MovementForm({
       type,
       date,
       amount: parsed,
-      currency: usdEnabled ? currency : "ARS",
+      currency: usdEnabled ? currency : (initial?.currency ?? "ARS"),
       description: description.trim(),
       scope,
       kind,
       category,
       incomeKind,
       source,
-      walletChoice: usdEnabled ? walletChoice : "auto",
+      walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
     });
 
     setSubmitting(true);
@@ -380,7 +380,7 @@ export function MovementForm({
             </div>
           )}
 
-          {walletMode === "split" && (
+          {walletMode === "split" && usdEnabled && (
             <div>
               <label className="mb-1 block text-xs text-zinc-500">
                 ¿A qué bolsillo va?
@@ -389,7 +389,7 @@ export function MovementForm({
                 {(
                   [
                     { id: "auto" as const, label: "Según moneda" },
-                    { id: "vida" as const, label: "Cotidiano" },
+                    { id: "vida" as const, label: "Diario" },
                     { id: "ahorro" as const, label: "Ahorro USD" },
                   ] as const
                 ).map(({ id, label }) => (

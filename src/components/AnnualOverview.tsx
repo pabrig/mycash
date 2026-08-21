@@ -50,7 +50,7 @@ export function AnnualOverview({
         <div className="space-y-3">
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-              Cotidiano · ARS
+              Diario · ARS
             </p>
             <div className="grid grid-cols-3 gap-2">
               <AvgPill
@@ -106,7 +106,7 @@ export function AnnualOverview({
         <div className="bento overflow-hidden !p-0">
           <div className="grid grid-cols-[minmax(3rem,1fr)_1.2fr_1.2fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
             <span>Mes</span>
-            <span className="text-right">Cotidiano</span>
+            <span className="text-right">Diario</span>
             <span className="text-right">Ahorro</span>
           </div>
 

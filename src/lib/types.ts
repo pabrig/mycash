@@ -10,7 +10,7 @@ export type ExpenseKind = "fixed" | "variable";
 
 export type IncomeKind = "passive" | "active";
 
-/** Bolsa mental: cotidiano (ARS) vs ahorro USD. Id interno "vida" = Cotidiano. */
+/** Bolsa mental: diario (ARS) vs ahorro USD. Id interno "vida" = Diario. */
 export type Wallet = "vida" | "ahorro";
 
 export type WalletMode = "unified" | "split";
