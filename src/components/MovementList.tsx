@@ -8,15 +8,11 @@ import { useFinance } from "@/context/FinanceContext";
 import { toArs } from "@/lib/currency";
 import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 import { DetailSheet } from "@/components/ui/DetailSheet";
-import {
-  IconArrowDown,
-  IconArrowUp,
-  IconShared,
-} from "@/components/ui/Icons";
+import { IconArrowDown, IconArrowUp, IconShared } from "@/components/ui/Icons";
 import {
   canManageMovement,
   matchesMovementFilter,
-  type MovementListFilter,
+  type MovementListFilter
 } from "@/lib/movement-access";
 import { expenseCategoryLabel, incomeSourceLabel } from "@/lib/labels";
 import type { Movement } from "@/lib/types";
@@ -26,14 +22,14 @@ type Filter = MovementListFilter;
 const ALL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
   { id: "income", label: "Ingresos" },
-  { id: "personal", label: "Míos" },
-  { id: "shared", label: "Compartido" },
+  { id: "personal", label: "Gastos" },
+  { id: "shared", label: "Compartido" }
 ];
 
 const PERSONAL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
   { id: "income", label: "Ingresos" },
-  { id: "personal", label: "Gastos" },
+  { id: "personal", label: "Gastos" }
 ];
 
 function formatDayLabel(date: string): string {
@@ -47,7 +43,7 @@ function formatDayLabel(date: string): string {
   return d.toLocaleDateString("es-AR", {
     weekday: "short",
     day: "numeric",
-    month: "short",
+    month: "short"
   });
 }
 
@@ -56,7 +52,7 @@ function formatFullDate(date: string): string {
     weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
+    year: "numeric"
   });
 }
 
@@ -95,7 +91,7 @@ function MovementRow({
   arsAmount,
   selected,
   onSelect,
-  dense,
+  dense
 }: {
   movement: Movement;
   arsAmount: number;
@@ -180,7 +176,7 @@ function MovementDetail({
   arsAmount,
   canManage,
   onDelete,
-  onClose,
+  onClose
 }: {
   movement: Movement;
   arsAmount: number;
@@ -229,7 +225,7 @@ function MovementDetail({
 
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Qué fue</dt>
+          <dt className="text-zinc-400">Qué fue</dt>
           <dd className="max-w-[60%] text-right font-semibold">
             {movement.description}
           </dd>
@@ -245,9 +241,7 @@ function MovementDetail({
             <dt className="text-zinc-400">
               {movement.type === "income" ? "De dónde" : "Tipo"}
             </dt>
-            <dd className="text-right font-medium">
-              {kindLabel(movement)}
-            </dd>
+            <dd className="text-right font-medium">{kindLabel(movement)}</dd>
           </div>
         )}
         {movement.createdByName && (
@@ -282,7 +276,7 @@ function MovementDetail({
 }
 
 export function MovementList({
-  variant = "default",
+  variant = "default"
 }: {
   /** feed: columna sticky desktop con tipografía más densa */
   variant?: "default" | "feed";
@@ -294,8 +288,7 @@ export function MovementList({
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filters = sharedEnabled ? ALL_FILTERS : PERSONAL_FILTERS;
-  const activeFilter =
-    !sharedEnabled && filter === "shared" ? "all" : filter;
+  const activeFilter = !sharedEnabled && filter === "shared" ? "all" : filter;
   const dense = variant === "feed";
 
   const filtered = monthMovements
@@ -307,9 +300,14 @@ export function MovementList({
   if (monthMovements.length === 0) {
     return (
       <section className="bento animate-slide-up-delay-2 py-12 text-center">
-        <p className="text-sm font-semibold text-zinc-400">Todavía no hay nada</p>
+        <p className="text-sm font-semibold text-zinc-400">
+          Todavía no hay nada
+        </p>
         <p className="meta mt-1">Cargá un gasto o un ingreso para empezar</p>
-        <Link href="/nuevo" className="btn-primary mt-6 inline-block px-8 text-sm">
+        <Link
+          href="/nuevo"
+          className="btn-primary mt-6 inline-block px-8 text-sm"
+        >
           Cargar el primero
         </Link>
       </section>
@@ -321,10 +319,14 @@ export function MovementList({
   return (
     <section className={dense ? "animate-fade-in" : "animate-slide-up-delay-2"}>
       <div className="mb-4 flex items-end justify-between">
-        <h2 className={`font-bold tracking-tight ${dense ? "text-base" : "text-lg"}`}>
+        <h2
+          className={`font-bold tracking-tight ${dense ? "text-base" : "text-lg"}`}
+        >
           {dense ? "Últimos" : "Este mes"}
         </h2>
-        <span className="text-xs font-medium text-zinc-400">{filtered.length}</span>
+        <span className="text-xs font-medium text-zinc-400">
+          {filtered.length}
+        </span>
       </div>
 
       <div className="mb-4 flex gap-1 overflow-x-auto pb-0.5">

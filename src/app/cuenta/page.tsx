@@ -13,13 +13,8 @@ import { ExportStatementSheet } from "@/components/ExportStatementSheet";
 import { downloadBlob } from "@/lib/download";
 
 export default function CuentaPage() {
-  const {
-    configured,
-    loading,
-    isAuthenticated,
-    user,
-    deleteAccount,
-  } = useAuth();
+  const { configured, loading, isAuthenticated, user, deleteAccount } =
+    useAuth();
   const { movements, rates, ready } = useFinance();
   const router = useRouter();
 
@@ -33,11 +28,7 @@ export default function CuentaPage() {
   }
 
   async function handleDeleteAccount() {
-    if (
-      !confirm(
-        "¿Borrar tu cuenta? Se borra todo y no se puede deshacer.",
-      )
-    ) {
+    if (!confirm("¿Borrar tu cuenta? Se borra todo y no se puede deshacer.")) {
       return;
     }
     if (!confirm("¿Seguro? Se borran tus gastos, ingresos y el acceso.")) {
@@ -56,13 +47,13 @@ export default function CuentaPage() {
       exportedAt: new Date().toISOString(),
       email: user?.email ?? null,
       movements,
-      rates,
+      rates
     };
     downloadBlob(
       new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
+        type: "application/json"
       }),
-      `mycash-export-${new Date().toISOString().slice(0, 10)}.json`,
+      `mycash-export-${new Date().toISOString().slice(0, 10)}.json`
     );
     setMessage("Listo, se descargó");
   }
@@ -95,7 +86,7 @@ export default function CuentaPage() {
           onClick={() => setExportOpen(true)}
           className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
         >
-          Exportar resumen
+          Descargar resumen
         </button>
         {isAuthenticated && (
           <>

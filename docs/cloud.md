@@ -158,7 +158,7 @@ Marcá antes de cargar datos reales:
 | Código invite | 12 chars, 7 días, máx. 5 pendientes | Owner puede **Revocar**. 1 código = 1 uso; no borra los otros |
 | Aceptar invite | Unir o `/join/CODE` | **Suma** membresía (no te saca de otros grupos). Máx. 8 miembros |
 | Salir / borrar grupo | Cuenta (grupo activo) | RPC `leave_household(id)`. Si quedás solo, borra el grupo |
-| Exportar | Cuenta → JSON | Backup personal |
+| Descargar | Cuenta → JSON | Backup personal |
 | Borrar cuenta | Cuenta (doble confirm) | RPC `delete_own_account` |
 
 ---

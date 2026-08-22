@@ -8,7 +8,7 @@ import { downloadStatement } from "@/lib/export-download";
 import {
   buildStatement,
   STATEMENT_FORMATS,
-  type StatementFormat,
+  type StatementFormat
 } from "@/lib/export-statement";
 import { friendlyError } from "@/lib/errors";
 import { formatMonth } from "@/lib/format";
@@ -17,21 +17,19 @@ import type { SummaryScope } from "@/lib/types";
 export function ExportStatementSheet({
   open,
   onClose,
-  initialScope,
+  initialScope
 }: {
   open: boolean;
   onClose: () => void;
   initialScope: SummaryScope;
 }) {
   if (!open) return null;
-  return (
-    <ExportStatementBody onClose={onClose} initialScope={initialScope} />
-  );
+  return <ExportStatementBody onClose={onClose} initialScope={initialScope} />;
 }
 
 function ExportStatementBody({
   onClose,
-  initialScope,
+  initialScope
 }: {
   onClose: () => void;
   initialScope: SummaryScope;
@@ -54,7 +52,7 @@ function ExportStatementBody({
         year,
         month,
         movements: ownMovements,
-        rates,
+        rates
       });
       await downloadStatement(statement, format);
       onClose();
@@ -65,7 +63,7 @@ function ExportStatementBody({
   }
 
   return (
-    <DetailSheet open onClose={onClose} title="Exportar">
+    <DetailSheet open onClose={onClose} title="Descargar">
       <div className="space-y-6 pb-2">
         <p className="text-sm leading-relaxed text-zinc-500">
           Un archivo con el resumen de {periodLabel}: ingresos, gastos y cada
@@ -73,7 +71,9 @@ function ExportStatementBody({
         </p>
 
         <fieldset className="space-y-2.5">
-          <legend className="text-sm font-semibold tracking-tight">Qué periodo</legend>
+          <legend className="text-sm font-semibold tracking-tight">
+            Qué periodo
+          </legend>
           <div className="space-y-2" role="radiogroup" aria-label="Periodo">
             <ChoiceOption
               title={formatMonth(year, month)}
@@ -91,7 +91,9 @@ function ExportStatementBody({
         </fieldset>
 
         <fieldset className="space-y-2.5">
-          <legend className="text-sm font-semibold tracking-tight">Formato</legend>
+          <legend className="text-sm font-semibold tracking-tight">
+            Formato
+          </legend>
           <div className="space-y-2" role="radiogroup" aria-label="Formato">
             {STATEMENT_FORMATS.map((option) => (
               <ChoiceOption

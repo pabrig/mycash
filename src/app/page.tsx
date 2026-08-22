@@ -44,7 +44,7 @@ export default function HomePage() {
           className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-zinc-500 transition active:scale-95"
         >
           <IconDownload className="h-4 w-4" />
-          Exportar
+          Descargar
         </button>
       </div>
 
