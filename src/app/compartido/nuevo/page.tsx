@@ -9,7 +9,7 @@ import { useFinance } from "@/context/FinanceContext";
 
 export default function CompartidoNuevoPage() {
   const router = useRouter();
-  const { ready, sharedEnabled } = useFinance();
+  const { ready, sharedEnabled, sharedFunding } = useFinance();
 
   useEffect(() => {
     if (ready && !sharedEnabled) router.replace("/");
@@ -29,7 +29,9 @@ export default function CompartidoNuevoPage() {
         >
           ‹
         </Link>
-        <h1 className="text-lg font-bold">Gasto con otros</h1>
+        <h1 className="text-lg font-bold">
+          {sharedFunding === "pool" ? "Del grupo" : "Gasto con otros"}
+        </h1>
       </div>
       <MovementForm mode="shared" redirectTo="/compartido" />
     </div>

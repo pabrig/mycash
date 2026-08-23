@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   affectsUserBalance,
   canManageMovement,
+  householdShareCount,
   matchesMovementFilter,
+  movementsForPersonalBalance,
   safeNextPath,
 } from "@/lib/movement-access";
 import type { Movement } from "@/lib/types";
@@ -42,10 +44,17 @@ describe("matchesMovementFilter", () => {
     expect(matchesMovementFilter(income, "personal")).toBe(false);
   });
 
-  it("shared only shared expenses", () => {
+  it("shared includes expenses and income of the group", () => {
     expect(matchesMovementFilter(sharedExpense, "shared")).toBe(true);
     expect(matchesMovementFilter(personalExpense, "shared")).toBe(false);
     expect(matchesMovementFilter(income, "shared")).toBe(false);
+    const sharedIncome = movement({
+      type: "income",
+      scope: "shared",
+      incomeKind: "active",
+    });
+    expect(matchesMovementFilter(sharedIncome, "shared")).toBe(true);
+    expect(matchesMovementFilter(sharedIncome, "income")).toBe(true);
   });
 });
 
@@ -80,6 +89,76 @@ describe("affectsUserBalance", () => {
   it("legacy shared and local (no user) still count", () => {
     expect(affectsUserBalance(legacyShared, "user-a")).toBe(true);
     expect(affectsUserBalance(theirs, undefined)).toBe(true);
+  });
+
+  it("pool counts every shared movement of the group", () => {
+    expect(affectsUserBalance(mine, "user-a", "pool")).toBe(true);
+    expect(affectsUserBalance(theirs, "user-a", "pool")).toBe(true);
+  });
+});
+
+describe("movementsForPersonalBalance", () => {
+  const mine = movement({
+    type: "expense",
+    scope: "shared",
+    amount: 100,
+    createdByUserId: "user-a",
+    householdId: "casa",
+  });
+  const theirs = movement({
+    id: "m2",
+    type: "expense",
+    scope: "shared",
+    amount: 40,
+    createdByUserId: "user-b",
+    householdId: "casa",
+  });
+  const sharedIncome = movement({
+    id: "m3",
+    type: "income",
+    scope: "shared",
+    amount: 200,
+    incomeKind: "active",
+    createdByUserId: "user-b",
+    householdId: "casa",
+  });
+  const personal = movement({
+    id: "m4",
+    type: "income",
+    amount: 50,
+  });
+
+  it("payer keeps own shared at full amount and drops the partner's", () => {
+    const own = movementsForPersonalBalance(
+      [mine, theirs, sharedIncome, personal],
+      "user-a",
+      "payer",
+      { casa: 2 },
+    );
+    expect(own.map((m) => m.id)).toEqual(["m1", "m4"]);
+    expect(own[0]?.amount).toBe(100);
+  });
+
+  it("pool splits every shared movement by household size", () => {
+    const own = movementsForPersonalBalance(
+      [mine, theirs, sharedIncome, personal],
+      "user-a",
+      "pool",
+      { casa: 2 },
+    );
+    expect(own).toHaveLength(4);
+    expect(own.find((m) => m.id === "m1")?.amount).toBe(50);
+    expect(own.find((m) => m.id === "m2")?.amount).toBe(20);
+    expect(own.find((m) => m.id === "m3")?.amount).toBe(100);
+    expect(own.find((m) => m.id === "m4")?.amount).toBe(50);
+  });
+});
+
+describe("householdShareCount", () => {
+  it("defaults to one person without a group size", () => {
+    expect(householdShareCount(undefined, {})).toBe(1);
+    expect(householdShareCount("casa", {})).toBe(1);
+    expect(householdShareCount("casa", { casa: 3 })).toBe(3);
   });
 });
 

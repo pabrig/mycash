@@ -7,7 +7,7 @@ import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 const BAR = {
   rentas: "bg-cyan-400",
   trabajo: "bg-teal-600",
-  gastos: "bg-rose-400/80",
+  gastos: "bg-rose-400/80"
 } as const;
 
 export function BalanceBar() {
@@ -29,7 +29,9 @@ export function BalanceBar() {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between text-left"
       >
-        <span className="text-sm font-semibold text-zinc-500">Entró y salió</span>
+        <span className="text-sm font-semibold text-zinc-500">
+          Entró y salió
+        </span>
         <span className="text-xs font-medium text-zinc-400">
           {open ? "Ocultar" : "Ver más"}
         </span>
@@ -40,9 +42,7 @@ export function BalanceBar() {
         role="img"
         aria-label={`Ingresos por rentas ${fmt(summary.passiveIncome)}, por trabajo ${fmt(summary.activeIncome)}. Gastos ${fmt(summary.totalExpenses)}`}
       >
-        {total === 0 && (
-          <Segment color={BAR.trabajo} width={50} />
-        )}
+        {total === 0 && <Segment color={BAR.trabajo} width={50} />}
         {rentasPct > 0 && <Segment color={BAR.rentas} width={rentasPct} />}
         {trabajoPct > 0 && <Segment color={BAR.trabajo} width={trabajoPct} />}
         {gastosPct > 0 && <Segment color={BAR.gastos} width={gastosPct} />}
@@ -69,11 +69,25 @@ export function BalanceBar() {
             tone="income"
             swatch={BAR.trabajo}
           />
-          <Detail label="Míos" value={summary.personalExpenses} fmt={fmt} tone="expense" />
+          <Detail
+            label="Gastos"
+            value={summary.personalExpenses}
+            fmt={fmt}
+            tone="expense"
+          />
           {sharedEnabled && (
-            <Detail label="Compartido" value={summary.sharedExpenses} fmt={fmt} tone="shared" />
+            <Detail
+              label="Compartido"
+              value={summary.sharedExpenses}
+              fmt={fmt}
+              tone="shared"
+            />
           )}
-          <Detail label="Todos los meses" value={summary.personalFixed} fmt={fmt} />
+          <Detail
+            label="Todos los meses"
+            value={summary.personalFixed}
+            fmt={fmt}
+          />
           <Detail label="Una vez" value={summary.personalVariable} fmt={fmt} />
         </div>
       )}
@@ -95,7 +109,7 @@ function Detail({
   value,
   fmt,
   tone,
-  swatch,
+  swatch
 }: {
   label: string;
   value: number;
@@ -106,14 +120,16 @@ function Detail({
   const colors = {
     income: "amount-positive",
     expense: "amount-negative",
-    shared: "text-teal-600 dark:text-teal-400",
+    shared: "text-teal-600 dark:text-teal-400"
   };
 
   return (
     <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
       <p className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
         {swatch && (
-          <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${swatch}`} />
+          <span
+            className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${swatch}`}
+          />
         )}
         {label}
       </p>

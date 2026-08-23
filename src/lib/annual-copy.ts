@@ -16,7 +16,7 @@ export function visibleMonthCount(
   return now.getMonth() + 1;
 }
 
-function monthSpanUntil(now: Date): string {
+export function monthSpanUntil(now: Date): string {
   const end = MONTH_NAMES[now.getMonth()]?.toLowerCase() ?? "";
   if (now.getMonth() === 0) return "enero";
   return `enero a ${end}`;

@@ -6,6 +6,9 @@ export type MovementType = "income" | "expense";
 
 export type ExpenseScope = "personal" | "shared";
 
+/** De dónde salen los gastos del grupo en tu mes. */
+export type SharedFunding = "payer" | "pool";
+
 export type ExpenseKind = "fixed" | "variable";
 
 export type IncomeKind = "passive" | "active";
@@ -60,6 +63,9 @@ export interface Movement {
   /** Usuario que cargó el movimiento (compartidos) */
   createdByUserId?: string;
   createdByName?: string;
+  /** Grupo al que pertenece un gasto shared */
+  householdId?: string;
+  householdName?: string;
 }
 
 export interface Profile {
@@ -72,6 +78,10 @@ export interface Household {
   name: string;
 }
 
+export interface HouseholdMembership extends Household {
+  role: "owner" | "member";
+}
+
 export interface HouseholdMember {
   userId: string;
   displayName: string;
@@ -82,6 +92,14 @@ export interface HouseholdInvite {
   id: string;
   code: string;
   expiresAt: string;
+  createdAt: string;
+}
+
+export interface UserNotice {
+  id: string;
+  kind: "household_closed";
+  title: string;
+  body: string;
   createdAt: string;
 }
 
@@ -130,6 +148,30 @@ export interface AnnualSummary {
 }
 
 export type SummaryScope = "month" | "year";
+
+export interface SharedCategorySlice {
+  category: string;
+  amountArs: number;
+  amountUsd: number;
+  share: number;
+  count: number;
+}
+
+export interface SharedPeriodSummary {
+  totalArs: number;
+  totalUsd: number;
+  movementCount: number;
+  activeMonths: number;
+  categories: SharedCategorySlice[];
+}
+
+export interface SharedMonthSnapshot {
+  year: number;
+  month: number;
+  totalArs: number;
+  totalUsd: number;
+  movementCount: number;
+}
 
 export const EXPENSE_CATEGORIES = [
   "alimentacion",

@@ -54,7 +54,7 @@ function parseWaitSeconds(message: string): number | null {
 }
 
 function isAppCopy(message: string): boolean {
-  return /[áéíóúñ¿¡]|^(Falta |Ya hay |No se |Se venció |Código |Sin conexión |Eso ya |Todavía |Esperá |El link |Ese )/i.test(
+  return /[áéíóúñ¿¡]|^(Falta |Ya hay |No se |Se venció |Código |Sin conexión |Eso ya |Todavía |Esperá |El link |Ese |El nombre |Elegí )/i.test(
     message,
   );
 }

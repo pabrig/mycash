@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { hasLocalToMigrate, type LocalSnapshot } from "@/lib/supabase/data";
+import {
+  hasLocalToMigrate,
+  isMissingNoticesTable,
+  isMissingOnboardingColumn,
+  parseUserSettings,
+  type LocalSnapshot,
+} from "@/lib/supabase/data";
 import type { Movement } from "@/lib/types";
 
 function snapshot(partial: Partial<LocalSnapshot> = {}): LocalSnapshot {
@@ -9,6 +15,7 @@ function snapshot(partial: Partial<LocalSnapshot> = {}): LocalSnapshot {
     displayCurrency: "ARS",
     walletMode: "unified",
     sharedEnabled: false,
+    sharedFunding: "payer",
     usdEnabled: true,
     ...partial,
   };
@@ -45,6 +52,7 @@ describe("hasLocalToMigrate", () => {
     expect(hasLocalToMigrate(snapshot({ displayCurrency: "USD" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ walletMode: "split" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ sharedEnabled: true }))).toBe(true);
+    expect(hasLocalToMigrate(snapshot({ sharedFunding: "pool" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ usdEnabled: false }))).toBe(true);
     expect(
       hasLocalToMigrate(
@@ -53,5 +61,52 @@ describe("hasLocalToMigrate", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("parseUserSettings", () => {
+  it("marks a new account as pending onboarding", () => {
+    const settings = parseUserSettings({
+      display_currency: "ARS",
+      wallet_mode: "unified",
+      shared_enabled: false,
+      usd_enabled: true,
+      onboarding_completed: false,
+    });
+    expect(settings.onboardingCompleted).toBe(false);
+    expect(settings.onboardingTracked).toBe(true);
+  });
+
+  it("does not trap older rows without the column", () => {
+    expect(parseUserSettings(null).onboardingTracked).toBe(false);
+    expect(parseUserSettings({}).onboardingTracked).toBe(false);
+    expect(parseUserSettings({}).onboardingCompleted).toBe(true);
+    expect(parseUserSettings({}).sharedFunding).toBe("payer");
+    expect(parseUserSettings({ shared_funding: "pool" }).sharedFunding).toBe(
+      "pool",
+    );
+  });
+});
+
+describe("isMissingOnboardingColumn", () => {
+  it("detects postgres and postgrest missing-column errors", () => {
+    expect(isMissingOnboardingColumn({ code: "42703" })).toBe(true);
+    expect(isMissingOnboardingColumn({ code: "PGRST204" })).toBe(true);
+    expect(
+      isMissingOnboardingColumn({
+        message: "Could not find the 'onboarding_completed' column",
+      }),
+    ).toBe(true);
+    expect(isMissingOnboardingColumn({ code: "42501" })).toBe(false);
+  });
+});
+
+describe("isMissingNoticesTable", () => {
+  it("detects a missing user_notices relation", () => {
+    expect(isMissingNoticesTable({ code: "42P01" })).toBe(true);
+    expect(isMissingNoticesTable({ message: "Could not find the table 'user_notices'" })).toBe(
+      true,
+    );
+    expect(isMissingNoticesTable({ code: "42501" })).toBe(false);
   });
 });

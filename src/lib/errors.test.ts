@@ -142,8 +142,16 @@ describe("friendlyError · sync and invites", () => {
     ).toBe("No se pudo guardar.");
   });
 
-  it("keeps our own Spanish", () => {
-    expect(friendlyError("Falta el nombre", "fallback")).toBe("Falta el nombre");
+  it("keeps household cap copy", () => {
+    expect(
+      friendlyError("Ya hay 8 grupos. Salí de uno para crear otro.", "fallback"),
+    ).toBe("Ya hay 8 grupos. Salí de uno para crear otro.");
+    expect(
+      friendlyError("Elegí un grupo para este gasto.", "fallback"),
+    ).toBe("Elegí un grupo para este gasto.");
+    expect(friendlyError("El nombre es muy largo", "fallback")).toBe(
+      "El nombre es muy largo",
+    );
   });
 
   it("never returns raw English", () => {

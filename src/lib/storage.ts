@@ -1,4 +1,4 @@
-import type { DisplayCurrency, MonthlyRate, Movement, WalletMode } from "./types";
+import type { DisplayCurrency, MonthlyRate, Movement, SharedFunding, WalletMode } from "./types";
 import type { SplitEvent, SplitExpense, SplitPerson } from "./split-bill";
 import { getDefaultRate } from "./currency";
 
@@ -7,8 +7,10 @@ const RATES_KEY = "mycash_rates";
 const DISPLAY_KEY = "mycash_display";
 const WALLET_MODE_KEY = "mycash_wallet_mode";
 const SHARED_ENABLED_KEY = "mycash_shared_enabled";
+const SHARED_FUNDING_KEY = "mycash_shared_funding";
 const USD_ENABLED_KEY = "mycash_usd_enabled";
 const AMOUNTS_HIDDEN_KEY = "mycash_amounts_hidden";
+const ONBOARDING_REPLAY_KEY = "mycash_onboarding_replay";
 
 const LEGACY_KEYS = [
   ["pagapp_movements", MOVEMENTS_KEY],
@@ -122,6 +124,16 @@ export function saveSharedEnabled(enabled: boolean): void {
   localStorage.setItem(SHARED_ENABLED_KEY, enabled ? "true" : "false");
 }
 
+export function loadSharedFunding(): SharedFunding {
+  if (typeof window === "undefined") return "payer";
+  migrateLegacyStorage();
+  return localStorage.getItem(SHARED_FUNDING_KEY) === "pool" ? "pool" : "payer";
+}
+
+export function saveSharedFunding(funding: SharedFunding): void {
+  localStorage.setItem(SHARED_FUNDING_KEY, funding);
+}
+
 /** Default true: no romper UX de quien ya usa USD / bolsillos. */
 export function loadUsdEnabled(): boolean {
   if (typeof window === "undefined") return true;
@@ -143,6 +155,18 @@ export function loadAmountsHidden(): boolean {
 
 export function saveAmountsHidden(hidden: boolean): void {
   localStorage.setItem(AMOUNTS_HIDDEN_KEY, hidden ? "true" : "false");
+}
+
+/** Sin la columna en la nube: al cerrar sesión se puede volver a ver el wizard. */
+export function loadOnboardingReplay(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ONBOARDING_REPLAY_KEY) === "true";
+}
+
+export function saveOnboardingReplay(replay: boolean): void {
+  if (typeof window === "undefined") return;
+  if (replay) localStorage.setItem(ONBOARDING_REPLAY_KEY, "true");
+  else localStorage.removeItem(ONBOARDING_REPLAY_KEY);
 }
 
 const SPLIT_EVENTS_KEY = "mycash_split_events";
@@ -212,6 +236,7 @@ const SYNCED_KEYS = [
   DISPLAY_KEY,
   WALLET_MODE_KEY,
   SHARED_ENABLED_KEY,
+  SHARED_FUNDING_KEY,
   USD_ENABLED_KEY,
 ] as const;
 
@@ -223,6 +248,7 @@ export function loadLocalSnapshot() {
     displayCurrency: loadDisplayCurrency(),
     walletMode: loadWalletMode(),
     sharedEnabled: loadSharedEnabled(),
+    sharedFunding: loadSharedFunding(),
     usdEnabled: loadUsdEnabled(),
   };
 }
