@@ -81,9 +81,10 @@ En **SQL Editor**, ejecutá en orden:
 8. `supabase/migrations/008_multi_household.sql` — un usuario ∈ N grupos, RLS set-based, caps 8/8  
 9. `supabase/migrations/009_onboarding.sql` — flag `onboarding_completed` para el wizard de cuenta  
 10. `supabase/migrations/010_shared_income.sql` — ingresos compartidos + `shared_funding` (payer/pool)
-11. `supabase/migrations/011_close_household.sql` — cerrar grupo + avisos a los demás
+11. `supabase/migrations/011_close_household.sql` — cerrar grupo + avisos a los demás  
+12. `supabase/migrations/012_shared_income_rls.sql` — RLS: ingresos shared (plata del grupo)
 
-Si el proyecto ya tenía `001`–`010`, corré `011`. Si ya tenía `008`, corré `009`, `010` y `011`.
+Si el proyecto ya tenía `001`–`011`, corré `012`. Si ya tenía `008`, corré `009`…`012`.
 
 ### 3. Variables de entorno
 
@@ -135,7 +136,7 @@ Marcá antes de cargar datos reales:
 
 - [ ] Solo `anon` key en `.env` / hosting; **no** existe `SERVICE_ROLE` en el repo ni en Vercel/env públicas
 - [ ] Redirect URLs allowlist solo localhost + dominio propio
-- [ ] Migraciones `001`→`008` aplicadas
+- [ ] Migraciones `001`→`012` aplicadas
 - [ ] RLS enabled en: `profiles`, `households`, `household_members`, `household_invites`, `movements`, `monthly_rates`, `user_settings`
 - [ ] RPCs `accept_household_invite`, `leave_household`, `create_household`, `delete_own_account` solo para `authenticated`
 - [ ] Probaste login magic link en el dominio real
