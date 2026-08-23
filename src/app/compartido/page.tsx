@@ -1,20 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { PeriodToggle } from "@/components/PeriodToggle";
 import { SharedMovementList } from "@/components/SharedMovementList";
+import { SharedYearReview } from "@/components/SharedYearReview";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
+import type { SummaryScope } from "@/lib/types";
 
 export default function CompartidoPage() {
   const router = useRouter();
   const { loading, members, user, households, household, setActiveHousehold } =
     useAuth();
   const { ready, sharedEnabled, walletMode } = useFinance();
+  const [scope, setScope] = useState<SummaryScope>("month");
 
   useEffect(() => {
     if (ready && !sharedEnabled) router.replace("/");
@@ -44,7 +48,7 @@ export default function CompartidoPage() {
               : "Acá van a ver los gastos de todos. Cada uno sigue con su plata."}
           </p>
         </div>
-        {walletMode === "unified" && (
+        {walletMode === "unified" && scope === "month" && (
           <div className="md:hidden">
             <CurrencyToggle />
           </div>
@@ -68,6 +72,12 @@ export default function CompartidoPage() {
         </div>
       )}
 
+      <div className="flex w-full items-center gap-2 md:mx-auto md:max-w-xs">
+        <div className="min-w-0 flex-1">
+          <PeriodToggle scope={scope} onChange={setScope} />
+        </div>
+      </div>
+
       {!paired && (
         <div className="bento space-y-3 md:max-w-md">
           <p className="text-sm font-semibold">Todavía no hay nadie más</p>
@@ -80,7 +90,11 @@ export default function CompartidoPage() {
         </div>
       )}
 
-      <SharedMovementList />
+      {scope === "year" ? (
+        <SharedYearReview onOpenMonth={() => setScope("month")} />
+      ) : (
+        <SharedMovementList />
+      )}
     </div>
   );
 }

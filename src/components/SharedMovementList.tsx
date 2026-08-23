@@ -3,10 +3,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { SharedSpendHero } from "@/components/SharedSpendHero";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
-import { useDisplayAmount } from "@/hooks/useDisplayAmount";
+import {
+  useDisplayAmount,
+  useFormatMoney,
+  useFormatUsd,
+} from "@/hooks/useDisplayAmount";
 import { toArs } from "@/lib/currency";
+import { sharedMonthHeroCopy } from "@/lib/shared-copy";
+import {
+  computeSharedPeriodSummary,
+  householdSharedMovements,
+} from "@/lib/shared-summary";
 import { filterByMonth } from "@/lib/summary";
 import { DetailSheet } from "@/components/ui/DetailSheet";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -203,29 +213,34 @@ function SharedDetail({
 }
 
 export function SharedMovementList() {
-  const { user, members, household } = useAuth();
-  const { sharedMovements, year, month, rate, deleteMovement, cloudEnabled } =
-    useFinance();
-  const fmt = useDisplayAmount();
+  const { user, household } = useAuth();
+  const {
+    sharedMovements,
+    year,
+    month,
+    rate,
+    rates,
+    deleteMovement,
+    cloudEnabled,
+  } = useFinance();
+  const formatArs = useFormatMoney();
+  const formatUsd = useFormatUsd();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const monthShared = useMemo(() => {
-    const ofMonth = filterByMonth(sharedMovements, year, month).sort((a, b) =>
+    const ofGroup = householdSharedMovements(
+      sharedMovements,
+      household?.id,
+      cloudEnabled,
+    );
+    return filterByMonth(ofGroup, year, month).sort((a, b) =>
       b.date.localeCompare(a.date),
     );
-    if (!cloudEnabled || !household) return ofMonth;
-    return ofMonth.filter(
-      (m) => !m.householdId || m.householdId === household.id,
-    );
-  }, [sharedMovements, year, month, cloudEnabled, household]);
+  }, [sharedMovements, year, month, cloudEnabled, household?.id]);
 
-  const total = useMemo(
-    () =>
-      monthShared.reduce(
-        (sum, m) => sum + toArs(m.amount, m.currency, rate),
-        0,
-      ),
-    [monthShared, rate],
+  const categorySummary = useMemo(
+    () => computeSharedPeriodSummary(monthShared, rates),
+    [monthShared, rates],
   );
 
   const contributions = useMemo(() => {
@@ -244,7 +259,7 @@ export function SharedMovementList() {
 
   if (monthShared.length === 0) {
     return (
-      <section className="bento animate-slide-up py-12 text-center">
+      <section className="bento animate-slide-up mx-auto max-w-5xl py-12 text-center">
         <p className="text-sm font-semibold text-zinc-400">Todavía no hay gastos del grupo</p>
         <p className="meta mt-1">Cuando alguien pague algo de todos, cargalo acá</p>
         <Link
@@ -258,119 +273,98 @@ export function SharedMovementList() {
   }
 
   const groups = groupByDate(monthShared);
-  const displayMembers =
-    members.length > 0
-      ? members
-      : contributions.map((c, i) => ({
-          userId: String(i),
-          displayName: c.name,
-          role: "member" as const,
-        }));
+  const total = categorySummary.totalArs;
+  const monthCopy = sharedMonthHeroCopy(year, month);
 
   return (
-    <section className="animate-slide-up space-y-4">
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="bento space-y-5 lg:col-span-2">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-zinc-400">Total del mes</p>
-              <p className="mt-1 text-3xl font-extrabold tracking-tighter tabular-nums">
-                {fmt(total)}
-              </p>
-              <p className="meta mt-1 text-xs">
-                Resta de la plata de quien lo cargó
-              </p>
-            </div>
-            <div className="flex -space-x-2">
-              {displayMembers.slice(0, 4).map((m, i) => (
-                <UserAvatar
-                  key={m.userId}
-                  name={m.displayName}
-                  tone={i}
-                  className="ring-2 ring-[var(--card)]"
+    <section className="animate-slide-up mx-auto grid w-full max-w-5xl gap-4 md:gap-6">
+      <SharedSpendHero
+        copy={monthCopy}
+        totalArs={categorySummary.totalArs}
+        totalUsd={categorySummary.totalUsd}
+        categories={categorySummary.categories}
+        formatArs={formatArs}
+        formatUsd={formatUsd}
+      >
+        {contributions.length > 0 && total > 0 ? (
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+              Quién cargó
+            </p>
+            <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+              {contributions.map((c, i) => (
+                <div
+                  key={c.name + i}
+                  className={
+                    i % 2 === 0
+                      ? "bg-teal-500 transition-all duration-700"
+                      : "bg-zinc-400 transition-all duration-700 dark:bg-zinc-500"
+                  }
+                      style={{ width: `${(c.amount / total) * 100}%` }}
+                      title={`${c.name}: ${formatArs(c.amount)}`}
                 />
               ))}
             </div>
-          </div>
-
-          {contributions.length > 0 && total > 0 && (
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
-                Quién cargó
-              </p>
-              <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                {contributions.map((c, i) => (
-                  <div
-                    key={c.name + i}
-                    className={
-                      i % 2 === 0
-                        ? "bg-teal-500 transition-all duration-700"
-                        : "bg-zinc-400 transition-all duration-700 dark:bg-zinc-500"
-                    }
-                    style={{ width: `${(c.amount / total) * 100}%` }}
-                    title={`${c.name}: ${fmt(c.amount)}`}
-                  />
-                ))}
-              </div>
-              <ul className="space-y-2">
-                {contributions.map((c, i) => (
-                  <li
-                    key={c.name + i}
-                    className="flex items-center justify-between gap-3 text-sm"
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <UserAvatar name={c.name} size="sm" tone={i} />
-                      <span className="truncate font-medium">{c.name}</span>
-                    </span>
-                    <span className="shrink-0 font-bold tabular-nums">
-                      {fmt(c.amount)}
-                      <span className="ml-1.5 text-xs font-medium text-zinc-400">
-                        {Math.round((c.amount / total) * 100)}%
+            <ul className="space-y-2">
+              {contributions.map((c, i) => (
+                <li
+                  key={c.name + i}
+                  className="flex items-center justify-between gap-3 text-sm"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserAvatar name={c.name} size="sm" tone={i} />
+                    <span className="truncate font-medium">{c.name}</span>
+                  </span>
+                      <span className="shrink-0 font-bold tabular-nums">
+                        {formatArs(c.amount)}
+                        <span className="ml-1.5 text-xs font-medium text-zinc-400">
+                          {Math.round((c.amount / total) * 100)}%
+                        </span>
                       </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-3 lg:col-span-3">
-          <div className="mb-1 flex items-end justify-between">
-            <h2 className="text-lg font-bold tracking-tight">Gastos</h2>
-            <span className="text-xs font-medium text-zinc-400">
-              {monthShared.length}
-            </span>
+                </li>
+              ))}
+            </ul>
           </div>
+        ) : null}
+      </SharedSpendHero>
 
-          <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
-            <span>Qué fue</span>
-            <span>Fecha</span>
-            <span>Tipo</span>
-            <span className="text-right">Monto</span>
-          </div>
+      <div>
+        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+          Gastos
+        </h2>
+        <p className="mt-0.5 text-xs text-zinc-400">
+          {monthShared.length === 1
+            ? "1 movimiento"
+            : `${monthShared.length} movimientos`}
+        </p>
+      </div>
 
-          <div className="bento space-y-5 !px-2 !py-3">
-            {[...groups.entries()].map(([date, items]) => (
-              <div key={date}>
-                <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase md:hidden">
-                  {formatDayLabel(date)}
-                </p>
-                <ul className="space-y-0.5">
-                  {items.map((m) => (
-                    <SharedRow
-                      key={m.id}
-                      movement={m}
-                      arsAmount={toArs(m.amount, m.currency, rate)}
-                      selected={selectedId === m.id}
-                      onSelect={() => setSelectedId(m.id)}
-                    />
-                  ))}
-                </ul>
-              </div>
-            ))}
+      <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
+        <span>Qué fue</span>
+        <span>Fecha</span>
+        <span>Tipo</span>
+        <span className="text-right">Monto</span>
+      </div>
+
+      <div className="bento space-y-5 !px-2 !py-3">
+        {[...groups.entries()].map(([date, items]) => (
+          <div key={date}>
+            <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase md:hidden">
+              {formatDayLabel(date)}
+            </p>
+            <ul className="space-y-0.5">
+              {items.map((m) => (
+                <SharedRow
+                  key={m.id}
+                  movement={m}
+                  arsAmount={toArs(m.amount, m.currency, rate)}
+                  selected={selectedId === m.id}
+                  onSelect={() => setSelectedId(m.id)}
+                />
+              ))}
+            </ul>
           </div>
-        </div>
+        ))}
       </div>
 
       <DetailSheet

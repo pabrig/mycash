@@ -138,6 +138,30 @@ export interface AnnualSummary {
 
 export type SummaryScope = "month" | "year";
 
+export interface SharedCategorySlice {
+  category: string;
+  amountArs: number;
+  amountUsd: number;
+  share: number;
+  count: number;
+}
+
+export interface SharedPeriodSummary {
+  totalArs: number;
+  totalUsd: number;
+  movementCount: number;
+  activeMonths: number;
+  categories: SharedCategorySlice[];
+}
+
+export interface SharedMonthSnapshot {
+  year: number;
+  month: number;
+  totalArs: number;
+  totalUsd: number;
+  movementCount: number;
+}
+
 export const EXPENSE_CATEGORIES = [
   "alimentacion",
   "transporte",
