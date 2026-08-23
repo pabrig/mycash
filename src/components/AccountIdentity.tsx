@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useFinance } from "@/context/FinanceContext";
 import { UserAvatar } from "@/components/UserAvatar";
+import { useIsClient } from "@/hooks/useIsClient";
+import { isLocalDevHost } from "@/lib/auth-routes";
 
 export function AccountIdentity() {
   const {
@@ -15,7 +18,11 @@ export function AccountIdentity() {
     signOut,
     updateDisplayName,
   } = useAuth();
+  const { replayOnboarding } = useFinance();
   const router = useRouter();
+  const isClient = useIsClient();
+  const canReplayOnboarding =
+    isClient && isLocalDevHost(window.location.hostname);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile?.displayName ?? "");
   const [busy, setBusy] = useState(false);
@@ -128,6 +135,18 @@ export function AccountIdentity() {
       <p className="text-xs text-teal-600 dark:text-teal-400">
         Estás adentro. Tu plata se guarda en la nube.
       </p>
+      {canReplayOnboarding ? (
+        <button
+          type="button"
+          onClick={() => {
+            replayOnboarding();
+            router.push("/onboarding");
+          }}
+          className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
+        >
+          Ver el recorrido de nuevo
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => {

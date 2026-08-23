@@ -10,25 +10,35 @@ import {
   type ReactNode,
 } from "react";
 import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
-import { clearSyncedLocalFinance } from "@/lib/storage";
+import { clearSyncedLocalFinance, saveOnboardingReplay } from "@/lib/storage";
 import {
   acceptHouseholdInvite,
+  closeHousehold,
+  createHousehold,
   createHouseholdInvite,
   deleteOwnAccount,
-  fetchHouseholdContext,
+  dismissNotice as dismissNoticeRemote,
+  fetchActiveHouseholdId,
+  fetchHouseholdMemberCounts,
+  fetchHouseholdMembers,
+  fetchHouseholdMemberships,
   fetchProfile,
+  fetchUnreadNotices,
   leaveHousehold,
-  updateDisplayName as saveDisplayName,
   listPendingInvites,
+  renameHousehold,
   revokeHouseholdInvite,
+  saveActiveHouseholdId,
+  updateDisplayName as saveDisplayName,
 } from "@/lib/supabase/data";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { friendlyError } from "@/lib/errors";
 import type {
-  Household,
   HouseholdInvite,
   HouseholdMember,
+  HouseholdMembership,
   Profile,
+  UserNotice,
 } from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
 
@@ -37,9 +47,13 @@ interface AuthContextValue {
   loading: boolean;
   user: User | null;
   profile: Profile | null;
-  household: Household | null;
+  households: HouseholdMembership[];
+  /** Grupo activo (invites, form shared, /compartido) */
+  household: HouseholdMembership | null;
   members: HouseholdMember[];
+  householdMemberCounts: Record<string, number>;
   pendingInvites: HouseholdInvite[];
+  notices: UserNotice[];
   isAuthenticated: boolean;
   signInWithEmail: (
     email: string,
@@ -49,24 +63,49 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<{ error?: string }>;
   refreshHousehold: () => Promise<void>;
+  setActiveHousehold: (householdId: string) => Promise<{ error?: string }>;
+  createGroup: (name: string) => Promise<{ error?: string }>;
+  renameGroup: (householdId: string, name: string) => Promise<{ error?: string }>;
   createInvite: () => Promise<{ code?: string; error?: string }>;
   acceptInvite: (code: string) => Promise<{ error?: string }>;
   revokeInvite: (inviteId: string) => Promise<{ error?: string }>;
-  leaveCurrentHousehold: () => Promise<{ error?: string }>;
+  leaveGroup: (householdId: string) => Promise<{ error?: string }>;
+  closeGroup: (householdId: string) => Promise<{ error?: string }>;
+  dismissNotice: (noticeId: string) => Promise<void>;
   deleteAccount: () => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function pickActiveId(
+  memberships: HouseholdMembership[],
+  savedId: string | null,
+): string | null {
+  if (savedId && memberships.some((h) => h.id === savedId)) return savedId;
+  return memberships[0]?.id ?? null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const configured = isSupabaseConfigured();
   const [loading, setLoading] = useState(configured);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [household, setHousehold] = useState<Household | null>(null);
+  const [households, setHouseholds] = useState<HouseholdMembership[]>([]);
+  const [activeHouseholdId, setActiveHouseholdId] = useState<string | null>(
+    null,
+  );
   const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [householdMemberCounts, setHouseholdMemberCounts] = useState<
+    Record<string, number>
+  >({});
   const [pendingInvites, setPendingInvites] = useState<HouseholdInvite[]>([]);
+  const [notices, setNotices] = useState<UserNotice[]>([]);
   const supabase = useBrowserSupabase();
+
+  const household = useMemo(
+    () => households.find((h) => h.id === activeHouseholdId) ?? null,
+    [households, activeHouseholdId],
+  );
 
   const loadPendingInvites = useCallback(
     async (householdId: string) => {
@@ -84,16 +123,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadHousehold = useCallback(
     async (userId: string) => {
       if (!supabase) return;
-      const ctx = await fetchHouseholdContext(supabase, userId);
-      setHousehold(ctx.household);
-      setMembers(ctx.members);
-      if (ctx.household) {
-        await loadPendingInvites(ctx.household.id);
+      const [memberships, savedId] = await Promise.all([
+        fetchHouseholdMemberships(supabase, userId),
+        fetchActiveHouseholdId(supabase, userId),
+      ]);
+      const nextActive = pickActiveId(memberships, savedId);
+      setHouseholds(memberships);
+      setActiveHouseholdId(nextActive);
+
+      const counts = await fetchHouseholdMemberCounts(
+        supabase,
+        memberships.map((h) => h.id),
+      );
+      setHouseholdMemberCounts(counts);
+
+      if (nextActive && nextActive !== savedId) {
+        try {
+          await saveActiveHouseholdId(supabase, userId, nextActive);
+        } catch {
+          /* el grupo igual queda activo en esta sesión */
+        }
+      }
+
+      if (nextActive) {
+        const nextMembers = await fetchHouseholdMembers(supabase, nextActive);
+        setMembers(nextMembers);
+        await loadPendingInvites(nextActive);
       } else {
+        setMembers([]);
+        setHouseholdMemberCounts({});
         setPendingInvites([]);
       }
     },
     [supabase, loadPendingInvites],
+  );
+
+  const loadNotices = useCallback(
+    async (userId: string) => {
+      if (!supabase) return;
+      try {
+        setNotices(await fetchUnreadNotices(supabase, userId));
+      } catch {
+        setNotices([]);
+      }
+    },
+    [supabase],
   );
 
   const loadUser = useCallback(async () => {
@@ -109,23 +183,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         const p = await fetchProfile(supabase, currentUser.id);
         setProfile(p);
-        await loadHousehold(currentUser.id);
+        await Promise.all([
+          loadHousehold(currentUser.id),
+          loadNotices(currentUser.id),
+        ]);
       } else {
         setProfile(null);
-        setHousehold(null);
+        setHouseholds([]);
+        setActiveHouseholdId(null);
         setMembers([]);
+        setHouseholdMemberCounts({});
         setPendingInvites([]);
+        setNotices([]);
       }
     } catch {
       setUser(null);
       setProfile(null);
-      setHousehold(null);
+      setHouseholds([]);
+      setActiveHouseholdId(null);
       setMembers([]);
+      setHouseholdMemberCounts({});
       setPendingInvites([]);
+      setNotices([]);
     } finally {
       setLoading(false);
     }
-  }, [supabase, loadHousehold]);
+  }, [supabase, loadHousehold, loadNotices]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -187,12 +270,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     await supabase.auth.signOut();
     clearSyncedLocalFinance();
+    saveOnboardingReplay(true);
     await loadUser();
   }, [supabase, loadUser]);
 
   const refreshHousehold = useCallback(async () => {
     if (user) await loadHousehold(user.id);
   }, [user, loadHousehold]);
+
+  const setActiveHousehold = useCallback(
+    async (householdId: string) => {
+      if (!supabase || !user) return { error: "Entrá de nuevo." };
+      if (!households.some((h) => h.id === householdId)) {
+        return { error: "No estás en ese grupo" };
+      }
+      setActiveHouseholdId(householdId);
+      try {
+        await saveActiveHouseholdId(supabase, user.id, householdId);
+        const nextMembers = await fetchHouseholdMembers(supabase, householdId);
+        setMembers(nextMembers);
+        await loadPendingInvites(householdId);
+        return {};
+      } catch (e) {
+        await loadHousehold(user.id);
+        return { error: friendlyError(e, "No se pudo cambiar de grupo") };
+      }
+    },
+    [supabase, user, households, loadPendingInvites, loadHousehold],
+  );
+
+  const createGroup = useCallback(
+    async (name: string) => {
+      if (!supabase || !user) return { error: "Entrá de nuevo." };
+      try {
+        await createHousehold(supabase, name);
+        await loadHousehold(user.id);
+        return {};
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo crear el grupo") };
+      }
+    },
+    [supabase, user, loadHousehold],
+  );
+
+  const renameGroup = useCallback(
+    async (householdId: string, name: string) => {
+      if (!supabase || !user) return { error: "Entrá de nuevo." };
+      const membership = households.find((h) => h.id === householdId);
+      if (!membership) return { error: "No estás en ese grupo" };
+      if (membership.role !== "owner") {
+        return { error: "Solo quien creó el grupo puede cambiarle el nombre" };
+      }
+      try {
+        await renameHousehold(supabase, householdId, name);
+        await loadHousehold(user.id);
+        return {};
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo cambiar el nombre") };
+      }
+    },
+    [supabase, user, households, loadHousehold],
+  );
 
   const createInvite = useCallback(async () => {
     if (!supabase || !user || !household) {
@@ -243,16 +381,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase, household, loadPendingInvites],
   );
 
-  const leaveCurrentHousehold = useCallback(async () => {
-    if (!supabase) return { error: "Esto no está disponible ahora." };
-    try {
-      await leaveHousehold(supabase);
-      await refreshHousehold();
-      return {};
-    } catch (e) {
-      return { error: friendlyError(e, "No se pudo salir del grupo") };
-    }
-  }, [supabase, refreshHousehold]);
+  const leaveGroup = useCallback(
+    async (householdId: string) => {
+      if (!supabase) return { error: "Esto no está disponible ahora." };
+      try {
+        await leaveHousehold(supabase, householdId);
+        await refreshHousehold();
+        return {};
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo salir del grupo") };
+      }
+    },
+    [supabase, refreshHousehold],
+  );
+
+  const closeGroup = useCallback(
+    async (householdId: string) => {
+      if (!supabase) return { error: "Esto no está disponible ahora." };
+      try {
+        await closeHousehold(supabase, householdId);
+        await refreshHousehold();
+        return {};
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo cerrar el grupo") };
+      }
+    },
+    [supabase, refreshHousehold],
+  );
+
+  const dismissNotice = useCallback(
+    async (noticeId: string) => {
+      setNotices((current) => current.filter((notice) => notice.id !== noticeId));
+      if (!supabase) return;
+      try {
+        await dismissNoticeRemote(supabase, noticeId);
+      } catch {
+        if (user) await loadNotices(user.id);
+      }
+    },
+    [supabase, user, loadNotices],
+  );
 
   const deleteAccount = useCallback(async () => {
     if (!supabase) return { error: "Esto no está disponible ahora." };
@@ -260,11 +428,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await deleteOwnAccount(supabase);
       await supabase.auth.signOut();
       clearSyncedLocalFinance();
+      saveOnboardingReplay(true);
       setUser(null);
       setProfile(null);
-      setHousehold(null);
+      setHouseholds([]);
+      setActiveHouseholdId(null);
       setMembers([]);
+      setHouseholdMemberCounts({});
       setPendingInvites([]);
+      setNotices([]);
       return {};
     } catch (e) {
       return { error: friendlyError(e, "No se pudo borrar la cuenta") };
@@ -277,18 +449,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       user,
       profile,
+      households,
       household,
       members,
+      householdMemberCounts,
       pendingInvites,
+      notices,
       isAuthenticated: Boolean(user),
       signInWithEmail,
       signOut,
       updateDisplayName,
       refreshHousehold,
+      setActiveHousehold,
+      createGroup,
+      renameGroup,
       createInvite,
       acceptInvite,
       revokeInvite,
-      leaveCurrentHousehold,
+      leaveGroup,
+      closeGroup,
+      dismissNotice,
       deleteAccount,
     }),
     [
@@ -296,17 +476,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       user,
       profile,
+      households,
       household,
       members,
+      householdMemberCounts,
       pendingInvites,
+      notices,
       signInWithEmail,
       signOut,
       updateDisplayName,
       refreshHousehold,
+      setActiveHousehold,
+      createGroup,
+      renameGroup,
       createInvite,
       acceptInvite,
       revokeInvite,
-      leaveCurrentHousehold,
+      leaveGroup,
+      closeGroup,
+      dismissNotice,
       deleteAccount,
     ],
   );

@@ -27,7 +27,7 @@ export function YearReview({
   const {
     year,
     month,
-    ownMovements,
+    balanceMovements,
     rates,
     annualSummary,
     annualSummaryArs,
@@ -58,8 +58,8 @@ export function YearReview({
   const monthsShown = visibleMonthCount(year);
   const breakdown = useMemo(
     () =>
-      computeMonthlyBreakdown(ownMovements, year, rates).slice(0, monthsShown),
-    [ownMovements, year, rates, monthsShown],
+      computeMonthlyBreakdown(balanceMovements, year, rates).slice(0, monthsShown),
+    [balanceMovements, year, rates, monthsShown],
   );
 
   const positive = annualSummaryArs.disponible >= 0;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
+import { useAuth } from "@/context/AuthContext";
 import { currentPeriod, formatMonth, todayIso } from "@/lib/format";
 import {
   addDaysIso,
@@ -33,6 +34,7 @@ import {
   incomeSourceLabel,
   normalizeIncomeSource,
 } from "@/lib/labels";
+import { friendlyError } from "@/lib/errors";
 
 const CURRENCIES: Currency[] = ["ARS", "USD"];
 
@@ -64,6 +66,7 @@ function buildPayload({
   incomeKind,
   source,
   walletChoice,
+  householdId,
 }: {
   mode: "full" | "shared";
   type: MovementType;
@@ -77,11 +80,28 @@ function buildPayload({
   incomeKind: IncomeKind;
   source: string;
   walletChoice: WalletChoice;
+  householdId?: string;
 }): Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName"> {
   const wallet =
     walletChoice === "auto" ? undefined : walletChoice;
+  const sharedHousehold =
+    mode === "shared" || scope === "shared" ? householdId : undefined;
 
-  if (mode === "shared" || (type === "expense" && scope === "shared")) {
+  if (mode === "shared" || scope === "shared") {
+    if (type === "income") {
+      return {
+        type: "income",
+        date,
+        amount,
+        currency,
+        description,
+        scope: "shared",
+        incomeKind,
+        source,
+        ...(wallet ? { wallet } : {}),
+        ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
+      };
+    }
     return {
       type: "expense",
       date,
@@ -92,6 +112,7 @@ function buildPayload({
       kind,
       category,
       ...(wallet ? { wallet } : {}),
+      ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
     };
   }
 
@@ -145,11 +166,13 @@ export function MovementForm({
     updateMovement,
     walletMode,
     sharedEnabled,
+    sharedFunding,
     usdEnabled,
     year,
     month,
     setPeriod,
   } = useFinance();
+  const { households, household, configured } = useAuth();
   const isEdit = Boolean(initial);
 
   const [type, setType] = useState<MovementType>(
@@ -187,15 +210,22 @@ export function MovementForm({
   const [walletChoice, setWalletChoice] = useState<WalletChoice>(
     initial?.wallet ?? "auto",
   );
+  const [householdId, setHouseholdId] = useState(initial?.householdId ?? "");
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("once");
   const [repeatCount, setRepeatCount] = useState(12);
   const [firstInstallment, setFirstInstallment] = useState(1);
   const [totalInstallments, setTotalInstallments] = useState(12);
   const [showMore, setShowMore] = useState(Boolean(initial));
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
   const isSharedMode = mode === "shared";
+  const allowSharedIncome = sharedFunding === "pool";
+  const isSharedMovement =
+    isSharedMode ||
+    (type === "expense" && scope === "shared") ||
+    (type === "income" && scope === "shared");
+  const selectedHouseholdId = householdId || household?.id || "";
   const canRepeat = !isEdit;
   const effectiveRepeat: RepeatMode =
     !canRepeat || (type === "income" && repeatMode === "installments")
@@ -251,11 +281,12 @@ export function MovementForm({
         incomeKind,
         source,
         walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
+        householdId: isSharedMovement ? selectedHouseholdId : undefined,
       });
     });
 
     setSubmitting(true);
-    setError("");
+    setFormError("");
     try {
       if (initial) {
         await updateMovement(initial.id, payloads[0]);
@@ -268,26 +299,33 @@ export function MovementForm({
       setPeriod(now.year, now.month);
       router.push(redirectTo);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
+      setFormError(friendlyError(err, "No se pudo guardar."));
     } finally {
       setSubmitting(false);
     }
   }
 
   const hasMore =
-    ((type === "expense" || isSharedMode) && !repeating) ||
+    ((type === "expense") && !repeating) ||
     type === "income" ||
     (walletMode === "split" && usdEnabled);
 
+
   return (
     <form onSubmit={handleSubmit} className="animate-slide-up space-y-6">
-      {!isSharedMode && (
+      {(!isSharedMode || allowSharedIncome) && (
         <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
           {(["expense", "income"] as const).map((t) => (
             <button
               key={t}
               type="button"
-              onClick={() => setType(t)}
+              onClick={() => {
+                setType(t);
+                if (isSharedMode) setScope("shared");
+                else if (t === "income" && !allowSharedIncome) {
+                  setScope("personal");
+                }
+              }}
               className={`rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 ${
                 type === t
                   ? t === "expense"
@@ -345,7 +383,9 @@ export function MovementForm({
         />
       </div>
 
-      {type === "expense" && !isSharedMode && sharedEnabled && (
+      {(type === "expense" || (type === "income" && allowSharedIncome)) &&
+        !isSharedMode &&
+        sharedEnabled && (
         <div className="flex gap-2">
           {(["personal", "shared"] as const).map((s) => (
             <button
@@ -366,7 +406,42 @@ export function MovementForm({
         </div>
       )}
 
-      {(type === "expense" || isSharedMode) && (
+      {isSharedMovement && configured && !isEdit && households.length > 1 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-400">Grupo</p>
+          <div className="flex flex-wrap gap-2">
+            {households.map((h) => (
+              <button
+                key={h.id}
+                type="button"
+                onClick={() => setHouseholdId(h.id)}
+                className={`chip ${
+                  selectedHouseholdId === h.id ? "chip-active" : "chip-inactive"
+                }`}
+              >
+                {h.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isSharedMovement && configured && !isEdit && households.length === 1 && (
+        <p className="text-center text-xs text-zinc-400">
+          Va a {households[0]?.name ?? "el grupo"}
+        </p>
+      )}
+
+      {isSharedMovement && configured && households.length === 0 && (
+        <p className="text-center text-sm text-zinc-500">
+          Primero creá o uníte a un grupo en{" "}
+          <Link href="/cuenta" className="font-semibold text-teal-600">
+            Cuenta
+          </Link>
+        </p>
+      )}
+
+      {type === "expense" && (
         <div className="flex flex-wrap gap-2">
           {EXPENSE_CATEGORIES.map((c) => (
             <button
@@ -434,7 +509,7 @@ export function MovementForm({
 
       {hasMore && showMore && (
         <div className="card space-y-4 p-4 animate-fade-in">
-          {(type === "expense" || isSharedMode) && !repeating && (
+          {type === "expense" && !repeating && (
             <div className="flex gap-2">
               {(["fixed", "variable"] as const).map((k) => (
                 <button
@@ -494,7 +569,9 @@ export function MovementForm({
         </div>
       )}
 
-      {error && <p className="text-xs text-rose-500">{error}</p>}
+      {formError && (
+        <p className="text-center text-sm text-red-500">{formError}</p>
+      )}
 
       <button type="submit" disabled={submitting} className="btn-primary w-full">
         {submitting

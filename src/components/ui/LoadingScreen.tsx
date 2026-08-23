@@ -18,7 +18,11 @@ export function variantFromPath(pathname: string): LoadingVariant {
   if (pathname.startsWith("/compartido")) return "shared";
   if (pathname.startsWith("/cuenta")) return "account";
   if (pathname.startsWith("/dividir")) return "account";
-  if (pathname.startsWith("/login") || pathname.startsWith("/join")) {
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/join") ||
+    pathname.startsWith("/onboarding")
+  ) {
     return "auth";
   }
   return "dashboard";

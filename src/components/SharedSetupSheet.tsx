@@ -21,24 +21,24 @@ export function SharedSetupSheet({
     <DetailSheet open={open} onClose={onClose} title="Gastos con otros">
       <div className="space-y-5 pb-2">
         <p className="text-sm leading-relaxed text-zinc-500">
-          No mezclan la plata. Cada uno ve lo suyo, y hay una lista de gastos
-          que ven todos.
+          Podés compartir una lista con otras personas. En Cuenta elegís si
+          cada gasto resta de quien lo pagó, o si sale de la plata del grupo.
         </p>
         <ol className="space-y-3 text-sm">
           <Step
             n="1"
+            title="Un grupo"
+            body="Casa, amigos, un viaje. Cada lista es aparte: el resto no se entera."
+          />
+          <Step
+            n="2"
             title="Invitar"
             body="Mandás un código o usás el de alguien. Ahí ven la misma lista."
           />
           <Step
-            n="2"
-            title="La plata es de cada uno"
-            body="Si vos cargás un gasto, resta de tu plata. Los demás lo ven, pero no les descuenta."
-          />
-          <Step
             n="3"
-            title="Tu nombre"
-            body="Así te van a ver cuando cargues un gasto."
+            title="Cómo cuenta en tu mes"
+            body="De quien pagó: resta solo de tu plata. De la plata del grupo: ingresos y gastos se parten y entran en tu mes solos."
           />
         </ol>
         <button

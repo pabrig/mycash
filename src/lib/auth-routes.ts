@@ -7,7 +7,24 @@ export function isPublicPath(pathname: string): boolean {
   );
 }
 
-/** Login / join: sin sidebar ni nav. */
+/** Login / join / primer armado de cuenta: sin sidebar ni nav. */
 export function isAuthShellPath(pathname: string): boolean {
-  return pathname === "/login" || pathname.startsWith("/join/");
+  return (
+    pathname === "/login" ||
+    pathname.startsWith("/join/") ||
+    pathname === "/onboarding"
+  );
+}
+
+export function isOnboardingPath(pathname: string): boolean {
+  return pathname === "/onboarding";
+}
+
+/** Localhost / loopback: se puede reabrir el onboarding aunque ya esté hecho. */
+export function isLocalDevHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  );
 }

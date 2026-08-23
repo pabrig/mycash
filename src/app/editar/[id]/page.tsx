@@ -40,7 +40,11 @@ export default function EditarPage() {
           ‹
         </Link>
         <h1 className="text-lg font-bold md:text-xl">
-          {isShared ? "Editar gasto" : "Editar"}
+          {isShared
+            ? movement.type === "income"
+              ? "Editar ingreso"
+              : "Editar gasto"
+            : "Editar"}
         </h1>
       </div>
       <MovementForm

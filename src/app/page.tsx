@@ -10,12 +10,15 @@ import { MovementList } from "@/components/MovementList";
 import { CloudBanner } from "@/components/CloudBanner";
 import { PeriodToggle } from "@/components/PeriodToggle";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { ExportStatementSheet } from "@/components/ExportStatementSheet";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { IconDownload } from "@/components/ui/Icons";
 import type { SummaryScope } from "@/lib/types";
 
 export default function HomePage() {
   const { ready, walletMode } = useFinance();
   const [scope, setScope] = useState<SummaryScope>("month");
+  const [exportOpen, setExportOpen] = useState(false);
 
   if (!ready) return <LoadingScreen variant="dashboard" />;
 
@@ -35,6 +38,14 @@ export default function HomePage() {
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={() => setExportOpen(true)}
+          className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-zinc-500 transition active:scale-95"
+        >
+          <IconDownload className="h-4 w-4" />
+          Descargar
+        </button>
       </div>
 
       {scope === "year" ? (
@@ -57,6 +68,12 @@ export default function HomePage() {
           </aside>
         </div>
       )}
+
+      <ExportStatementSheet
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        initialScope={scope}
+      />
     </div>
   );
 }
