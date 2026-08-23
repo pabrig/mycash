@@ -99,10 +99,17 @@ function SharedRow({
           {formatDayLabel(movement.date)}
         </p>
         <p className="meta hidden truncate text-xs md:block">
-          {expenseCategoryLabel(movement.category) || "—"}
+          {movement.type === "income"
+            ? "Ingreso"
+            : expenseCategoryLabel(movement.category) || "—"}
         </p>
-        <p className="shrink-0 text-right font-bold tabular-nums tracking-tight">
-          −{fmt(arsAmount)}
+        <p
+          className={`shrink-0 text-right font-bold tabular-nums tracking-tight ${
+            movement.type === "income" ? "amount-positive" : ""
+          }`}
+        >
+          {movement.type === "income" ? "+" : "−"}
+          {fmt(arsAmount)}
         </p>
       </button>
     </li>
@@ -124,7 +131,12 @@ function SharedDetail({
 }) {
   const router = useRouter();
   const fmt = useDisplayAmount();
+  const { sharedFunding } = useFinance();
   const [deleting, setDeleting] = useState(false);
+  const partnerHint =
+    sharedFunding === "pool"
+      ? "Esto lo cargó otra persona. En tu mes entra tu parte."
+      : "Esto lo cargó otra persona. No resta de tu plata.";
 
   async function handleDelete() {
     if (!confirm(`¿Eliminar "${movement.description}"?`)) return;
@@ -140,14 +152,19 @@ function SharedDetail({
   return (
     <div className="space-y-6 pb-4">
       <div>
-        <p className="text-sm font-medium text-zinc-400">Gasto compartido</p>
-        <p className="mt-2 text-4xl font-extrabold tracking-tighter tabular-nums">
-          −{fmt(arsAmount)}
+        <p className="text-sm font-medium text-zinc-400">
+          {movement.type === "income" ? "Ingreso del grupo" : "Gasto compartido"}
+        </p>
+        <p
+          className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${
+            movement.type === "income" ? "amount-positive" : ""
+          }`}
+        >
+          {movement.type === "income" ? "+" : "−"}
+          {fmt(arsAmount)}
         </p>
         {!canManage && (
-          <p className="meta mt-2 text-xs">
-            Esto lo cargó otra persona. No resta de tu plata.
-          </p>
+          <p className="meta mt-2 text-xs">{partnerHint}</p>
         )}
       </div>
       <dl className="space-y-3 text-sm">
@@ -185,9 +202,7 @@ function SharedDetail({
         )}
       </dl>
       {!canManage && (
-        <p className="text-xs leading-relaxed text-zinc-400">
-          Esto lo cargó otra persona. No resta de tu plata.
-        </p>
+        <p className="text-xs leading-relaxed text-zinc-400">{partnerHint}</p>
       )}
       {canManage && (
         <div className="flex gap-2 pt-2">
@@ -222,6 +237,7 @@ export function SharedMovementList() {
     rates,
     deleteMovement,
     cloudEnabled,
+    sharedFunding,
   } = useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
@@ -238,14 +254,19 @@ export function SharedMovementList() {
     );
   }, [sharedMovements, year, month, cloudEnabled, household?.id]);
 
+  const monthExpenses = useMemo(
+    () => monthShared.filter((m) => m.type === "expense"),
+    [monthShared],
+  );
+
   const categorySummary = useMemo(
-    () => computeSharedPeriodSummary(monthShared, rates),
-    [monthShared, rates],
+    () => computeSharedPeriodSummary(monthExpenses, rates),
+    [monthExpenses, rates],
   );
 
   const contributions = useMemo(() => {
     const map = new Map<string, { name: string; amount: number }>();
-    for (const m of monthShared) {
+    for (const m of monthExpenses) {
       const key = m.createdByUserId ?? m.createdByName ?? "unknown";
       const name = m.createdByName ?? "Alguien";
       const prev = map.get(key) ?? { name, amount: 0 };
@@ -253,15 +274,23 @@ export function SharedMovementList() {
       map.set(key, prev);
     }
     return [...map.values()].sort((a, b) => b.amount - a.amount);
-  }, [monthShared, rate]);
+  }, [monthExpenses, rate]);
 
   const selected = monthShared.find((m) => m.id === selectedId) ?? null;
 
   if (monthShared.length === 0) {
     return (
       <section className="bento animate-slide-up mx-auto max-w-5xl py-12 text-center">
-        <p className="text-sm font-semibold text-zinc-400">Todavía no hay gastos del grupo</p>
-        <p className="meta mt-1">Cuando alguien pague algo de todos, cargalo acá</p>
+        <p className="text-sm font-semibold text-zinc-400">
+          {sharedFunding === "pool"
+            ? "Todavía no hay nada del grupo"
+            : "Todavía no hay gastos del grupo"}
+        </p>
+        <p className="meta mt-1">
+          {sharedFunding === "pool"
+            ? "Cuando entre o salga plata de todos, cargalo acá"
+            : "Cuando alguien pague algo de todos, cargalo acá"}
+        </p>
         <Link
           href="/compartido/nuevo"
           className="btn-primary mt-6 inline-block px-8 text-sm"

@@ -85,11 +85,23 @@ function buildPayload({
   const wallet =
     walletChoice === "auto" ? undefined : walletChoice;
   const sharedHousehold =
-    mode === "shared" || (type === "expense" && scope === "shared")
-      ? householdId
-      : undefined;
+    mode === "shared" || scope === "shared" ? householdId : undefined;
 
-  if (mode === "shared" || (type === "expense" && scope === "shared")) {
+  if (mode === "shared" || scope === "shared") {
+    if (type === "income") {
+      return {
+        type: "income",
+        date,
+        amount,
+        currency,
+        description,
+        scope: "shared",
+        incomeKind,
+        source,
+        ...(wallet ? { wallet } : {}),
+        ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
+      };
+    }
     return {
       type: "expense",
       date,
@@ -154,6 +166,7 @@ export function MovementForm({
     updateMovement,
     walletMode,
     sharedEnabled,
+    sharedFunding,
     usdEnabled,
     year,
     month,
@@ -207,8 +220,11 @@ export function MovementForm({
   const [formError, setFormError] = useState("");
 
   const isSharedMode = mode === "shared";
-  const isSharedExpense =
-    isSharedMode || (type === "expense" && scope === "shared");
+  const allowSharedIncome = sharedFunding === "pool";
+  const isSharedMovement =
+    isSharedMode ||
+    (type === "expense" && scope === "shared") ||
+    (type === "income" && scope === "shared");
   const selectedHouseholdId = householdId || household?.id || "";
   const canRepeat = !isEdit;
   const effectiveRepeat: RepeatMode =
@@ -265,7 +281,7 @@ export function MovementForm({
         incomeKind,
         source,
         walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
-        householdId: isSharedExpense ? selectedHouseholdId : undefined,
+        householdId: isSharedMovement ? selectedHouseholdId : undefined,
       });
     });
 
@@ -290,20 +306,26 @@ export function MovementForm({
   }
 
   const hasMore =
-    ((type === "expense" || isSharedMode) && !repeating) ||
+    ((type === "expense") && !repeating) ||
     type === "income" ||
     (walletMode === "split" && usdEnabled);
 
 
   return (
     <form onSubmit={handleSubmit} className="animate-slide-up space-y-6">
-      {!isSharedMode && (
+      {(!isSharedMode || allowSharedIncome) && (
         <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
           {(["expense", "income"] as const).map((t) => (
             <button
               key={t}
               type="button"
-              onClick={() => setType(t)}
+              onClick={() => {
+                setType(t);
+                if (isSharedMode) setScope("shared");
+                else if (t === "income" && !allowSharedIncome) {
+                  setScope("personal");
+                }
+              }}
               className={`rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 ${
                 type === t
                   ? t === "expense"
@@ -361,7 +383,9 @@ export function MovementForm({
         />
       </div>
 
-      {type === "expense" && !isSharedMode && sharedEnabled && (
+      {(type === "expense" || (type === "income" && allowSharedIncome)) &&
+        !isSharedMode &&
+        sharedEnabled && (
         <div className="flex gap-2">
           {(["personal", "shared"] as const).map((s) => (
             <button
@@ -382,7 +406,7 @@ export function MovementForm({
         </div>
       )}
 
-      {isSharedExpense && configured && !isEdit && households.length > 1 && (
+      {isSharedMovement && configured && !isEdit && households.length > 1 && (
         <div className="space-y-2">
           <p className="text-xs font-medium text-zinc-400">Grupo</p>
           <div className="flex flex-wrap gap-2">
@@ -402,13 +426,13 @@ export function MovementForm({
         </div>
       )}
 
-      {isSharedExpense && configured && !isEdit && households.length === 1 && (
+      {isSharedMovement && configured && !isEdit && households.length === 1 && (
         <p className="text-center text-xs text-zinc-400">
           Va a {households[0]?.name ?? "el grupo"}
         </p>
       )}
 
-      {isSharedExpense && configured && households.length === 0 && (
+      {isSharedMovement && configured && households.length === 0 && (
         <p className="text-center text-sm text-zinc-500">
           Primero creá o uníte a un grupo en{" "}
           <Link href="/cuenta" className="font-semibold text-teal-600">
@@ -417,7 +441,7 @@ export function MovementForm({
         </p>
       )}
 
-      {(type === "expense" || isSharedMode) && (
+      {type === "expense" && (
         <div className="flex flex-wrap gap-2">
           {EXPENSE_CATEGORIES.map((c) => (
             <button
@@ -485,7 +509,7 @@ export function MovementForm({
 
       {hasMore && showMore && (
         <div className="card space-y-4 p-4 animate-fade-in">
-          {(type === "expense" || isSharedMode) && !repeating && (
+          {type === "expense" && !repeating && (
             <div className="flex gap-2">
               {(["fixed", "variable"] as const).map((k) => (
                 <button

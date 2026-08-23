@@ -2,7 +2,30 @@ import {
   settingsForMoneyProfile,
   type MoneyProfile,
 } from "./money-profile";
-import type { WalletMode } from "./types";
+import type { SharedFunding, WalletMode } from "./types";
+export const SHARED_FUNDING_OPTIONS: {
+  id: SharedFunding;
+  title: string;
+  description: string;
+  example: string;
+}[] = [
+  {
+    id: "payer",
+    title: "De quien lo pagó",
+    description:
+      "Cada uno anota lo que pagó. Eso resta de su propia plata. El otro lo ve, pero no le descuenta.",
+    example:
+      "Vos pagás el súper: sale de tu mes. Tu pareja ve el gasto, pero no le resta.",
+  },
+  {
+    id: "pool",
+    title: "De la plata del grupo",
+    description:
+      "El grupo tiene ingresos y gastos juntos. Se parten entre todos y eso entra en tu mes, solo.",
+    example:
+      "Entran $200.000 al grupo y gastan $80.000. Si son dos, a vos te suman $100.000 y te restan $40.000.",
+  },
+];
 
 export const MONEY_PROFILE_OPTIONS: {
   id: MoneyProfile;
@@ -78,6 +101,7 @@ export type OnboardingStep =
   | "money"
   | "view"
   | "shared"
+  | "shared_funding"
   | "howto_movements"
   | "howto_period"
   | "howto_split"
@@ -154,8 +178,8 @@ export const HOWTO_SHARED = {
       body: "Cuando cargás un gasto compartido, decís a qué grupo va. Casa no se mezcla con amigos.",
     },
     {
-      title: "Resta de quien pagó",
-      body: "Si vos pagaste el súper, lo cargás vos. Sale de tu plata. Los otros lo ven, pero no les descuenta.",
+      title: "De dónde sale",
+      body: "Si elegiste de quien pagó, el súper que cargás sale de tu plata. Si elegiste la plata del grupo, lo que entra y sale se parte y entra solo en tu mes. Después lo podés cambiar en Cuenta.",
     },
     {
       title: "Invitar",
@@ -168,11 +192,13 @@ export const HOWTO_SHARED = {
 export function onboardingSteps(input: {
   moneyProfile: MoneyProfile | null;
   askShared: boolean;
+  sharedEnabled: boolean | null;
   showSharedHowTo: boolean;
 }): OnboardingStep[] {
   const steps: OnboardingStep[] = ["welcome", "money"];
   if (input.moneyProfile === "dual") steps.push("view");
   if (input.askShared) steps.push("shared");
+  if (input.sharedEnabled === true) steps.push("shared_funding");
   steps.push("howto_movements", "howto_period", "howto_split");
   if (input.showSharedHowTo) steps.push("howto_shared");
   steps.push("done");
@@ -180,7 +206,12 @@ export function onboardingSteps(input: {
 }
 
 export function isSetupQuestionStep(step: OnboardingStep): boolean {
-  return step === "money" || step === "view" || step === "shared";
+  return (
+    step === "money" ||
+    step === "view" ||
+    step === "shared" ||
+    step === "shared_funding"
+  );
 }
 
 export function greetingName(displayName: string | undefined | null): string {
@@ -195,23 +226,25 @@ export function isOnboardingDone(value: boolean | null | undefined): boolean {
 }
 
 /**
- * Con la columna en la nube, esa es la verdad.
- * Sin migración: al cerrar sesión se marca un replay local para poder
- * probar el wizard otra vez.
+ * Replay local gana: sirve para ver el wizard de nuevo en esta máquina
+ * sin tocar el flag de la nube. Si no hay replay, la columna en la nube
+ * es la verdad. Sin migración: se considera hecho.
  */
 export function resolveOnboardingCompleted(input: {
   tracked: boolean;
   completed: boolean;
   replay: boolean;
 }): boolean {
+  if (input.replay) return false;
   if (input.tracked) return input.completed;
-  return !input.replay;
+  return true;
 }
 
 export function setupSummaryLines(
   profile: MoneyProfile,
   walletMode: WalletMode,
   sharedEnabled: boolean,
+  sharedFunding: SharedFunding = "payer",
 ): string[] {
   const lines: string[] = [];
   switch (profile) {
@@ -229,11 +262,16 @@ export function setupSummaryLines(
       );
       break;
   }
-  lines.push(
-    sharedEnabled
-      ? "También podés anotar gastos con otras personas."
-      : "Por ahora, solo tu plata.",
-  );
+  if (sharedEnabled) {
+    lines.push("También podés anotar gastos con otras personas.");
+    lines.push(
+      sharedFunding === "pool"
+        ? "Los gastos del grupo salen de la plata compartida."
+        : "Cada uno anota lo que pagó, de su propia plata.",
+    );
+  } else {
+    lines.push("Por ahora, solo tu plata.");
+  }
   return lines;
 }
 
@@ -253,6 +291,7 @@ export function canContinueOnboarding(
     moneyProfile: MoneyProfile | null;
     walletMode: WalletMode | null;
     sharedEnabled: boolean | null;
+    sharedFunding?: SharedFunding | null;
   },
 ): boolean {
   switch (step) {
@@ -269,5 +308,7 @@ export function canContinueOnboarding(
       return input.walletMode != null;
     case "shared":
       return input.sharedEnabled != null;
+    case "shared_funding":
+      return input.sharedFunding != null;
   }
 }

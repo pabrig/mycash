@@ -14,7 +14,8 @@ where relnamespace = 'public'::regnamespace
     'household_invites',
     'movements',
     'monthly_rates',
-    'user_settings'
+    'user_settings',
+    'user_notices'
   )
 order by relname;
 -- Esperado: rls_enabled = true en todas
@@ -30,7 +31,8 @@ where schemaname = 'public'
     'household_invites',
     'movements',
     'monthly_rates',
-    'user_settings'
+    'user_settings',
+    'user_notices'
   )
 order by tablename, policyname;
 -- Esperado mínimo en movements: select, insert, update, delete
@@ -43,6 +45,7 @@ where specific_schema = 'public'
   and routine_name in (
     'accept_household_invite',
     'leave_household',
+    'close_household',
     'create_household',
     'delete_own_account',
     'my_household_id',
@@ -63,6 +66,7 @@ where n.nspname = 'public'
   and p.proname in (
     'accept_household_invite',
     'leave_household',
+    'close_household',
     'create_household',
     'delete_own_account',
     'my_household_id',

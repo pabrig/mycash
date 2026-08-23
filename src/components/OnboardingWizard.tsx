@@ -18,13 +18,14 @@ import {
   onboardingSteps,
   resolvedWalletMode,
   setupSummaryLines,
+  SHARED_FUNDING_OPTIONS,
   SHARED_SETUP_OPTIONS,
   WALLET_VIEW_OPTIONS,
   type OnboardingStep,
 } from "@/lib/account-setup";
 import { friendlyError } from "@/lib/errors";
 import type { MoneyProfile } from "@/lib/money-profile";
-import type { WalletMode } from "@/lib/types";
+import type { SharedFunding, WalletMode } from "@/lib/types";
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -41,13 +42,16 @@ export function OnboardingWizard() {
   const [sharedEnabled, setSharedEnabled] = useState<boolean | null>(
     joinedGroup ? true : null,
   );
+  const [sharedFunding, setSharedFunding] = useState<SharedFunding | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const usesShared = joinedGroup || sharedEnabled === true;
   const steps = onboardingSteps({
     moneyProfile,
     askShared,
-    showSharedHowTo: joinedGroup || sharedEnabled === true,
+    sharedEnabled: usesShared ? true : sharedEnabled,
+    showSharedHowTo: usesShared,
   });
   const current = steps.includes(step) ? step : "money";
   const index = Math.max(0, steps.indexOf(current));
@@ -57,6 +61,7 @@ export function OnboardingWizard() {
     moneyProfile,
     walletMode,
     sharedEnabled,
+    sharedFunding,
   });
 
   function goBack() {
@@ -84,7 +89,8 @@ export function OnboardingWizard() {
       await completeAccountSetup({
         profile: moneyProfile,
         walletMode: resolvedWalletMode(moneyProfile, walletMode),
-        sharedEnabled: joinedGroup ? true : Boolean(sharedEnabled),
+        sharedEnabled: usesShared,
+        sharedFunding: usesShared ? (sharedFunding ?? "payer") : "payer",
       });
       router.replace("/");
     } catch (e) {
@@ -159,6 +165,11 @@ export function OnboardingWizard() {
           <ViewStep selected={walletMode} onSelect={setWalletMode} />
         ) : current === "shared" ? (
           <SharedStep selected={sharedEnabled} onSelect={setSharedEnabled} />
+        ) : current === "shared_funding" ? (
+          <SharedFundingStep
+            selected={sharedFunding}
+            onSelect={setSharedFunding}
+          />
         ) : current === "howto_movements" ? (
           <HowToStep
             title={HOWTO_MOVEMENTS.title}
@@ -195,7 +206,8 @@ export function OnboardingWizard() {
                 ? setupSummaryLines(
                     moneyProfile,
                     resolvedWalletMode(moneyProfile, walletMode),
-                    joinedGroup ? true : Boolean(sharedEnabled),
+                    usesShared,
+                    usesShared ? (sharedFunding ?? "payer") : "payer",
                   )
                 : []
             }
@@ -298,6 +310,45 @@ function ViewStep({
             size="comfortable"
             title={option.title}
             description={option.description}
+            selected={selected === option.id}
+            onSelect={() => onSelect(option.id)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SharedFundingStep({
+  selected,
+  onSelect,
+}: {
+  selected: SharedFunding | null;
+  onSelect: (value: SharedFunding) => void;
+}) {
+  return (
+    <section className="space-y-5">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          ¿De dónde salen los gastos del grupo?
+        </h1>
+        <p className="mt-2 text-base leading-relaxed text-zinc-500">
+          Esto entra en tu mes, solo. El otro ve la lista, pero no le cambia su
+          número.
+        </p>
+      </div>
+      <div
+        className="space-y-2.5"
+        role="radiogroup"
+        aria-label="De dónde salen los gastos del grupo"
+      >
+        {SHARED_FUNDING_OPTIONS.map((option) => (
+          <ChoiceOption
+            key={option.id}
+            size="comfortable"
+            title={option.title}
+            description={option.description}
+            example={option.example}
             selected={selected === option.id}
             onSelect={() => onSelect(option.id)}
           />

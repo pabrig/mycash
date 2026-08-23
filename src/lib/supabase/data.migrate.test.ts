@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hasLocalToMigrate,
+  isMissingNoticesTable,
   isMissingOnboardingColumn,
   parseUserSettings,
   type LocalSnapshot,
@@ -14,6 +15,7 @@ function snapshot(partial: Partial<LocalSnapshot> = {}): LocalSnapshot {
     displayCurrency: "ARS",
     walletMode: "unified",
     sharedEnabled: false,
+    sharedFunding: "payer",
     usdEnabled: true,
     ...partial,
   };
@@ -50,6 +52,7 @@ describe("hasLocalToMigrate", () => {
     expect(hasLocalToMigrate(snapshot({ displayCurrency: "USD" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ walletMode: "split" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ sharedEnabled: true }))).toBe(true);
+    expect(hasLocalToMigrate(snapshot({ sharedFunding: "pool" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ usdEnabled: false }))).toBe(true);
     expect(
       hasLocalToMigrate(
@@ -78,6 +81,10 @@ describe("parseUserSettings", () => {
     expect(parseUserSettings(null).onboardingTracked).toBe(false);
     expect(parseUserSettings({}).onboardingTracked).toBe(false);
     expect(parseUserSettings({}).onboardingCompleted).toBe(true);
+    expect(parseUserSettings({}).sharedFunding).toBe("payer");
+    expect(parseUserSettings({ shared_funding: "pool" }).sharedFunding).toBe(
+      "pool",
+    );
   });
 });
 
@@ -91,5 +98,15 @@ describe("isMissingOnboardingColumn", () => {
       }),
     ).toBe(true);
     expect(isMissingOnboardingColumn({ code: "42501" })).toBe(false);
+  });
+});
+
+describe("isMissingNoticesTable", () => {
+  it("detects a missing user_notices relation", () => {
+    expect(isMissingNoticesTable({ code: "42P01" })).toBe(true);
+    expect(isMissingNoticesTable({ message: "Could not find the table 'user_notices'" })).toBe(
+      true,
+    );
+    expect(isMissingNoticesTable({ code: "42501" })).toBe(false);
   });
 });

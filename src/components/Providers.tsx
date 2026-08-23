@@ -7,12 +7,13 @@ import { FinanceProvider, useFinance } from "@/context/FinanceContext";
 import { BottomNav } from "@/components/BottomNav";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { UserNotices } from "@/components/UserNotices";
 import {
   LoadingScreen,
   variantFromPath,
 } from "@/components/ui/LoadingScreen";
 import { useIsClient } from "@/hooks/useIsClient";
-import { isAuthShellPath, isOnboardingPath } from "@/lib/auth-routes";
+import { isAuthShellPath, isLocalDevHost, isOnboardingPath } from "@/lib/auth-routes";
 
 function isStandaloneDisplay() {
   const nav = navigator as Navigator & { standalone?: boolean };
@@ -84,6 +85,7 @@ function AppFrame({
   useEffect(() => {
     if (!onOnboarding || !configured || !isAuthenticated) return;
     if (!ready || !onboardingCompleted) return;
+    if (isLocalDevHost(window.location.hostname)) return;
     router.replace("/");
   }, [
     onOnboarding,
@@ -111,7 +113,10 @@ function AppFrame({
             ) : blockApp ? (
               <LoadingScreen variant="auth" />
             ) : (
-              children
+              <>
+                {!hideChrome ? <UserNotices /> : null}
+                {children}
+              </>
             )}
           </main>
         </div>

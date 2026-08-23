@@ -10,6 +10,7 @@ import {
   resolveOnboardingCompleted,
   resolvedWalletMode,
   setupSummaryLines,
+  SHARED_FUNDING_OPTIONS,
 } from "./account-setup";
 
 describe("onboardingSteps", () => {
@@ -18,6 +19,7 @@ describe("onboardingSteps", () => {
       onboardingSteps({
         moneyProfile: "ars_only",
         askShared: true,
+        sharedEnabled: null,
         showSharedHowTo: false,
       }),
     ).toEqual([
@@ -33,6 +35,7 @@ describe("onboardingSteps", () => {
       onboardingSteps({
         moneyProfile: "ars_savings",
         askShared: true,
+        sharedEnabled: false,
         showSharedHowTo: false,
       }),
     ).toEqual([
@@ -46,11 +49,12 @@ describe("onboardingSteps", () => {
     ]);
   });
 
-  it("adds how-to-see-it only when they use pesos and dollars", () => {
+  it("asks how shared expenses count after they turn shared on", () => {
     expect(
       onboardingSteps({
         moneyProfile: "dual",
         askShared: true,
+        sharedEnabled: true,
         showSharedHowTo: true,
       }),
     ).toEqual([
@@ -58,6 +62,7 @@ describe("onboardingSteps", () => {
       "money",
       "view",
       "shared",
+      "shared_funding",
       "howto_movements",
       "howto_period",
       "howto_split",
@@ -66,16 +71,18 @@ describe("onboardingSteps", () => {
     ]);
   });
 
-  it("skips the shared question when they already joined a group", () => {
+  it("asks how the group counts when they already joined", () => {
     expect(
       onboardingSteps({
         moneyProfile: "ars_only",
         askShared: false,
+        sharedEnabled: true,
         showSharedHowTo: true,
       }),
     ).toEqual([
       "welcome",
       "money",
+      "shared_funding",
       "howto_movements",
       "howto_period",
       "howto_split",
@@ -89,6 +96,7 @@ describe("onboardingSteps", () => {
       onboardingSteps({
         moneyProfile: null,
         askShared: true,
+        sharedEnabled: null,
         showSharedHowTo: false,
       }),
     ).toEqual([
@@ -107,9 +115,18 @@ describe("onboardingSteps", () => {
       onboardingSteps({
         moneyProfile: "ars_only",
         askShared: false,
+        sharedEnabled: false,
         showSharedHowTo: false,
       }),
     ).not.toContain("howto_shared");
+    expect(
+      onboardingSteps({
+        moneyProfile: "ars_only",
+        askShared: false,
+        sharedEnabled: false,
+        showSharedHowTo: false,
+      }),
+    ).not.toContain("shared_funding");
   });
 
   it("always explains how to split a bill", () => {
@@ -117,9 +134,19 @@ describe("onboardingSteps", () => {
       onboardingSteps({
         moneyProfile: "ars_only",
         askShared: false,
+        sharedEnabled: false,
         showSharedHowTo: false,
       }),
     ).toContain("howto_split");
+  });
+});
+
+describe("SHARED_FUNDING_OPTIONS", () => {
+  it("explains payer and pool with a concrete example", () => {
+    const payer = SHARED_FUNDING_OPTIONS.find((option) => option.id === "payer");
+    const pool = SHARED_FUNDING_OPTIONS.find((option) => option.id === "pool");
+    expect(payer?.example).toMatch(/súper/i);
+    expect(pool?.example).toMatch(/parten|suman|restan/i);
   });
 });
 
@@ -154,6 +181,14 @@ describe("HOWTO_SHARED", () => {
     ].join(" ");
     expect(text).toMatch(/más de un grupo/i);
     expect(text).toMatch(/elegís el grupo/i);
+  });
+
+  it("recaps payer vs pool instead of sending them to Cuenta first", () => {
+    const body = HOWTO_SHARED.items.find((item) => item.title === "De dónde sale")
+      ?.body;
+    expect(body).toMatch(/de quien pagó/i);
+    expect(body).toMatch(/plata del grupo/i);
+    expect(body).not.toMatch(/en cuenta elegís/i);
   });
 });
 
@@ -194,6 +229,22 @@ describe("canContinueOnboarding", () => {
         sharedEnabled: null,
       }),
     ).toBe(true);
+    expect(
+      canContinueOnboarding("shared_funding", {
+        moneyProfile: "ars_only",
+        walletMode: null,
+        sharedEnabled: true,
+        sharedFunding: null,
+      }),
+    ).toBe(false);
+    expect(
+      canContinueOnboarding("shared_funding", {
+        moneyProfile: "ars_only",
+        walletMode: null,
+        sharedEnabled: true,
+        sharedFunding: "pool",
+      }),
+    ).toBe(true);
   });
 });
 
@@ -218,9 +269,15 @@ describe("setupSummaryLines", () => {
   });
 
   it("mentions shared expenses when enabled", () => {
-    const lines = setupSummaryLines("dual", "split", true);
+    const lines = setupSummaryLines("dual", "split", true, "payer");
     expect(lines[0]).toContain("Diario y ahorro");
     expect(lines[1]).toContain("otras personas");
+    expect(lines[2]).toMatch(/propia plata/);
+  });
+
+  it("says when shared expenses come from the group pool", () => {
+    const lines = setupSummaryLines("ars_only", "unified", true, "pool");
+    expect(lines).toContain("Los gastos del grupo salen de la plata compartida.");
   });
 });
 
@@ -242,21 +299,31 @@ describe("isOnboardingDone", () => {
 });
 
 describe("resolveOnboardingCompleted", () => {
-  it("follows the cloud flag when the column exists", () => {
+  it("follows the cloud flag when the column exists and they are not replaying", () => {
     expect(
       resolveOnboardingCompleted({
         tracked: true,
         completed: false,
-        replay: true,
+        replay: false,
       }),
     ).toBe(false);
     expect(
       resolveOnboardingCompleted({
         tracked: true,
         completed: true,
-        replay: true,
+        replay: false,
       }),
     ).toBe(true);
+  });
+
+  it("replays the wizard locally even if the cloud already marked it done", () => {
+    expect(
+      resolveOnboardingCompleted({
+        tracked: true,
+        completed: true,
+        replay: true,
+      }),
+    ).toBe(false);
   });
 
   it("replays the wizard after logout when the column is missing", () => {

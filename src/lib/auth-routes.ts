@@ -19,3 +19,12 @@ export function isAuthShellPath(pathname: string): boolean {
 export function isOnboardingPath(pathname: string): boolean {
   return pathname === "/onboarding";
 }
+
+/** Localhost / loopback: se puede reabrir el onboarding aunque ya esté hecho. */
+export function isLocalDevHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  );
+}

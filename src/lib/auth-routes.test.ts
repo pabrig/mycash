@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isAuthShellPath, isOnboardingPath, isPublicPath } from "@/lib/auth-routes";
+import {
+  isAuthShellPath,
+  isLocalDevHost,
+  isOnboardingPath,
+  isPublicPath,
+} from "@/lib/auth-routes";
 
 describe("isPublicPath", () => {
   it("allows login, auth callback and join links", () => {
@@ -32,5 +37,14 @@ describe("isOnboardingPath", () => {
     expect(isOnboardingPath("/onboarding")).toBe(true);
     expect(isOnboardingPath("/cuenta")).toBe(false);
     expect(isOnboardingPath("/login")).toBe(false);
+  });
+});
+
+describe("isLocalDevHost", () => {
+  it("allows localhost and loopback", () => {
+    expect(isLocalDevHost("localhost")).toBe(true);
+    expect(isLocalDevHost("127.0.0.1")).toBe(true);
+    expect(isLocalDevHost("[::1]")).toBe(true);
+    expect(isLocalDevHost("mycash.app")).toBe(false);
   });
 });

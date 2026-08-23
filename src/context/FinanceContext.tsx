@@ -22,7 +22,7 @@ import {
   computeSplitMonthlySummary,
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
-import { affectsUserBalance } from "@/lib/movement-access";
+import { movementsForPersonalBalance } from "@/lib/movement-access";
 import { resolveSharedHouseholdId } from "@/lib/household";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
 import { friendlyError } from "@/lib/errors";
@@ -40,6 +40,7 @@ import {
   saveAccountSetupRemote,
   saveDisplayCurrencyRemote,
   saveSharedEnabledRemote,
+  saveSharedFundingRemote,
   saveUsdEnabledRemote,
   saveWalletModeRemote,
   updateMovementById,
@@ -53,6 +54,7 @@ import type {
   Movement,
   SplitAnnualSummary,
   SplitMonthlySummary,
+  SharedFunding,
   WalletMode,
 } from "@/lib/types";
 import * as storage from "@/lib/storage";
@@ -64,8 +66,10 @@ interface FinanceContextValue {
   syncError: string | null;
   clearSyncError: () => void;
   movements: Movement[];
-  /** Movimientos que entran en el disponible (sin lo compartido del otro) */
+  /** Movimientos propios para la lista (el shared del otro no aparece acá) */
   ownMovements: Movement[];
+  /** Movimientos que entran en tu mes (en pool, el shared se parte) */
+  balanceMovements: Movement[];
   sharedMovements: Movement[];
   rates: MonthlyRate[];
   year: number;
@@ -76,13 +80,17 @@ interface FinanceContextValue {
   setWalletMode: (mode: WalletMode) => void;
   sharedEnabled: boolean;
   setSharedEnabled: (enabled: boolean) => void;
+  sharedFunding: SharedFunding;
+  setSharedFunding: (funding: SharedFunding) => void;
   usdEnabled: boolean;
   setUsdEnabled: (enabled: boolean) => void;
   onboardingCompleted: boolean;
+  replayOnboarding: () => void;
   completeAccountSetup: (input: {
     profile: MoneyProfile;
     walletMode: WalletMode;
     sharedEnabled: boolean;
+    sharedFunding: SharedFunding;
   }) => Promise<void>;
   amountsHidden: boolean;
   setAmountsHidden: (hidden: boolean) => void;
@@ -126,7 +134,7 @@ function friendlySyncError(e: unknown): string {
 const FinanceContext = createContext<FinanceContextValue | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  const { configured, loading: authLoading, user, household, isAuthenticated } =
+  const { configured, loading: authLoading, user, household, isAuthenticated, householdMemberCounts } =
     useAuth();
 
   const [ready, setReady] = useState(false);
@@ -136,6 +144,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     useState<DisplayCurrency>("ARS");
   const [walletMode, setWalletModeState] = useState<WalletMode>("unified");
   const [sharedEnabled, setSharedEnabledState] = useState(false);
+  const [sharedFunding, setSharedFundingState] =
+    useState<SharedFunding>("payer");
   const [usdEnabled, setUsdEnabledState] = useState(true);
   const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [amountsHidden, setAmountsHiddenState] = useState(false);
@@ -154,6 +164,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setDisplayCurrencyState(storage.loadDisplayCurrency());
     setWalletModeState(storage.loadWalletMode());
     setSharedEnabledState(storage.loadSharedEnabled());
+    setSharedFundingState(storage.loadSharedFunding());
     setUsdEnabledState(storage.loadUsdEnabled());
     setOnboardingCompleted(!storage.loadOnboardingReplay());
     setAmountsHiddenState(storage.loadAmountsHidden());
@@ -175,6 +186,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setDisplayCurrencyState(remoteSettings.displayCurrency);
     setWalletModeState(remoteSettings.walletMode);
     setSharedEnabledState(remoteSettings.sharedEnabled);
+    setSharedFundingState(remoteSettings.sharedFunding);
     setUsdEnabledState(remoteSettings.usdEnabled);
     setOnboardingCompleted(
       resolveOnboardingCompleted({
@@ -218,6 +230,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setDisplayCurrencyState("ARS");
         setWalletModeState("unified");
         setSharedEnabledState(false);
+        setSharedFundingState("payer");
         setUsdEnabledState(true);
         setOnboardingCompleted(true);
         if (!cancelled) setReady(true);
@@ -263,6 +276,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         await saveSharedEnabledRemote(supabase, user.id, enabled);
       } else {
         storage.saveSharedEnabled(enabled);
+      }
+    },
+    [cloudEnabled, supabase, user],
+  );
+
+  const setSharedFunding = useCallback(
+    async (funding: SharedFunding) => {
+      setSharedFundingState(funding);
+      if (cloudEnabled && supabase && user) {
+        await saveSharedFundingRemote(supabase, user.id, funding);
+      } else {
+        storage.saveSharedFunding(funding);
       }
     },
     [cloudEnabled, supabase, user],
@@ -327,15 +352,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       profile: MoneyProfile;
       walletMode: WalletMode;
       sharedEnabled: boolean;
+      sharedFunding: SharedFunding;
     }) => {
       const settings = settingsForMoneyProfile(input.profile, input.walletMode);
       const displayCurrency: DisplayCurrency = "ARS";
+      const sharedFunding = input.sharedEnabled ? input.sharedFunding : "payer";
 
       if (cloudEnabled && supabase && user) {
         await saveAccountSetupRemote(supabase, user.id, {
           displayCurrency,
           walletMode: settings.walletMode,
           sharedEnabled: input.sharedEnabled,
+          sharedFunding,
           usdEnabled: settings.usdEnabled,
           onboardingCompleted: true,
         });
@@ -343,18 +371,25 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         storage.saveUsdEnabled(settings.usdEnabled);
         storage.saveWalletMode(settings.walletMode);
         storage.saveSharedEnabled(input.sharedEnabled);
+        storage.saveSharedFunding(sharedFunding);
         storage.saveDisplayCurrency(displayCurrency);
       }
 
       setUsdEnabledState(settings.usdEnabled);
       setWalletModeState(settings.walletMode);
       setSharedEnabledState(input.sharedEnabled);
+      setSharedFundingState(sharedFunding);
       setDisplayCurrencyState(displayCurrency);
       setOnboardingCompleted(true);
       storage.saveOnboardingReplay(false);
     },
     [cloudEnabled, supabase, user],
   );
+
+  const replayOnboarding = useCallback(() => {
+    storage.saveOnboardingReplay(true);
+    setOnboardingCompleted(false);
+  }, []);
 
   const setAmountsHidden = useCallback((hidden: boolean) => {
     setAmountsHiddenState(hidden);
@@ -588,13 +623,35 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const ownMovements = useMemo(
-    () => movements.filter((m) => affectsUserBalance(m, user?.id)),
-    [movements, user?.id],
+    () =>
+      movementsForPersonalBalance(
+        movements,
+        user?.id,
+        "payer",
+        householdMemberCounts,
+      ),
+    [movements, user?.id, householdMemberCounts],
+  );
+
+  const balanceMovements = useMemo(
+    () =>
+      movementsForPersonalBalance(
+        movements,
+        user?.id,
+        sharedFunding,
+        householdMemberCounts,
+      ),
+    [movements, user?.id, sharedFunding, householdMemberCounts],
   );
 
   const monthMovements = useMemo(
     () => filterByMonth(ownMovements, year, month),
     [ownMovements, year, month],
+  );
+
+  const monthBalanceMovements = useMemo(
+    () => filterByMonth(balanceMovements, year, month),
+    [balanceMovements, year, month],
   );
 
   const sharedMovements = useMemo(
@@ -603,28 +660,28 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const summary = useMemo(
-    () => computeMonthlySummary(monthMovements, rate),
-    [monthMovements, rate],
+    () => computeMonthlySummary(monthBalanceMovements, rate),
+    [monthBalanceMovements, rate],
   );
 
   const annualSummary = useMemo(
-    () => computeAnnualSummary(ownMovements, year, rates),
-    [ownMovements, year, rates],
+    () => computeAnnualSummary(balanceMovements, year, rates),
+    [balanceMovements, year, rates],
   );
 
   const annualSummaryArs = useMemo(
-    () => computeAnnualSummaryArs(ownMovements, year, rates),
-    [ownMovements, year, rates],
+    () => computeAnnualSummaryArs(balanceMovements, year, rates),
+    [balanceMovements, year, rates],
   );
 
   const splitSummary = useMemo(
-    () => computeSplitMonthlySummary(monthMovements, rate),
-    [monthMovements, rate],
+    () => computeSplitMonthlySummary(monthBalanceMovements, rate),
+    [monthBalanceMovements, rate],
   );
 
   const splitAnnualSummary = useMemo(
-    () => computeSplitAnnualSummary(ownMovements, year, rates),
-    [ownMovements, year, rates],
+    () => computeSplitAnnualSummary(balanceMovements, year, rates),
+    [balanceMovements, year, rates],
   );
 
   const effectiveWalletMode: WalletMode =
@@ -640,6 +697,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       clearSyncError,
       movements,
       ownMovements,
+      balanceMovements,
       sharedMovements,
       rates,
       year,
@@ -650,9 +708,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setWalletMode,
       sharedEnabled,
       setSharedEnabled,
+      sharedFunding,
+      setSharedFunding,
       usdEnabled,
       setUsdEnabled,
       onboardingCompleted,
+      replayOnboarding,
       completeAccountSetup,
       amountsHidden,
       setAmountsHidden,
@@ -679,6 +740,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       clearSyncError,
       movements,
       ownMovements,
+      balanceMovements,
       sharedMovements,
       rates,
       year,
@@ -689,9 +751,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setWalletMode,
       sharedEnabled,
       setSharedEnabled,
+      sharedFunding,
+      setSharedFunding,
       usdEnabled,
       setUsdEnabled,
       onboardingCompleted,
+      replayOnboarding,
       completeAccountSetup,
       amountsHidden,
       setAmountsHidden,

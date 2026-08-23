@@ -34,7 +34,7 @@ function ExportStatementBody({
   onClose: () => void;
   initialScope: SummaryScope;
 }) {
-  const { year, month, ownMovements, rates } = useFinance();
+  const { year, month, balanceMovements, rates } = useFinance();
   const [scope, setScope] = useState<SummaryScope>(initialScope);
   const [format, setFormat] = useState<StatementFormat>("pdf");
   const [busy, setBusy] = useState(false);
@@ -51,7 +51,7 @@ function ExportStatementBody({
         scope,
         year,
         month,
-        movements: ownMovements,
+        movements: balanceMovements,
         rates
       });
       await downloadStatement(statement, format);

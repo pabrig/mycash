@@ -6,7 +6,7 @@ PWA de **finanzas personales** para controlar ingresos, gastos y disponible mens
 
 - **Modo local** — sin login, datos en el teléfono (localStorage)
 - **Modo nube** (opcional) — Supabase: magic link, sync personal y gastos compartidos en grupo
-- **Gastos compartidos**: solo egresos; resta del disponible de quien lo cargó; el resto lo ve (sin reparto)
+- **Gastos compartidos**: egresos (e ingresos, si en Cuenta elegís “plata del grupo”); resta de quien lo cargó o se parte entre todos
 - **Un grupo por usuario** — vinculación por código de invitación
 - **Disponible** = ingresos − gastos personales − gastos compartidos
 - **Modo bolsillos** (opcional, requiere USD): **Todo junto** o **Dos bolsillos** (Cotidiano ARS + Ahorro USD)
@@ -76,7 +76,7 @@ Guía completa (glosario, qué ve el grupo, checklist prod, RLS): **[docs/cloud.
 Resumen rápido:
 
 1. Creá un proyecto en [Supabase](https://supabase.com)
-2. En SQL Editor, ejecutá en orden `supabase/migrations/001_initial.sql` … `009_onboarding.sql`
+2. En SQL Editor, ejecutá en orden `supabase/migrations/001_initial.sql` … `011_close_household.sql`
 3. Copiá `.env.example` → `.env.local` (solo URL + **anon** key — nunca `service_role`)
 4. Authentication → URL Configuration: `http://localhost:3000/auth/callback` (+ dominio prod)
 5. Reiniciá `npm run dev`

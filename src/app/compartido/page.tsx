@@ -17,7 +17,7 @@ export default function CompartidoPage() {
   const router = useRouter();
   const { loading, members, user, households, household, setActiveHousehold } =
     useAuth();
-  const { ready, sharedEnabled, walletMode } = useFinance();
+  const { ready, sharedEnabled, walletMode, sharedFunding } = useFinance();
   const [scope, setScope] = useState<SummaryScope>("month");
 
   useEffect(() => {
@@ -44,8 +44,10 @@ export default function CompartidoPage() {
           </h2>
           <p className="meta mt-1">
             {paired
-              ? `Con ${otherNames.join(", ")}. Cada gasto resta de quien lo cargó.`
-              : "Acá van a ver los gastos de todos. Cada uno sigue con su plata."}
+              ? sharedFunding === "pool"
+                ? `Con ${otherNames.join(", ")}. La plata del grupo se parte en tu mes.`
+                : `Con ${otherNames.join(", ")}. Cada gasto resta de quien lo cargó.`
+              : "Acá van a ver los gastos de todos. En Cuenta elegís cómo cuenta en tu mes."}
           </p>
         </div>
         {walletMode === "unified" && scope === "month" && (

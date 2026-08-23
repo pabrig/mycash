@@ -13,15 +13,20 @@ import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
 import { clearSyncedLocalFinance, saveOnboardingReplay } from "@/lib/storage";
 import {
   acceptHouseholdInvite,
+  closeHousehold,
   createHousehold,
   createHouseholdInvite,
   deleteOwnAccount,
+  dismissNotice as dismissNoticeRemote,
   fetchActiveHouseholdId,
+  fetchHouseholdMemberCounts,
   fetchHouseholdMembers,
   fetchHouseholdMemberships,
   fetchProfile,
+  fetchUnreadNotices,
   leaveHousehold,
   listPendingInvites,
+  renameHousehold,
   revokeHouseholdInvite,
   saveActiveHouseholdId,
   updateDisplayName as saveDisplayName,
@@ -33,6 +38,7 @@ import type {
   HouseholdMember,
   HouseholdMembership,
   Profile,
+  UserNotice,
 } from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
 
@@ -45,7 +51,9 @@ interface AuthContextValue {
   /** Grupo activo (invites, form shared, /compartido) */
   household: HouseholdMembership | null;
   members: HouseholdMember[];
+  householdMemberCounts: Record<string, number>;
   pendingInvites: HouseholdInvite[];
+  notices: UserNotice[];
   isAuthenticated: boolean;
   signInWithEmail: (
     email: string,
@@ -57,10 +65,13 @@ interface AuthContextValue {
   refreshHousehold: () => Promise<void>;
   setActiveHousehold: (householdId: string) => Promise<{ error?: string }>;
   createGroup: (name: string) => Promise<{ error?: string }>;
+  renameGroup: (householdId: string, name: string) => Promise<{ error?: string }>;
   createInvite: () => Promise<{ code?: string; error?: string }>;
   acceptInvite: (code: string) => Promise<{ error?: string }>;
   revokeInvite: (inviteId: string) => Promise<{ error?: string }>;
   leaveGroup: (householdId: string) => Promise<{ error?: string }>;
+  closeGroup: (householdId: string) => Promise<{ error?: string }>;
+  dismissNotice: (noticeId: string) => Promise<void>;
   deleteAccount: () => Promise<{ error?: string }>;
 }
 
@@ -84,7 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     null,
   );
   const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [householdMemberCounts, setHouseholdMemberCounts] = useState<
+    Record<string, number>
+  >({});
   const [pendingInvites, setPendingInvites] = useState<HouseholdInvite[]>([]);
+  const [notices, setNotices] = useState<UserNotice[]>([]);
   const supabase = useBrowserSupabase();
 
   const household = useMemo(
@@ -116,6 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHouseholds(memberships);
       setActiveHouseholdId(nextActive);
 
+      const counts = await fetchHouseholdMemberCounts(
+        supabase,
+        memberships.map((h) => h.id),
+      );
+      setHouseholdMemberCounts(counts);
+
       if (nextActive && nextActive !== savedId) {
         try {
           await saveActiveHouseholdId(supabase, userId, nextActive);
@@ -130,10 +151,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await loadPendingInvites(nextActive);
       } else {
         setMembers([]);
+        setHouseholdMemberCounts({});
         setPendingInvites([]);
       }
     },
     [supabase, loadPendingInvites],
+  );
+
+  const loadNotices = useCallback(
+    async (userId: string) => {
+      if (!supabase) return;
+      try {
+        setNotices(await fetchUnreadNotices(supabase, userId));
+      } catch {
+        setNotices([]);
+      }
+    },
+    [supabase],
   );
 
   const loadUser = useCallback(async () => {
@@ -149,13 +183,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         const p = await fetchProfile(supabase, currentUser.id);
         setProfile(p);
-        await loadHousehold(currentUser.id);
+        await Promise.all([
+          loadHousehold(currentUser.id),
+          loadNotices(currentUser.id),
+        ]);
       } else {
         setProfile(null);
         setHouseholds([]);
         setActiveHouseholdId(null);
         setMembers([]);
+        setHouseholdMemberCounts({});
         setPendingInvites([]);
+        setNotices([]);
       }
     } catch {
       setUser(null);
@@ -163,11 +202,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHouseholds([]);
       setActiveHouseholdId(null);
       setMembers([]);
+      setHouseholdMemberCounts({});
       setPendingInvites([]);
+      setNotices([]);
     } finally {
       setLoading(false);
     }
-  }, [supabase, loadHousehold]);
+  }, [supabase, loadHousehold, loadNotices]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -272,6 +313,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase, user, loadHousehold],
   );
 
+  const renameGroup = useCallback(
+    async (householdId: string, name: string) => {
+      if (!supabase || !user) return { error: "Entrá de nuevo." };
+      const membership = households.find((h) => h.id === householdId);
+      if (!membership) return { error: "No estás en ese grupo" };
+      if (membership.role !== "owner") {
+        return { error: "Solo quien creó el grupo puede cambiarle el nombre" };
+      }
+      try {
+        await renameHousehold(supabase, householdId, name);
+        await loadHousehold(user.id);
+        return {};
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo cambiar el nombre") };
+      }
+    },
+    [supabase, user, households, loadHousehold],
+  );
+
   const createInvite = useCallback(async () => {
     if (!supabase || !user || !household) {
       return { error: "Todavía no hay grupo" };
@@ -335,6 +395,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase, refreshHousehold],
   );
 
+  const closeGroup = useCallback(
+    async (householdId: string) => {
+      if (!supabase) return { error: "Esto no está disponible ahora." };
+      try {
+        await closeHousehold(supabase, householdId);
+        await refreshHousehold();
+        return {};
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo cerrar el grupo") };
+      }
+    },
+    [supabase, refreshHousehold],
+  );
+
+  const dismissNotice = useCallback(
+    async (noticeId: string) => {
+      setNotices((current) => current.filter((notice) => notice.id !== noticeId));
+      if (!supabase) return;
+      try {
+        await dismissNoticeRemote(supabase, noticeId);
+      } catch {
+        if (user) await loadNotices(user.id);
+      }
+    },
+    [supabase, user, loadNotices],
+  );
+
   const deleteAccount = useCallback(async () => {
     if (!supabase) return { error: "Esto no está disponible ahora." };
     try {
@@ -347,7 +434,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHouseholds([]);
       setActiveHouseholdId(null);
       setMembers([]);
+      setHouseholdMemberCounts({});
       setPendingInvites([]);
+      setNotices([]);
       return {};
     } catch (e) {
       return { error: friendlyError(e, "No se pudo borrar la cuenta") };
@@ -363,7 +452,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       households,
       household,
       members,
+      householdMemberCounts,
       pendingInvites,
+      notices,
       isAuthenticated: Boolean(user),
       signInWithEmail,
       signOut,
@@ -371,10 +462,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshHousehold,
       setActiveHousehold,
       createGroup,
+      renameGroup,
       createInvite,
       acceptInvite,
       revokeInvite,
       leaveGroup,
+      closeGroup,
+      dismissNotice,
       deleteAccount,
     }),
     [
@@ -385,17 +479,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       households,
       household,
       members,
+      householdMemberCounts,
       pendingInvites,
+      notices,
       signInWithEmail,
       signOut,
       updateDisplayName,
       refreshHousehold,
       setActiveHousehold,
       createGroup,
+      renameGroup,
       createInvite,
       acceptInvite,
       revokeInvite,
       leaveGroup,
+      closeGroup,
+      dismissNotice,
       deleteAccount,
     ],
   );

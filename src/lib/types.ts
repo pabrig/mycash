@@ -6,6 +6,9 @@ export type MovementType = "income" | "expense";
 
 export type ExpenseScope = "personal" | "shared";
 
+/** De dónde salen los gastos del grupo en tu mes. */
+export type SharedFunding = "payer" | "pool";
+
 export type ExpenseKind = "fixed" | "variable";
 
 export type IncomeKind = "passive" | "active";
@@ -89,6 +92,14 @@ export interface HouseholdInvite {
   id: string;
   code: string;
   expiresAt: string;
+  createdAt: string;
+}
+
+export interface UserNotice {
+  id: string;
+  kind: "household_closed";
+  title: string;
+  body: string;
   createdAt: string;
 }
 

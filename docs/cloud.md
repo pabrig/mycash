@@ -32,7 +32,7 @@ En la app solo van **URL** + **anon key** (ver [`.env.example`](../.env.example)
 | **RLS** | Políticas por fila en cada tabla | Define qué filas podés SELECT/INSERT/UPDATE/DELETE. |
 | **household** | “Hogar” / grupo compartido | Un usuario ∈ **N** hogares (máx. 8). Máx. 8 miembros por grupo. |
 | **scope personal** | Movimiento solo tuyo | El resto del grupo **no** lo ve. |
-| **scope shared** | Gasto compartido | El grupo lo ve (monto + descripción + quién lo cargó). |
+| **scope shared** | Gasto o ingreso del grupo | El grupo lo ve (monto + descripción + quién lo cargó). |
 | **RPC security definer** | Función SQL con privilegios elevados | Usada p.ej. para aceptar invitaciones; hay que restringir `GRANT EXECUTE`. |
 
 ---
@@ -43,17 +43,20 @@ Si activaste **Gastos con otros** y hay grupos:
 
 **Sí ve** (solo gente del **mismo** grupo)
 - Gastos marcados como **compartidos de ese grupo** (descripción, monto, moneda, categoría, autor).
+- **Ingresos compartidos** del grupo, si alguien los anotó (misma visibilidad que un gasto shared).
 - Nombre de display de los miembros de ese grupo.
 
 **No ve**
-- Tus **ingresos** (sueldo, pasivos, etc.).
+- Tus **ingresos personales** (sueldo, etc.).
 - Tus gastos **personales**.
 - Gastos shared de **otro** grupo tuyo (Casa no ve Proyecto).
 - Que existís en un grupo al que esa persona no pertenece.
 - Tu **tipo de cambio** mensual ni settings (ARS/USD display, bolsillos, flags).
 - Tu bolsillo Ahorro / Cotidiano como “cuenta bancaria” privada.
 
-**Importante:** el gasto compartido **resta solo del disponible de quien lo cargó**. Tu pareja lo ve, pero no le descuenta de su fondo (no hay “quién debe a quién”).
+**Importante:** en Cuenta cada uno elige cómo cuenta el grupo en **su** mes:
+- **De quien lo pagó:** el gasto resta solo del disponible de quien lo cargó. El resto lo ve, pero no le descuenta.
+- **De la plata del grupo:** se pueden anotar ingresos compartidos (el grupo los ve). Gastos e ingresos del grupo se parten entre los miembros y entran solos en el disponible de cada uno.
 
 ---
 
@@ -77,8 +80,10 @@ En **SQL Editor**, ejecutá en orden:
 7. `supabase/migrations/007_lifecycle_invites.sql` — revocar invites, salir del hogar, borrar cuenta  
 8. `supabase/migrations/008_multi_household.sql` — un usuario ∈ N grupos, RLS set-based, caps 8/8  
 9. `supabase/migrations/009_onboarding.sql` — flag `onboarding_completed` para el wizard de cuenta  
+10. `supabase/migrations/010_shared_income.sql` — ingresos compartidos + `shared_funding` (payer/pool)
+11. `supabase/migrations/011_close_household.sql` — cerrar grupo + avisos a los demás
 
-Si el proyecto ya tenía `001`–`007`, corré `008` y `009`. Si ya tenía `008`, solo corré `009`.
+Si el proyecto ya tenía `001`–`010`, corré `011`. Si ya tenía `008`, corré `009`, `010` y `011`.
 
 ### 3. Variables de entorno
 

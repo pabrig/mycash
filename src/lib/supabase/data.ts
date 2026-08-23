@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isOnboardingDone } from "@/lib/account-setup";
+import { normalizeHouseholdName } from "@/lib/household";
 import type {
   DisplayCurrency,
   HouseholdMember,
@@ -7,6 +8,8 @@ import type {
   Movement,
   MonthlyRate,
   Profile,
+  SharedFunding,
+  UserNotice,
   WalletMode,
 } from "@/lib/types";
 
@@ -16,6 +19,7 @@ export type LocalSnapshot = {
   displayCurrency: DisplayCurrency;
   walletMode: WalletMode;
   sharedEnabled: boolean;
+  sharedFunding: SharedFunding;
   usdEnabled: boolean;
 };
 
@@ -28,6 +32,7 @@ export function hasLocalToMigrate(local: LocalSnapshot): boolean {
     local.displayCurrency === "USD" ||
     local.walletMode === "split" ||
     local.sharedEnabled ||
+    local.sharedFunding === "pool" ||
     local.usdEnabled === false
   );
 }
@@ -223,6 +228,26 @@ export async function fetchHouseholdMembers(
   });
 }
 
+export async function fetchHouseholdMemberCounts(
+  supabase: SupabaseClient,
+  householdIds: string[],
+): Promise<Record<string, number>> {
+  if (householdIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from("household_members")
+    .select("household_id")
+    .in("household_id", householdIds);
+
+  if (error) throw error;
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const id = row.household_id as string;
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export async function fetchActiveHouseholdId(
   supabase: SupabaseClient,
   userId: string,
@@ -258,6 +283,22 @@ export async function createHousehold(
   });
   if (error) throw error;
   return data as string;
+}
+
+export async function renameHousehold(
+  supabase: SupabaseClient,
+  householdId: string,
+  name: string,
+): Promise<void> {
+  const n = normalizeHouseholdName(name);
+  if (!n) throw new Error("Falta el nombre");
+
+  const { error } = await supabase
+    .from("households")
+    .update({ name: n })
+    .eq("id", householdId);
+
+  if (error) throw error;
 }
 
 export async function fetchAllMovementsForUser(
@@ -372,6 +413,7 @@ export type UserSettings = {
   displayCurrency: DisplayCurrency;
   walletMode: WalletMode;
   sharedEnabled: boolean;
+  sharedFunding: SharedFunding;
   usdEnabled: boolean;
   onboardingCompleted: boolean;
   /** False si la columna todavía no existe en la base. */
@@ -382,12 +424,26 @@ export function isMissingOnboardingColumn(error: {
   code?: string;
   message?: string;
 } | null): boolean {
+  return isMissingColumn(error, "onboarding_completed");
+}
+
+export function isMissingSharedFundingColumn(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  return isMissingColumn(error, "shared_funding");
+}
+
+function isMissingColumn(
+  error: { code?: string; message?: string } | null,
+  column: string,
+): boolean {
   if (!error) return false;
   const message = (error.message ?? "").toLowerCase();
   return (
     error.code === "42703" ||
     error.code === "PGRST204" ||
-    message.includes("onboarding_completed")
+    message.includes(column)
   );
 }
 
@@ -396,6 +452,7 @@ export function parseUserSettings(
     display_currency?: string | null;
     wallet_mode?: string | null;
     shared_enabled?: boolean | null;
+    shared_funding?: string | null;
     usd_enabled?: boolean | null;
     onboarding_completed?: boolean | null;
   } | null,
@@ -404,6 +461,7 @@ export function parseUserSettings(
     displayCurrency: data?.display_currency === "USD" ? "USD" : "ARS",
     walletMode: data?.wallet_mode === "split" ? "split" : "unified",
     sharedEnabled: data?.shared_enabled === true,
+    sharedFunding: data?.shared_funding === "pool" ? "pool" : "payer",
     usdEnabled: data?.usd_enabled !== false,
     onboardingCompleted: isOnboardingDone(data?.onboarding_completed),
     onboardingTracked:
@@ -411,35 +469,42 @@ export function parseUserSettings(
   };
 }
 
-const SETTINGS_COLUMNS =
+const SETTINGS_CORE =
   "display_currency, wallet_mode, shared_enabled, usd_enabled";
 
 export async function fetchUserSettings(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<UserSettings> {
-  const withColumn = await supabase
-    .from("user_settings")
-    .select(`${SETTINGS_COLUMNS}, onboarding_completed`)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const attempts = [
+    `${SETTINGS_CORE}, shared_funding, onboarding_completed`,
+    `${SETTINGS_CORE}, onboarding_completed`,
+    `${SETTINGS_CORE}, shared_funding`,
+    SETTINGS_CORE,
+  ];
 
-  if (!withColumn.error) {
-    return parseUserSettings(withColumn.data);
+  let lastError: { code?: string; message?: string } | null = null;
+  for (const columns of attempts) {
+    const result = await supabase
+      .from("user_settings")
+      .select(columns)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!result.error) {
+      return parseUserSettings(
+        result.data as Parameters<typeof parseUserSettings>[0],
+      );
+    }
+    lastError = result.error;
+    if (
+      !isMissingOnboardingColumn(result.error) &&
+      !isMissingSharedFundingColumn(result.error)
+    ) {
+      throw result.error;
+    }
   }
 
-  if (!isMissingOnboardingColumn(withColumn.error)) {
-    throw withColumn.error;
-  }
-
-  const fallback = await supabase
-    .from("user_settings")
-    .select(SETTINGS_COLUMNS)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (fallback.error) throw fallback.error;
-  return parseUserSettings(fallback.data);
+  throw lastError ?? new Error("No se pudieron leer los ajustes");
 }
 
 export async function saveAccountSetupRemote(
@@ -449,31 +514,43 @@ export async function saveAccountSetupRemote(
     displayCurrency: DisplayCurrency;
     walletMode: WalletMode;
     sharedEnabled: boolean;
+    sharedFunding: SharedFunding;
     usdEnabled: boolean;
     onboardingCompleted: boolean;
   },
 ): Promise<void> {
-  const payload = {
+  const core = {
     user_id: userId,
     display_currency: settings.displayCurrency,
     wallet_mode: settings.walletMode,
     shared_enabled: settings.sharedEnabled,
     usd_enabled: settings.usdEnabled,
-    onboarding_completed: settings.onboardingCompleted,
   };
+  const attempts = [
+    {
+      ...core,
+      shared_funding: settings.sharedFunding,
+      onboarding_completed: settings.onboardingCompleted,
+    },
+    { ...core, onboarding_completed: settings.onboardingCompleted },
+    { ...core, shared_funding: settings.sharedFunding },
+    core,
+  ];
 
-  const first = await supabase.from("user_settings").upsert(payload);
-  if (!first.error) return;
-  if (!isMissingOnboardingColumn(first.error)) throw first.error;
+  let lastError: { code?: string; message?: string } | null = null;
+  for (const payload of attempts) {
+    const result = await supabase.from("user_settings").upsert(payload);
+    if (!result.error) return;
+    lastError = result.error;
+    if (
+      !isMissingOnboardingColumn(result.error) &&
+      !isMissingSharedFundingColumn(result.error)
+    ) {
+      throw result.error;
+    }
+  }
 
-  const retry = await supabase.from("user_settings").upsert({
-    user_id: payload.user_id,
-    display_currency: payload.display_currency,
-    wallet_mode: payload.wallet_mode,
-    shared_enabled: payload.shared_enabled,
-    usd_enabled: payload.usd_enabled,
-  });
-  if (retry.error) throw retry.error;
+  throw lastError ?? new Error("No se pudieron guardar los ajustes");
 }
 
 export async function fetchWalletMode(
@@ -522,6 +599,18 @@ export async function saveSharedEnabledRemote(
   const { error } = await supabase.from("user_settings").upsert({
     user_id: userId,
     shared_enabled: enabled,
+  });
+  if (error) throw error;
+}
+
+export async function saveSharedFundingRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  funding: SharedFunding,
+): Promise<void> {
+  const { error } = await supabase.from("user_settings").upsert({
+    user_id: userId,
+    shared_funding: funding,
   });
   if (error) throw error;
 }
@@ -675,6 +764,73 @@ export async function leaveHousehold(
     target_household_id: householdId,
   });
   if (error) throw error;
+}
+
+export async function closeHousehold(
+  supabase: SupabaseClient,
+  householdId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("close_household", {
+    target_household_id: householdId,
+  });
+  if (error) throw error;
+}
+
+export function isMissingNoticesTable(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    message.includes("user_notices")
+  );
+}
+
+export async function fetchUnreadNotices(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<UserNotice[]> {
+  const { data, error } = await supabase
+    .from("user_notices")
+    .select("id, kind, title, body, created_at")
+    .eq("user_id", userId)
+    .is("read_at", null)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (isMissingNoticesTable(error)) return [];
+    throw error;
+  }
+
+  return (data ?? []).flatMap((row) => {
+    if (row.kind !== "household_closed") return [];
+    return [
+      {
+        id: row.id as string,
+        kind: "household_closed",
+        title: row.title as string,
+        body: row.body as string,
+        createdAt: row.created_at as string,
+      },
+    ];
+  });
+}
+
+export async function dismissNotice(
+  supabase: SupabaseClient,
+  noticeId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_notices")
+    .update({ read_at: new Date().toISOString() })
+    .eq("id", noticeId);
+  if (error) {
+    if (isMissingNoticesTable(error)) return;
+    throw error;
+  }
 }
 
 export async function deleteOwnAccount(

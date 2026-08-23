@@ -86,7 +86,7 @@ export function MoneySettings() {
               Lo que entra en pesos va a Diario. Lo que entra en dólares, a
               Ahorro.
               {sharedEnabled
-                ? " Los gastos con otros que cargás cuentan como Diario."
+                ? " Los gastos con otros que cargás cuentan como Diario, salvo que en Cuenta elijas partir la plata del grupo."
                 : ""}
             </p>
           )}

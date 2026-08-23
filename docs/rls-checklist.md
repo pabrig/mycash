@@ -2,7 +2,7 @@
 
 Objetivo: **A no ve lo personal de B**. Shared solo es visible entre miembros del **mismo** grupo. Un segundo grupo (Proyecto) no se filtra a quien no es miembro.
 
-Hacé esto **después** de aplicar migraciones `001`→`008`.
+Hacé esto **después** de aplicar migraciones `001`→`011`.
 
 ## Preparación
 
@@ -33,7 +33,7 @@ Opcional: corré primero el script estructural [`rls-audit.sql`](./rls-audit.sql
 |------|----------|
 | A carga gasto shared en **Casa** | A y B lo ven. **C no** |
 | A carga gasto shared en **Proyecto** | A y C lo ven. **B no** |
-| El monto resta del disponible de **quien lo cargó** | El resto lo ve; su fondo no cambia |
+| El monto resta según la config de **Cuenta** (quien lo pagó, o parte de todos) | El resto lo ve |
 
 ### 3. Membresía no se filtra entre grupos
 
@@ -83,13 +83,22 @@ Opcional: corré primero el script estructural [`rls-audit.sql`](./rls-audit.sql
 | C no tenía otro grupo | Puede crear uno o unirse a otro |
 | A sigue en Casa | Los shared de Casa no se tocan |
 
+### 9. Cerrar un grupo
+
+| Paso | Esperado |
+|------|----------|
+| A cierra Casa (con B adentro) | Casa desaparece para A y B. Se van esos shared |
+| B abre la app | Ve el aviso “Se cerró Casa” |
+| B no ve Casa en Cuenta | OK |
+| Proyecto sigue | A y C lo siguen viendo |
+
 ---
 
 ## Verificación estructural (SQL)
 
 Ejecutá [`rls-audit.sql`](./rls-audit.sql) y confirmá:
 
-1. `rls_enabled = true` en las 7 tablas.
+1. `rls_enabled = true` en las 8 tablas (incluye `user_notices`).
 2. Policies de `movements` incluyen SELECT / INSERT / UPDATE / DELETE.
 3. `household_invites` tiene policy de DELETE (revocar).
 4. RPCs `accept_household_invite`, `leave_household`, `create_household`, `delete_own_account`, `is_household_member`, `my_household_ids`: **sin** EXECUTE para `anon` / `PUBLIC`.
@@ -103,7 +112,7 @@ select relname, relrowsecurity
 from pg_class
 where relname in (
   'profiles', 'households', 'household_members', 'household_invites',
-  'movements', 'monthly_rates', 'user_settings'
+  'movements', 'monthly_rates', 'user_settings', 'user_notices'
 )
 order by relname;
 ```
@@ -130,6 +139,7 @@ Cuando todos los escenarios pasan:
 - [ ] Settings/rates propios  
 - [ ] Invites: un código = un uso; no borra hermanas  
 - [ ] Salir de un grupo no te saca de los otros  
+- [ ] Cerrar un grupo avisa a los demás y borra esa lista  
 - [ ] RLS enabled + grants RPC OK (`rls-audit.sql`)  
 
 → multi-household listo para F&F.
