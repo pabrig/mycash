@@ -18,6 +18,7 @@ import {
   createHouseholdInvite,
   deleteOwnAccount,
   dismissNotice as dismissNoticeRemote,
+  ensureOwnAccount,
   fetchActiveHouseholdId,
   fetchHouseholdMemberCounts,
   fetchHouseholdMembers,
@@ -181,7 +182,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
 
       if (currentUser) {
-        const p = await fetchProfile(supabase, currentUser.id);
+        let p = await fetchProfile(supabase, currentUser.id);
+        if (!p) {
+          try {
+            await ensureOwnAccount(supabase);
+            p = await fetchProfile(supabase, currentUser.id);
+          } catch {
+            /* 013 no aplicada o el trigger falló: el join lo dice */
+          }
+        }
         setProfile(p);
         await Promise.all([
           loadHousehold(currentUser.id),
