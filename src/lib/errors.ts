@@ -160,6 +160,13 @@ export function friendlyError(
     return "Eso ya está cargado.";
   }
 
+  if (
+    code === "23503" ||
+    /foreign key constraint.*household_members/i.test(text)
+  ) {
+    return "Falta tu perfil. Cerrá sesión y entrá de nuevo.";
+  }
+
   if (text && isAppCopy(text)) return text;
 
   return fallback;

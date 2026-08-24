@@ -130,6 +130,19 @@ describe("friendlyError · sync and invites", () => {
     ).toBe("Código inválido o vencido.");
   });
 
+  it("maps missing profile on join", () => {
+    expect(
+      friendlyError(
+        {
+          code: "23503",
+          message:
+            'insert or update on table "household_members" violates foreign key constraint "household_members_user_id_fkey"',
+        },
+        "Ese código no sirve",
+      ),
+    ).toBe("Falta tu perfil. Cerrá sesión y entrá de nuevo.");
+  });
+
   it("maps RLS without leaking English", () => {
     expect(
       friendlyError(
