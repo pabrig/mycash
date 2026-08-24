@@ -140,6 +140,13 @@ function movementToInsert(
   };
 }
 
+export async function ensureOwnAccount(
+  supabase: SupabaseClient,
+): Promise<void> {
+  const { error } = await supabase.rpc("ensure_own_account");
+  if (error) throw error;
+}
+
 export async function updateDisplayName(
   supabase: SupabaseClient,
   userId: string,
