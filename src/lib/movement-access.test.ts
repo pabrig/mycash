@@ -152,6 +152,27 @@ describe("movementsForPersonalBalance", () => {
     expect(own.find((m) => m.id === "m3")?.amount).toBe(100);
     expect(own.find((m) => m.id === "m4")?.amount).toBe(50);
   });
+
+  it("applies payer and pool per group", () => {
+    const trip = movement({
+      id: "m5",
+      type: "expense",
+      scope: "shared",
+      amount: 80,
+      createdByUserId: "user-b",
+      householdId: "viaje",
+    });
+    const own = movementsForPersonalBalance(
+      [mine, theirs, trip, personal],
+      "user-a",
+      { casa: "pool", viaje: "payer" },
+      { casa: 2, viaje: 3 },
+    );
+    expect(own.map((m) => m.id).sort()).toEqual(["m1", "m2", "m4"]);
+    expect(own.find((m) => m.id === "m1")?.amount).toBe(50);
+    expect(own.find((m) => m.id === "m2")?.amount).toBe(20);
+    expect(own.find((m) => m.id === "m4")?.amount).toBe(50);
+  });
 });
 
 describe("householdShareCount", () => {

@@ -217,7 +217,7 @@ export function SharedAccountCard() {
             <p className="text-sm font-semibold tracking-tight">Gastos con otros</p>
             <p className="meta mt-1 text-xs leading-relaxed">
               {households.length > 1
-                ? "Cada grupo tiene su lista. Abajo elegís cómo cuenta en tu mes."
+                ? "Cada grupo tiene su lista y cómo cuenta en tu mes."
                 : paired
                   ? "El grupo ve la lista. Abajo elegís cómo cuenta en tu mes."
                   : "Para anotar gastos de todos. Abajo elegís cómo cuenta en tu mes."}
@@ -241,24 +241,6 @@ export function SharedAccountCard() {
             />
           </button>
         </div>
-
-        {sharedEnabled && (
-          <div className="space-y-2" role="radiogroup" aria-label="De dónde salen los gastos del grupo">
-            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
-              En tu mes
-            </p>
-            {SHARED_FUNDING_OPTIONS.map((option) => (
-              <ChoiceOption
-                key={option.id}
-                title={option.title}
-                description={option.description}
-                example={option.example}
-                selected={sharedFunding === option.id}
-                onSelect={() => void setSharedFunding(option.id)}
-              />
-            ))}
-          </div>
-        )}
 
         {sharedEnabled && configured && households.length > 0 && (
           <div className="space-y-2">
@@ -319,6 +301,39 @@ export function SharedAccountCard() {
                 </button>
               )
             ) : null}
+          </div>
+        )}
+
+        {sharedEnabled && (
+          <div className="space-y-2" role="radiogroup" aria-label="De dónde salen los gastos del grupo">
+            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+              {household ? `En tu mes · ${household.name}` : "En tu mes"}
+            </p>
+            {SHARED_FUNDING_OPTIONS.map((option) => (
+              <ChoiceOption
+                key={option.id}
+                title={option.title}
+                description={option.description}
+                example={option.example}
+                selected={sharedFunding === option.id}
+                onSelect={() => {
+                  if (sharedFunding === option.id) return;
+                  void (async () => {
+                    setBusy(true);
+                    setError("");
+                    try {
+                      await setSharedFunding(option.id);
+                    } catch (e) {
+                      setError(
+                        e instanceof Error ? e.message : "No se pudo guardar",
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              />
+            ))}
           </div>
         )}
 

@@ -2,7 +2,7 @@
 
 Objetivo: **A no ve lo personal de B**. Shared solo es visible entre miembros del **mismo** grupo. Un segundo grupo (Proyecto) no se filtra a quien no es miembro.
 
-Hacé esto **después** de aplicar migraciones `001`→`011`.
+Hacé esto **después** de aplicar migraciones `001`→`014`.
 
 ## Preparación
 
@@ -34,7 +34,7 @@ Opcional: corré primero el script estructural [`rls-audit.sql`](./rls-audit.sql
 | A carga gasto shared en **Casa** | A y B lo ven. **C no** |
 | A carga ingreso shared en **Casa** (pool) | A y B lo ven. **C no**. Insert no falla (post-012) |
 | A carga gasto shared en **Proyecto** | A y C lo ven. **B no** |
-| El monto resta según la config de **Cuenta** (quien lo pagó, o parte de todos) | El resto lo ve |
+| El monto resta según la config de **ese** grupo en Cuenta (quien lo pagó, o parte de todos). Otro grupo puede ser distinto. | El resto lo ve |
 
 ### 3. Membresía no se filtra entre grupos
 

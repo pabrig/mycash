@@ -52,7 +52,8 @@ where specific_schema = 'public'
     'my_household_ids',
     'is_household_member',
     'is_household_owner',
-    'ensure_own_account'
+    'ensure_own_account',
+    'set_membership_shared_funding'
   )
 order by routine_name, grantee;
 -- Esperado: authenticated (y roles internos). NO anon / PUBLIC con EXECUTE.
@@ -75,7 +76,8 @@ where n.nspname = 'public'
     'is_household_member',
     'is_household_owner',
     'handle_new_user',
-    'ensure_own_account'
+    'ensure_own_account',
+    'set_membership_shared_funding'
   )
 order by p.proname;
 -- Esperado: security_definer = true en RPCs de invite/leave/create/delete/helpers
