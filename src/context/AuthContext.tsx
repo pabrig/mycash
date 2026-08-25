@@ -30,6 +30,7 @@ import {
   renameHousehold,
   revokeHouseholdInvite,
   saveActiveHouseholdId,
+  saveHouseholdSharedFunding,
   updateDisplayName as saveDisplayName,
 } from "@/lib/supabase/data";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -39,6 +40,7 @@ import type {
   HouseholdMember,
   HouseholdMembership,
   Profile,
+  SharedFunding,
   UserNotice,
 } from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
@@ -72,6 +74,10 @@ interface AuthContextValue {
   revokeInvite: (inviteId: string) => Promise<{ error?: string }>;
   leaveGroup: (householdId: string) => Promise<{ error?: string }>;
   closeGroup: (householdId: string) => Promise<{ error?: string }>;
+  setHouseholdFunding: (
+    householdId: string,
+    funding: SharedFunding,
+  ) => Promise<{ error?: string; usedAccountDefault?: boolean }>;
   dismissNotice: (noticeId: string) => Promise<void>;
   deleteAccount: () => Promise<{ error?: string }>;
 }
@@ -418,6 +424,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase, refreshHousehold],
   );
 
+  const setHouseholdFunding = useCallback(
+    async (householdId: string, funding: SharedFunding) => {
+      if (!supabase || !user) return { error: "Entrá de nuevo." };
+      if (!households.some((h) => h.id === householdId)) {
+        return { error: "No estás en ese grupo" };
+      }
+      try {
+        const persisted = await saveHouseholdSharedFunding(
+          supabase,
+          user.id,
+          householdId,
+          funding,
+        );
+        setHouseholds((prev) =>
+          prev.map((h) =>
+            h.id === householdId ? { ...h, sharedFunding: funding } : h,
+          ),
+        );
+        return { usedAccountDefault: persisted === "settings" };
+      } catch (e) {
+        return { error: friendlyError(e, "No se pudo guardar") };
+      }
+    },
+    [supabase, user, households],
+  );
+
   const dismissNotice = useCallback(
     async (noticeId: string) => {
       setNotices((current) => current.filter((notice) => notice.id !== noticeId));
@@ -477,6 +509,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       revokeInvite,
       leaveGroup,
       closeGroup,
+      setHouseholdFunding,
       dismissNotice,
       deleteAccount,
     }),
@@ -503,6 +536,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       revokeInvite,
       leaveGroup,
       closeGroup,
+      setHouseholdFunding,
       dismissNotice,
       deleteAccount,
     ],

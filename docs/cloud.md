@@ -54,7 +54,7 @@ Si activaste **Gastos con otros** y hay grupos:
 - Tu **tipo de cambio** mensual ni settings (ARS/USD display, bolsillos, flags).
 - Tu bolsillo Ahorro / Cotidiano como “cuenta bancaria” privada.
 
-**Importante:** en Cuenta cada uno elige cómo cuenta el grupo en **su** mes:
+**Importante:** en Cuenta, **cada grupo** tiene su forma de contar en **tu** mes. Casa puede ser de una y el viaje de otra:
 - **De quien lo pagó:** el gasto resta solo del disponible de quien lo cargó. El resto lo ve, pero no le descuenta.
 - **De la plata del grupo:** se pueden anotar ingresos compartidos (el grupo los ve). Gastos e ingresos del grupo se parten entre los miembros y entran solos en el disponible de cada uno.
 
@@ -84,7 +84,11 @@ En **SQL Editor**, ejecutá en orden:
 11. `supabase/migrations/011_close_household.sql` — cerrar grupo + avisos a los demás  
 12. `supabase/migrations/012_shared_income_rls.sql` — RLS: ingresos shared (plata del grupo)
 13. `supabase/migrations/013_ensure_profile.sql` — backfill de perfil/settings si el trigger no corrió
+<<<<<<< HEAD
 14. `supabase/migrations/014_shared_income_repair.sql` — ingresos del grupo (CHECK + RLS). Correr si el gasto shared anda y el ingreso no.
+=======
+14. `supabase/migrations/014_membership_shared_funding.sql` — `shared_funding` por grupo (payer/pool independiente)
+>>>>>>> bef2e0276f264c498796aa342bb55a572d543d45
 
 Si el proyecto ya tenía `001`–`013`, corré `014`. Si ya tenía `008`, corré `009`…`014`.
 

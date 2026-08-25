@@ -1,4 +1,4 @@
-import type { ExpenseScope } from "@/lib/types";
+import type { ExpenseScope, SharedFunding } from "@/lib/types";
 
 /** Caps F&F — deben coincidir con supabase/migrations/008_multi_household.sql */
 export const MAX_HOUSEHOLDS_PER_USER = 8;
@@ -27,6 +27,31 @@ export function closeHouseholdConfirmMessage(
   const last = otherNames[otherNames.length - 1] ?? "";
   const rest = otherNames.slice(0, -1).join(", ");
   return `¿Cerrar ${name}? Se borra la lista de todos. Les avisamos a ${rest} y ${last}.`;
+}
+
+export function parseSharedFunding(value: unknown): SharedFunding {
+  return value === "pool" ? "pool" : "payer";
+}
+
+/** Cómo cuenta un grupo en tu mes. Sin dato, el default de la cuenta. */
+export function fundingForHousehold(
+  householdId: string | undefined,
+  fundingByHousehold: Record<string, SharedFunding>,
+  fallback: SharedFunding = "payer",
+): SharedFunding {
+  if (!householdId) return fallback;
+  return fundingByHousehold[householdId] ?? fallback;
+}
+
+export function householdFundingMap(
+  households: Array<{ id: string; sharedFunding?: SharedFunding }>,
+  fallback: SharedFunding = "payer",
+): Record<string, SharedFunding> {
+  const map: Record<string, SharedFunding> = {};
+  for (const h of households) {
+    map[h.id] = h.sharedFunding ?? fallback;
+  }
+  return map;
 }
 
 /**

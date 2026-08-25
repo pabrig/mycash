@@ -69,10 +69,10 @@ export default function CuentaPage() {
         </Link>
         <h1 className="text-lg font-bold md:text-2xl">Cuenta</h1>
       </div>
-
-      <SharedAccountCard />
-      <MoneySettings />
       <AccountIdentity />
+      <MoneySettings />
+      <SharedAccountCard />
+
       <section className="bento space-y-3 p-4">
         <p className="text-sm font-semibold">Tus datos</p>
         <p className="text-xs leading-relaxed text-zinc-500">

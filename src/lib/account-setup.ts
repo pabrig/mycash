@@ -179,7 +179,7 @@ export const HOWTO_SHARED = {
     },
     {
       title: "De dónde sale",
-      body: "Si elegiste de quien pagó, el súper que cargás sale de tu plata. Si elegiste la plata del grupo, lo que entra y sale se parte y entra solo en tu mes. Después lo podés cambiar en Cuenta.",
+      body: "Cada grupo puede ser distinto. De quien pagó: el súper que cargás sale de tu plata. De la plata del grupo: lo que entra y sale se parte y entra solo en tu mes. Lo elegís en Cuenta, por grupo.",
     },
     {
       title: "Invitar",
