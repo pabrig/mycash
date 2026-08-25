@@ -183,11 +183,12 @@ describe("HOWTO_SHARED", () => {
     expect(text).toMatch(/elegís el grupo/i);
   });
 
-  it("recaps payer vs pool instead of sending them to Cuenta first", () => {
+  it("recaps payer vs pool per group instead of sending them to Cuenta first", () => {
     const body = HOWTO_SHARED.items.find((item) => item.title === "De dónde sale")
       ?.body;
     expect(body).toMatch(/de quien pagó/i);
     expect(body).toMatch(/plata del grupo/i);
+    expect(body).toMatch(/por grupo|cada grupo/i);
     expect(body).not.toMatch(/en cuenta elegís/i);
   });
 });

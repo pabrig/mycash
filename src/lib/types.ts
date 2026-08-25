@@ -80,6 +80,8 @@ export interface Household {
 
 export interface HouseholdMembership extends Household {
   role: "owner" | "member";
+  /** Cómo cuenta este grupo en tu mes. Si falta, se usa el default de la cuenta. */
+  sharedFunding?: SharedFunding;
 }
 
 export interface HouseholdMember {

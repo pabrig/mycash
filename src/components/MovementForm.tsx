@@ -220,12 +220,17 @@ export function MovementForm({
   const [formError, setFormError] = useState("");
 
   const isSharedMode = mode === "shared";
-  const allowSharedIncome = sharedFunding === "pool";
+  const selectedHouseholdId = householdId || household?.id || "";
+  const selectedGroupFunding =
+    households.find((h) => h.id === selectedHouseholdId)?.sharedFunding ??
+    sharedFunding;
+  const allowSharedIncome =
+    selectedGroupFunding === "pool" ||
+    (isEdit && initial?.scope === "shared" && initial?.type === "income");
   const isSharedMovement =
     isSharedMode ||
     (type === "expense" && scope === "shared") ||
     (type === "income" && scope === "shared");
-  const selectedHouseholdId = householdId || household?.id || "";
   const canRepeat = !isEdit;
   const effectiveRepeat: RepeatMode =
     !canRepeat || (type === "income" && repeatMode === "installments")
@@ -414,7 +419,14 @@ export function MovementForm({
               <button
                 key={h.id}
                 type="button"
-                onClick={() => setHouseholdId(h.id)}
+                onClick={() => {
+                  setHouseholdId(h.id);
+                  const nextFunding = h.sharedFunding ?? sharedFunding;
+                  if (type === "income" && nextFunding !== "pool") {
+                    setType("expense");
+                    if (!isSharedMode) setScope("shared");
+                  }
+                }}
                 className={`chip ${
                   selectedHouseholdId === h.id ? "chip-active" : "chip-inactive"
                 }`}

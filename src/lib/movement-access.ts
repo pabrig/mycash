@@ -1,3 +1,4 @@
+import { fundingForHousehold } from "@/lib/household";
 import type { Movement, SharedFunding } from "@/lib/types";
 
 export type MovementListFilter = "all" | "income" | "personal" | "shared";
@@ -48,17 +49,23 @@ export function householdShareCount(
 /**
  * Movimientos que entran en tu mes, con el monto que te toca.
  * Payer: el shared propio al 100%. Pool: cada shared del grupo ÷ miembros.
+ * `funding` puede ser uno para todos, o uno distinto por grupo.
  */
 export function movementsForPersonalBalance(
   movements: Movement[],
   userId: string | undefined,
-  funding: SharedFunding,
+  funding: SharedFunding | Record<string, SharedFunding>,
   memberCounts: Record<string, number>,
+  fallback: SharedFunding = "payer",
 ): Movement[] {
   const result: Movement[] = [];
   for (const movement of movements) {
-    if (!affectsUserBalance(movement, userId, funding)) continue;
-    if (movement.scope !== "shared" || funding !== "pool") {
+    const groupFunding =
+      typeof funding === "string"
+        ? funding
+        : fundingForHousehold(movement.householdId, funding, fallback);
+    if (!affectsUserBalance(movement, userId, groupFunding)) continue;
+    if (movement.scope !== "shared" || groupFunding !== "pool") {
       result.push(movement);
       continue;
     }
