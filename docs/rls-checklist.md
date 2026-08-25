@@ -2,7 +2,7 @@
 
 Objetivo: **A no ve lo personal de B**. Shared solo es visible entre miembros del **mismo** grupo. Un segundo grupo (Proyecto) no se filtra a quien no es miembro.
 
-Hacé esto **después** de aplicar migraciones `001`→`011`.
+Hacé esto **después** de aplicar migraciones `001`→`014`.
 
 ## Preparación
 

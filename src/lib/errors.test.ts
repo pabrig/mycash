@@ -155,6 +155,19 @@ describe("friendlyError · sync and invites", () => {
     ).toBe("No se pudo guardar.");
   });
 
+  it("maps a shared-income check constraint without leaking English", () => {
+    expect(
+      friendlyError(
+        {
+          message:
+            'new row for relation "movements" violates check constraint "movements_shared_rules"',
+          code: "23514",
+        },
+        "No se pudo guardar.",
+      ),
+    ).toBe("No se pudo anotar ese ingreso en el grupo.");
+  });
+
   it("keeps household cap copy", () => {
     expect(
       friendlyError("Ya hay 8 grupos. Salí de uno para crear otro.", "fallback"),

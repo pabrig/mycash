@@ -156,6 +156,13 @@ export function friendlyError(
     return "No se pudo guardar.";
   }
 
+  if (code === "23514" || /check constraint/i.test(text)) {
+    if (/movements_shared_rules/i.test(text)) {
+      return "No se pudo anotar ese ingreso en el grupo.";
+    }
+    return "Eso no se puede guardar así.";
+  }
+
   if (/duplicate key|unique constraint|23505/i.test(text) || code === "23505") {
     return "Eso ya está cargado.";
   }

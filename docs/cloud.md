@@ -84,8 +84,9 @@ En **SQL Editor**, ejecutá en orden:
 11. `supabase/migrations/011_close_household.sql` — cerrar grupo + avisos a los demás  
 12. `supabase/migrations/012_shared_income_rls.sql` — RLS: ingresos shared (plata del grupo)
 13. `supabase/migrations/013_ensure_profile.sql` — backfill de perfil/settings si el trigger no corrió
+14. `supabase/migrations/014_shared_income_repair.sql` — ingresos del grupo (CHECK + RLS). Correr si el gasto shared anda y el ingreso no.
 
-Si el proyecto ya tenía `001`–`012`, corré `013`. Si ya tenía `008`, corré `009`…`013`.
+Si el proyecto ya tenía `001`–`013`, corré `014`. Si ya tenía `008`, corré `009`…`014`.
 
 ### 3. Variables de entorno
 
