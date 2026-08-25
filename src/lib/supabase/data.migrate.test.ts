@@ -3,6 +3,7 @@ import {
   hasLocalToMigrate,
   isMissingNoticesTable,
   isMissingOnboardingColumn,
+  isMissingRpc,
   parseUserSettings,
   type LocalSnapshot,
 } from "@/lib/supabase/data";
@@ -108,5 +109,28 @@ describe("isMissingNoticesTable", () => {
       true,
     );
     expect(isMissingNoticesTable({ code: "42501" })).toBe(false);
+  });
+});
+
+describe("isMissingRpc", () => {
+  it("detects a missing postgres function", () => {
+    expect(isMissingRpc({ code: "42883" }, "set_membership_shared_funding")).toBe(
+      true,
+    );
+    expect(isMissingRpc({ code: "PGRST202" }, "set_membership_shared_funding")).toBe(
+      true,
+    );
+    expect(
+      isMissingRpc(
+        {
+          message:
+            "Could not find the function public.set_membership_shared_funding",
+        },
+        "set_membership_shared_funding",
+      ),
+    ).toBe(true);
+    expect(isMissingRpc({ code: "42501" }, "set_membership_shared_funding")).toBe(
+      false,
+    );
   });
 });

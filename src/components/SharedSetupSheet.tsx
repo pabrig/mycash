@@ -21,8 +21,8 @@ export function SharedSetupSheet({
     <DetailSheet open={open} onClose={onClose} title="Gastos con otros">
       <div className="space-y-5 pb-2">
         <p className="text-sm leading-relaxed text-zinc-500">
-          Podés compartir una lista con otras personas. En Cuenta elegís si
-          cada gasto resta de quien lo pagó, o si sale de la plata del grupo.
+          Podés tener más de un grupo. En cada uno elegís si el gasto resta de
+          quien lo pagó, o si sale de la plata del grupo.
         </p>
         <ol className="space-y-3 text-sm">
           <Step
@@ -38,7 +38,7 @@ export function SharedSetupSheet({
           <Step
             n="3"
             title="Cómo cuenta en tu mes"
-            body="De quien pagó: resta solo de tu plata. De la plata del grupo: ingresos y gastos se parten y entran en tu mes solos."
+            body="De quien pagó: resta solo de tu plata. De la plata del grupo: ingresos y gastos se parten y entran en tu mes solos. Cada grupo se elige aparte."
           />
         </ol>
         <button

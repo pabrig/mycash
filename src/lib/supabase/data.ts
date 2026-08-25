@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isOnboardingDone } from "@/lib/account-setup";
-import { normalizeHouseholdName } from "@/lib/household";
+import { normalizeHouseholdName, parseSharedFunding } from "@/lib/household";
 import type {
   DisplayCurrency,
   HouseholdMember,
@@ -185,10 +185,45 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
+type MembershipRow = {
+  role: string;
+  households: { id: string; name: string } | { id: string; name: string }[] | null;
+  shared_funding?: string | null;
+};
+
+function mapMembershipRows(data: MembershipRow[] | null): HouseholdMembership[] {
+  return (data ?? []).flatMap((row) => {
+    const h = unwrapOne(row.households);
+    if (!h) return [];
+    const membership: HouseholdMembership = {
+      id: h.id,
+      name: h.name,
+      role: row.role as HouseholdMembership["role"],
+    };
+    if (Object.prototype.hasOwnProperty.call(row, "shared_funding")) {
+      membership.sharedFunding = parseSharedFunding(row.shared_funding);
+    }
+    return [membership];
+  });
+}
+
 export async function fetchHouseholdMemberships(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<HouseholdMembership[]> {
+  const withFunding = await supabase
+    .from("household_members")
+    .select("role, joined_at, shared_funding, households(id, name)")
+    .eq("user_id", userId)
+    .order("joined_at", { ascending: true });
+
+  if (!withFunding.error) {
+    return mapMembershipRows(withFunding.data as MembershipRow[] | null);
+  }
+  if (!isMissingSharedFundingColumn(withFunding.error)) {
+    throw withFunding.error;
+  }
+
   const { data, error } = await supabase
     .from("household_members")
     .select("role, joined_at, households(id, name)")
@@ -196,20 +231,7 @@ export async function fetchHouseholdMemberships(
     .order("joined_at", { ascending: true });
 
   if (error) throw error;
-
-  return (data ?? []).flatMap((row) => {
-    const h = unwrapOne(
-      row.households as { id: string; name: string } | { id: string; name: string }[] | null,
-    );
-    if (!h) return [];
-    return [
-      {
-        id: h.id,
-        name: h.name,
-        role: row.role as HouseholdMembership["role"],
-      },
-    ];
-  });
+  return mapMembershipRows(data as MembershipRow[] | null);
 }
 
 export async function fetchHouseholdMembers(
@@ -441,6 +463,20 @@ export function isMissingSharedFundingColumn(error: {
   return isMissingColumn(error, "shared_funding");
 }
 
+export function isMissingRpc(
+  error: { code?: string; message?: string } | null,
+  name: string,
+): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  const n = name.toLowerCase();
+  return (
+    error.code === "42883" ||
+    error.code === "PGRST202" ||
+    (message.includes("function") && message.includes(n))
+  );
+}
+
 function isMissingColumn(
   error: { code?: string; message?: string } | null,
   column: string,
@@ -468,7 +504,7 @@ export function parseUserSettings(
     displayCurrency: data?.display_currency === "USD" ? "USD" : "ARS",
     walletMode: data?.wallet_mode === "split" ? "split" : "unified",
     sharedEnabled: data?.shared_enabled === true,
-    sharedFunding: data?.shared_funding === "pool" ? "pool" : "payer",
+    sharedFunding: parseSharedFunding(data?.shared_funding),
     usdEnabled: data?.usd_enabled !== false,
     onboardingCompleted: isOnboardingDone(data?.onboarding_completed),
     onboardingTracked:
@@ -620,6 +656,23 @@ export async function saveSharedFundingRemote(
     shared_funding: funding,
   });
   if (error) throw error;
+}
+
+/** Cómo cuenta este grupo en tu mes. Si la RPC no existe, usa el default de la cuenta. */
+export async function saveHouseholdSharedFunding(
+  supabase: SupabaseClient,
+  userId: string,
+  householdId: string,
+  funding: SharedFunding,
+): Promise<"membership" | "settings"> {
+  const { error } = await supabase.rpc("set_membership_shared_funding", {
+    target_household_id: householdId,
+    funding,
+  });
+  if (!error) return "membership";
+  if (!isMissingRpc(error, "set_membership_shared_funding")) throw error;
+  await saveSharedFundingRemote(supabase, userId, funding);
+  return "settings";
 }
 
 /** Default true si la columna no existe aún / null. */

@@ -333,8 +333,8 @@ function SharedFundingStep({
           ¿De dónde salen los gastos del grupo?
         </h1>
         <p className="mt-2 text-base leading-relaxed text-zinc-500">
-          Esto entra en tu mes, solo. El otro ve la lista, pero no le cambia su
-          número.
+          Esto entra en tu mes, solo. Si después tenés más de un grupo, en
+          Cuenta cada uno puede ser distinto.
         </p>
       </div>
       <div

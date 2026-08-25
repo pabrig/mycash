@@ -23,7 +23,7 @@ import {
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
 import { movementsForPersonalBalance } from "@/lib/movement-access";
-import { resolveSharedHouseholdId } from "@/lib/household";
+import { householdFundingMap, resolveSharedHouseholdId } from "@/lib/household";
 import { fetchLiveRatesClient } from "@/lib/rates-client";
 import { friendlyError } from "@/lib/errors";
 import { useBrowserSupabase } from "@/hooks/useBrowserSupabase";
@@ -134,8 +134,16 @@ function friendlySyncError(e: unknown): string {
 const FinanceContext = createContext<FinanceContextValue | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  const { configured, loading: authLoading, user, household, isAuthenticated, householdMemberCounts } =
-    useAuth();
+  const {
+    configured,
+    loading: authLoading,
+    user,
+    household,
+    households,
+    isAuthenticated,
+    householdMemberCounts,
+    setHouseholdFunding,
+  } = useAuth();
 
   const [ready, setReady] = useState(false);
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -144,7 +152,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     useState<DisplayCurrency>("ARS");
   const [walletMode, setWalletModeState] = useState<WalletMode>("unified");
   const [sharedEnabled, setSharedEnabledState] = useState(false);
-  const [sharedFunding, setSharedFundingState] =
+  const [accountFunding, setAccountFundingState] =
     useState<SharedFunding>("payer");
   const [usdEnabled, setUsdEnabledState] = useState(true);
   const [onboardingCompleted, setOnboardingCompleted] = useState(true);
@@ -164,7 +172,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setDisplayCurrencyState(storage.loadDisplayCurrency());
     setWalletModeState(storage.loadWalletMode());
     setSharedEnabledState(storage.loadSharedEnabled());
-    setSharedFundingState(storage.loadSharedFunding());
+    setAccountFundingState(storage.loadSharedFunding());
     setUsdEnabledState(storage.loadUsdEnabled());
     setOnboardingCompleted(!storage.loadOnboardingReplay());
     setAmountsHiddenState(storage.loadAmountsHidden());
@@ -186,7 +194,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setDisplayCurrencyState(remoteSettings.displayCurrency);
     setWalletModeState(remoteSettings.walletMode);
     setSharedEnabledState(remoteSettings.sharedEnabled);
-    setSharedFundingState(remoteSettings.sharedFunding);
+    setAccountFundingState(remoteSettings.sharedFunding);
     setUsdEnabledState(remoteSettings.usdEnabled);
     setOnboardingCompleted(
       resolveOnboardingCompleted({
@@ -230,7 +238,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setDisplayCurrencyState("ARS");
         setWalletModeState("unified");
         setSharedEnabledState(false);
-        setSharedFundingState("payer");
+        setAccountFundingState("payer");
         setUsdEnabledState(true);
         setOnboardingCompleted(true);
         if (!cancelled) setReady(true);
@@ -281,16 +289,30 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [cloudEnabled, supabase, user],
   );
 
+  const fundingByHousehold = useMemo(
+    () => householdFundingMap(households, accountFunding),
+    [households, accountFunding],
+  );
+  const sharedFunding = household
+    ? (household.sharedFunding ?? accountFunding)
+    : accountFunding;
+
   const setSharedFunding = useCallback(
     async (funding: SharedFunding) => {
-      setSharedFundingState(funding);
+      if (household && cloudEnabled && supabase && user) {
+        const result = await setHouseholdFunding(household.id, funding);
+        if (result.error) throw new Error(result.error);
+        if (result.usedAccountDefault) setAccountFundingState(funding);
+        return;
+      }
+      setAccountFundingState(funding);
       if (cloudEnabled && supabase && user) {
         await saveSharedFundingRemote(supabase, user.id, funding);
       } else {
         storage.saveSharedFunding(funding);
       }
     },
-    [cloudEnabled, supabase, user],
+    [cloudEnabled, supabase, user, household, setHouseholdFunding],
   );
 
   const persistDisplayCurrency = useCallback(
@@ -378,7 +400,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setUsdEnabledState(settings.usdEnabled);
       setWalletModeState(settings.walletMode);
       setSharedEnabledState(input.sharedEnabled);
-      setSharedFundingState(sharedFunding);
+      setAccountFundingState(sharedFunding);
       setDisplayCurrencyState(displayCurrency);
       setOnboardingCompleted(true);
       storage.saveOnboardingReplay(false);
@@ -638,10 +660,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       movementsForPersonalBalance(
         movements,
         user?.id,
-        sharedFunding,
+        fundingByHousehold,
         householdMemberCounts,
+        accountFunding,
       ),
-    [movements, user?.id, sharedFunding, householdMemberCounts],
+    [movements, user?.id, fundingByHousehold, householdMemberCounts, accountFunding],
   );
 
   const monthMovements = useMemo(

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   closeHouseholdConfirmMessage,
+  fundingForHousehold,
+  householdFundingMap,
   HOUSEHOLD_NAME_MAX,
   MAX_HOUSEHOLDS_PER_USER,
   MAX_MEMBERS_PER_HOUSEHOLD,
   normalizeHouseholdName,
+  parseSharedFunding,
   resolveSharedHouseholdId,
 } from "./household";
 
@@ -61,5 +64,36 @@ describe("resolveSharedHouseholdId", () => {
 
   it("returns null when there is no group", () => {
     expect(resolveSharedHouseholdId("shared", undefined, null)).toBeNull();
+  });
+});
+
+describe("parseSharedFunding", () => {
+  it("only treats pool as pool", () => {
+    expect(parseSharedFunding("pool")).toBe("pool");
+    expect(parseSharedFunding("payer")).toBe("payer");
+    expect(parseSharedFunding(null)).toBe("payer");
+    expect(parseSharedFunding("other")).toBe("payer");
+  });
+});
+
+describe("fundingForHousehold", () => {
+  it("uses the group map and falls back", () => {
+    expect(fundingForHousehold("casa", { casa: "pool" })).toBe("pool");
+    expect(fundingForHousehold("viaje", { casa: "pool" }, "payer")).toBe("payer");
+    expect(fundingForHousehold(undefined, { casa: "pool" }, "pool")).toBe("pool");
+  });
+});
+
+describe("householdFundingMap", () => {
+  it("keeps each group independent and fills missing from the account default", () => {
+    expect(
+      householdFundingMap(
+        [
+          { id: "casa", sharedFunding: "pool" },
+          { id: "viaje" },
+        ],
+        "payer",
+      ),
+    ).toEqual({ casa: "pool", viaje: "payer" });
   });
 });
