@@ -8,10 +8,11 @@ import {
   useFormatUsd,
 } from "@/hooks/useDisplayAmount";
 import { formatMoney, todayIso } from "@/lib/format";
+import { priorMonthsRangeLabel } from "@/lib/carryover-copy";
 import { IconChevronDown } from "@/components/ui/Icons";
 
 export function DisponibleHero() {
-  const { walletMode, summary, sharedEnabled } = useFinance();
+  const { walletMode, summary, monthBalance, month, sharedEnabled } = useFinance();
   const fmt = useDisplayAmount();
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -19,24 +20,41 @@ export function DisponibleHero() {
     return <SplitHero />;
   }
 
-  const disponible = summary.disponible;
-  const positive = disponible >= 0;
+  const { monthDisponible, carryoverDisponible, totalDisponible } = monthBalance;
+  const hasCarryover = carryoverDisponible !== 0;
+  const positive = totalDisponible >= 0;
   const income = summary.totalIncome;
   const expenses = summary.totalExpenses;
   const shared = summary.sharedExpenses;
+  const priorRange = priorMonthsRangeLabel(month);
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento overflow-hidden !p-0">
         <div className="px-6 pt-7 pb-6">
-          <p className="text-sm font-medium text-zinc-400">Te queda este mes</p>
+          <p className="text-sm font-medium text-zinc-400">
+            {hasCarryover ? "Te queda acumulado" : "Te queda este mes"}
+          </p>
           <p
             className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
-            {fmt(disponible)}
+            {fmt(totalDisponible)}
           </p>
+          {hasCarryover && priorRange && (
+            <p className="meta mt-2 text-sm leading-relaxed">
+              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                {priorRange}:
+              </span>{" "}
+              {fmt(carryoverDisponible)}
+              <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">·</span>
+              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                Este mes:
+              </span>{" "}
+              {fmt(monthDisponible)}
+            </p>
+          )}
 
           <button
             type="button"
@@ -52,6 +70,14 @@ export function DisponibleHero() {
 
         {detailsOpen && (
           <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4 sm:grid-cols-3">
+            {hasCarryover && (
+              <MacroStat
+                label="Meses anteriores"
+                value={fmt(carryoverDisponible)}
+                tone={carryoverDisponible >= 0 ? "income" : "expense"}
+                className="col-span-2 sm:col-span-3"
+              />
+            )}
             <MacroStat
               label="Ingresos"
               value={fmt(income)}
@@ -111,7 +137,7 @@ function MacroStat({
 }
 
 function SplitHero() {
-  const { splitSummary, rate } = useFinance();
+  const { splitSummary, splitMonthBalance, rate, month } = useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
   const [ahorroOpen, setAhorroOpen] = useState(false);
@@ -119,22 +145,43 @@ function SplitHero() {
 
   const cotidiano = splitSummary.vida;
   const ahorro = splitSummary.ahorro;
+  const vidaBalance = splitMonthBalance.vida;
+  const ahorroBalance = splitMonthBalance.ahorro;
+  const priorRange = priorMonthsRangeLabel(month);
+  const hasVidaCarryover = vidaBalance.carryoverDisponible !== 0;
+  const hasAhorroCarryover = ahorroBalance.carryoverDisponible !== 0;
   const ahorroArs = ahorro.disponible * rate.usdToArs;
-  const positive = cotidiano.disponible >= 0;
+  const positive = vidaBalance.totalDisponible >= 0;
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento !p-0 overflow-hidden">
         <div className="px-6 pt-7 pb-5">
-          <p className="text-sm font-medium text-zinc-400">Diario · ARS</p>
+          <p className="text-sm font-medium text-zinc-400">
+            {hasVidaCarryover ? "Diario acumulado · ARS" : "Diario · ARS"}
+          </p>
           <p
             className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums ${
               positive ? "text-zinc-900 dark:text-white" : "amount-negative"
             }`}
           >
-            {formatArs(cotidiano.disponible)}
+            {formatArs(vidaBalance.totalDisponible)}
           </p>
-          <p className="meta mt-2">Lo que te queda este mes</p>
+          {hasVidaCarryover && priorRange ? (
+            <p className="meta mt-2 text-sm leading-relaxed">
+              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                {priorRange}:
+              </span>{" "}
+              {formatArs(vidaBalance.carryoverDisponible)}
+              <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">·</span>
+              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                Este mes:
+              </span>{" "}
+              {formatArs(vidaBalance.monthDisponible)}
+            </p>
+          ) : (
+            <p className="meta mt-2">Lo que te queda este mes</p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4">
           <MacroStat
@@ -164,9 +211,16 @@ function SplitHero() {
               Ahorro USD
             </p>
             <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums">
-              {formatUsd(ahorro.disponible)}
+              {formatUsd(ahorroBalance.totalDisponible)}
             </p>
-            <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
+            {hasAhorroCarryover && priorRange ? (
+              <p className="meta text-xs leading-relaxed">
+                {priorRange}: {formatUsd(ahorroBalance.carryoverDisponible)} · Este
+                mes: {formatUsd(ahorroBalance.monthDisponible)}
+              </p>
+            ) : (
+              <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
+            )}
           </div>
           <IconChevronDown
             className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform ${ahorroOpen ? "rotate-180" : ""}`}

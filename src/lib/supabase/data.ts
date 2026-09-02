@@ -21,6 +21,7 @@ export type LocalSnapshot = {
   sharedEnabled: boolean;
   sharedFunding: SharedFunding;
   usdEnabled: boolean;
+  carryoverEnabled: boolean;
 };
 
 /** Hay algo local que vale la pena subir en el primer login. */
@@ -33,7 +34,8 @@ export function hasLocalToMigrate(local: LocalSnapshot): boolean {
     local.walletMode === "split" ||
     local.sharedEnabled ||
     local.sharedFunding === "pool" ||
-    local.usdEnabled === false
+    local.usdEnabled === false ||
+    local.carryoverEnabled
   );
 }
 
@@ -444,6 +446,7 @@ export type UserSettings = {
   sharedEnabled: boolean;
   sharedFunding: SharedFunding;
   usdEnabled: boolean;
+  carryoverEnabled: boolean;
   onboardingCompleted: boolean;
   /** False si la columna todavía no existe en la base. */
   onboardingTracked: boolean;
@@ -461,6 +464,13 @@ export function isMissingSharedFundingColumn(error: {
   message?: string;
 } | null): boolean {
   return isMissingColumn(error, "shared_funding");
+}
+
+export function isMissingCarryoverColumn(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  return isMissingColumn(error, "carryover_enabled");
 }
 
 export function isMissingRpc(
@@ -497,6 +507,7 @@ export function parseUserSettings(
     shared_enabled?: boolean | null;
     shared_funding?: string | null;
     usd_enabled?: boolean | null;
+    carryover_enabled?: boolean | null;
     onboarding_completed?: boolean | null;
   } | null,
 ): UserSettings {
@@ -506,6 +517,7 @@ export function parseUserSettings(
     sharedEnabled: data?.shared_enabled === true,
     sharedFunding: parseSharedFunding(data?.shared_funding),
     usdEnabled: data?.usd_enabled !== false,
+    carryoverEnabled: data?.carryover_enabled === true,
     onboardingCompleted: isOnboardingDone(data?.onboarding_completed),
     onboardingTracked:
       data != null && Object.prototype.hasOwnProperty.call(data, "onboarding_completed"),
@@ -513,7 +525,7 @@ export function parseUserSettings(
 }
 
 const SETTINGS_CORE =
-  "display_currency, wallet_mode, shared_enabled, usd_enabled";
+  "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled";
 
 export async function fetchUserSettings(
   supabase: SupabaseClient,
@@ -523,7 +535,9 @@ export async function fetchUserSettings(
     `${SETTINGS_CORE}, shared_funding, onboarding_completed`,
     `${SETTINGS_CORE}, onboarding_completed`,
     `${SETTINGS_CORE}, shared_funding`,
-    SETTINGS_CORE,
+    "display_currency, wallet_mode, shared_enabled, usd_enabled, shared_funding, onboarding_completed",
+    "display_currency, wallet_mode, shared_enabled, usd_enabled, onboarding_completed",
+    "display_currency, wallet_mode, shared_enabled, usd_enabled",
   ];
 
   let lastError: { code?: string; message?: string } | null = null;
@@ -541,7 +555,8 @@ export async function fetchUserSettings(
     lastError = result.error;
     if (
       !isMissingOnboardingColumn(result.error) &&
-      !isMissingSharedFundingColumn(result.error)
+      !isMissingSharedFundingColumn(result.error) &&
+      !isMissingCarryoverColumn(result.error)
     ) {
       throw result.error;
     }
@@ -587,13 +602,26 @@ export async function saveAccountSetupRemote(
     lastError = result.error;
     if (
       !isMissingOnboardingColumn(result.error) &&
-      !isMissingSharedFundingColumn(result.error)
+      !isMissingSharedFundingColumn(result.error) &&
+      !isMissingCarryoverColumn(result.error)
     ) {
       throw result.error;
     }
   }
 
   throw lastError ?? new Error("No se pudieron guardar los ajustes");
+}
+
+export async function saveCarryoverEnabledRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("user_settings").upsert({
+    user_id: userId,
+    carryover_enabled: enabled,
+  });
+  if (error && !isMissingCarryoverColumn(error)) throw error;
 }
 
 export async function fetchWalletMode(
@@ -966,6 +994,7 @@ export async function migrateLocalIfEmpty(
     wallet_mode: local.walletMode,
     shared_enabled: local.sharedEnabled,
     usd_enabled: local.usdEnabled,
+    carryover_enabled: local.carryoverEnabled,
     onboarding_completed: true,
   };
   const firstSettings = await supabase.from("user_settings").upsert(settingsPayload);
@@ -976,6 +1005,7 @@ export async function migrateLocalIfEmpty(
       wallet_mode: settingsPayload.wallet_mode,
       shared_enabled: settingsPayload.shared_enabled,
       usd_enabled: settingsPayload.usd_enabled,
+      carryover_enabled: settingsPayload.carryover_enabled,
     });
     if (retry.error) throw retry.error;
   } else if (firstSettings.error) {

@@ -14,11 +14,15 @@ import { getRateForMonth } from "@/lib/storage";
 import {
   computeAnnualSummary,
   computeAnnualSummaryArs,
+  computeMonthBalance,
   computeMonthlySummary,
   filterByMonth,
+  withCarryoverPreference,
+  withSplitCarryoverPreference,
 } from "@/lib/summary";
 import {
   computeSplitAnnualSummary,
+  computeSplitMonthBalance,
   computeSplitMonthlySummary,
 } from "@/lib/wallet";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
@@ -38,6 +42,7 @@ import {
   insertMovement,
   migrateLocalIfEmpty,
   saveAccountSetupRemote,
+  saveCarryoverEnabledRemote,
   saveDisplayCurrencyRemote,
   saveSharedEnabledRemote,
   saveSharedFundingRemote,
@@ -49,10 +54,12 @@ import {
 import type {
   AnnualSummary,
   DisplayCurrency,
+  MonthBalance,
   MonthlyRate,
   MonthlySummary,
   Movement,
   SplitAnnualSummary,
+  SplitMonthBalance,
   SplitMonthlySummary,
   SharedFunding,
   WalletMode,
@@ -84,6 +91,8 @@ interface FinanceContextValue {
   setSharedFunding: (funding: SharedFunding) => void;
   usdEnabled: boolean;
   setUsdEnabled: (enabled: boolean) => void;
+  carryoverEnabled: boolean;
+  setCarryoverEnabled: (enabled: boolean) => void;
   onboardingCompleted: boolean;
   replayOnboarding: () => void;
   completeAccountSetup: (input: {
@@ -117,7 +126,9 @@ interface FinanceContextValue {
   getMovementById: (id: string) => Movement | undefined;
   monthMovements: Movement[];
   summary: MonthlySummary;
+  monthBalance: MonthBalance;
   splitSummary: SplitMonthlySummary;
+  splitMonthBalance: SplitMonthBalance;
   annualSummary: AnnualSummary;
   annualSummaryArs: AnnualSummary;
   splitAnnualSummary: SplitAnnualSummary;
@@ -155,6 +166,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [accountFunding, setAccountFundingState] =
     useState<SharedFunding>("payer");
   const [usdEnabled, setUsdEnabledState] = useState(true);
+  const [carryoverEnabled, setCarryoverEnabledState] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [amountsHidden, setAmountsHiddenState] = useState(false);
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
@@ -174,6 +186,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setSharedEnabledState(storage.loadSharedEnabled());
     setAccountFundingState(storage.loadSharedFunding());
     setUsdEnabledState(storage.loadUsdEnabled());
+    setCarryoverEnabledState(storage.loadCarryoverEnabled());
     setOnboardingCompleted(!storage.loadOnboardingReplay());
     setAmountsHiddenState(storage.loadAmountsHidden());
   }, []);
@@ -196,6 +209,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setSharedEnabledState(remoteSettings.sharedEnabled);
     setAccountFundingState(remoteSettings.sharedFunding);
     setUsdEnabledState(remoteSettings.usdEnabled);
+    setCarryoverEnabledState(remoteSettings.carryoverEnabled);
     setOnboardingCompleted(
       resolveOnboardingCompleted({
         tracked: remoteSettings.onboardingTracked,
@@ -240,6 +254,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setSharedEnabledState(false);
         setAccountFundingState("payer");
         setUsdEnabledState(true);
+        setCarryoverEnabledState(false);
         setOnboardingCompleted(true);
         if (!cancelled) setReady(true);
         return;
@@ -367,6 +382,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
     },
     [cloudEnabled, supabase, user, persistDisplayCurrency],
+  );
+
+  const setCarryoverEnabled = useCallback(
+    async (enabled: boolean) => {
+      setCarryoverEnabledState(enabled);
+      if (cloudEnabled && supabase && user) {
+        await saveCarryoverEnabledRemote(supabase, user.id, enabled);
+      } else {
+        storage.saveCarryoverEnabled(enabled);
+      }
+    },
+    [cloudEnabled, supabase, user],
   );
 
   const completeAccountSetup = useCallback(
@@ -687,6 +714,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [monthBalanceMovements, rate],
   );
 
+  const monthBalance = useMemo(() => {
+    const balance = computeMonthBalance(balanceMovements, rates, year, month);
+    return withCarryoverPreference(balance, carryoverEnabled);
+  }, [balanceMovements, rates, year, month, carryoverEnabled]);
+
   const annualSummary = useMemo(
     () => computeAnnualSummary(balanceMovements, year, rates),
     [balanceMovements, year, rates],
@@ -701,6 +733,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     () => computeSplitMonthlySummary(monthBalanceMovements, rate),
     [monthBalanceMovements, rate],
   );
+
+  const splitMonthBalance = useMemo(() => {
+    const balance = computeSplitMonthBalance(balanceMovements, rates, year, month);
+    return withSplitCarryoverPreference(balance, carryoverEnabled);
+  }, [balanceMovements, rates, year, month, carryoverEnabled]);
 
   const splitAnnualSummary = useMemo(
     () => computeSplitAnnualSummary(balanceMovements, year, rates),
@@ -735,6 +772,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedFunding,
       usdEnabled,
       setUsdEnabled,
+      carryoverEnabled,
+      setCarryoverEnabled,
       onboardingCompleted,
       replayOnboarding,
       completeAccountSetup,
@@ -749,7 +788,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       getMovementById,
       monthMovements,
       summary,
+      monthBalance,
       splitSummary,
+      splitMonthBalance,
       annualSummary,
       annualSummaryArs,
       splitAnnualSummary,
@@ -778,6 +819,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setSharedFunding,
       usdEnabled,
       setUsdEnabled,
+      carryoverEnabled,
+      setCarryoverEnabled,
       onboardingCompleted,
       replayOnboarding,
       completeAccountSetup,
@@ -792,7 +835,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       getMovementById,
       monthMovements,
       summary,
+      monthBalance,
       splitSummary,
+      splitMonthBalance,
       annualSummary,
       annualSummaryArs,
       splitAnnualSummary,

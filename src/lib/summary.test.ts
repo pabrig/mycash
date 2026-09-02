@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatDisplay, formatMoney, formatUsd, initials } from "./format";
 import { affectsUserBalance } from "./movement-access";
-import { computeAnnualSummary, computeAnnualSummaryArs, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth, monthlySummaryToUsd } from "./summary";
+import { computeAnnualSummary, computeAnnualSummaryArs, computeCarryoverDisponible, computeMonthBalance, computeMonthlyBreakdown, computeMonthlySummary, filterByMonth, monthlySummaryToUsd, withCarryoverPreference } from "./summary";
 import type { MonthlyRate, Movement } from "./types";
 
 const rate: MonthlyRate = {
@@ -175,6 +175,59 @@ describe("computeAnnualSummaryArs", () => {
     expect(annual.totalIncome).toBe(3500 * 1200 + 500000);
     expect(annual.totalExpenses).toBe(280000 + 100 * 1200 + 50000);
     expect(annual.disponible).toBe(annual.totalIncome - annual.totalExpenses);
+  });
+});
+
+describe("computeMonthBalance", () => {
+  it("accumulates disponible from prior months in the same year", () => {
+    const janRate: MonthlyRate = { year: 2026, month: 1, usdToArs: 1000 };
+    const rates = [janRate, rate];
+    const balance = computeMonthBalance(movements, rates, 2026, 2);
+
+    expect(balance.carryoverDisponible).toBe(-50000);
+    expect(balance.monthDisponible).toBe(
+      3500 * 1200 + 500000 - 280000 - 100 * 1200,
+    );
+    expect(balance.totalDisponible).toBe(
+      balance.carryoverDisponible + balance.monthDisponible,
+    );
+  });
+
+  it("starts with zero carryover in january", () => {
+    const balance = computeMonthBalance(movements, [rate], 2026, 1);
+
+    expect(balance.carryoverDisponible).toBe(0);
+    expect(balance.monthDisponible).toBe(-50000);
+    expect(balance.totalDisponible).toBe(-50000);
+  });
+});
+
+describe("computeCarryoverDisponible", () => {
+  it("sums only months before the target month", () => {
+    const janRate: MonthlyRate = { year: 2026, month: 1, usdToArs: 1000 };
+    const carryover = computeCarryoverDisponible(movements, [janRate, rate], 2026, 3);
+
+    expect(carryover).toBe(
+      -50000 +
+        (3500 * 1200 + 500000 - 280000 - 100 * 1200),
+    );
+  });
+});
+
+describe("withCarryoverPreference", () => {
+  it("zeros carryover when disabled", () => {
+    const balance = {
+      monthDisponible: 100,
+      carryoverDisponible: 50,
+      totalDisponible: 150,
+    };
+
+    expect(withCarryoverPreference(balance, false)).toEqual({
+      monthDisponible: 100,
+      carryoverDisponible: 0,
+      totalDisponible: 100,
+    });
+    expect(withCarryoverPreference(balance, true)).toEqual(balance);
   });
 });
 

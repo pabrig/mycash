@@ -19,6 +19,8 @@ export function MoneySettings() {
     walletMode,
     setWalletMode,
     sharedEnabled,
+    carryoverEnabled,
+    setCarryoverEnabled,
   } = useFinance();
   const profile = resolveMoneyProfile(usdEnabled, walletMode);
 
@@ -32,6 +34,35 @@ export function MoneySettings() {
 
   return (
     <>
+      <section className="bento space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold tracking-tight">Arrastre anual</p>
+            <p className="meta mt-1 text-xs leading-relaxed">
+              En la vista mes suma lo que te fue quedando desde enero. Apagado,
+              solo ves el mes actual.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={carryoverEnabled}
+            onClick={() => void setCarryoverEnabled(!carryoverEnabled)}
+            className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
+              carryoverEnabled
+                ? "bg-zinc-900 dark:bg-white"
+                : "bg-zinc-200 dark:bg-zinc-700"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
+                carryoverEnabled ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+      </section>
+
       <section className="bento space-y-4">
         <div>
           <p className="text-sm font-semibold tracking-tight">¿Cómo es tu plata?</p>
