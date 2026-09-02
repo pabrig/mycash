@@ -141,7 +141,7 @@ export const HOWTO_PERIOD = {
   items: [
     {
       title: "Mes",
-      body: "Cuánto te queda este mes: lo que cobraste menos lo que gastaste. Es el día a día.",
+      body: "Cuánto te queda este mes. En Cuenta podés activar el arrastre anual para sumar meses anteriores. Deslizá para cambiar de mes.",
     },
     {
       title: "Año",

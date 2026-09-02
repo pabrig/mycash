@@ -9,6 +9,7 @@ const WALLET_MODE_KEY = "mycash_wallet_mode";
 const SHARED_ENABLED_KEY = "mycash_shared_enabled";
 const SHARED_FUNDING_KEY = "mycash_shared_funding";
 const USD_ENABLED_KEY = "mycash_usd_enabled";
+const CARRYOVER_ENABLED_KEY = "mycash_carryover_enabled";
 const AMOUNTS_HIDDEN_KEY = "mycash_amounts_hidden";
 const ONBOARDING_REPLAY_KEY = "mycash_onboarding_replay";
 
@@ -147,6 +148,17 @@ export function saveUsdEnabled(enabled: boolean): void {
   localStorage.setItem(USD_ENABLED_KEY, enabled ? "true" : "false");
 }
 
+/** Default false: la vista mes muestra solo el mes actual salvo que lo actives. */
+export function loadCarryoverEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  migrateLegacyStorage();
+  return localStorage.getItem(CARRYOVER_ENABLED_KEY) === "true";
+}
+
+export function saveCarryoverEnabled(enabled: boolean): void {
+  localStorage.setItem(CARRYOVER_ENABLED_KEY, enabled ? "true" : "false");
+}
+
 /** Solo este dispositivo — útil en un lugar público. */
 export function loadAmountsHidden(): boolean {
   if (typeof window === "undefined") return false;
@@ -238,6 +250,7 @@ const SYNCED_KEYS = [
   SHARED_ENABLED_KEY,
   SHARED_FUNDING_KEY,
   USD_ENABLED_KEY,
+  CARRYOVER_ENABLED_KEY,
 ] as const;
 
 /** Snapshot para migrar a la nube en el primer login. */
@@ -250,6 +263,7 @@ export function loadLocalSnapshot() {
     sharedEnabled: loadSharedEnabled(),
     sharedFunding: loadSharedFunding(),
     usdEnabled: loadUsdEnabled(),
+    carryoverEnabled: loadCarryoverEnabled(),
   };
 }
 

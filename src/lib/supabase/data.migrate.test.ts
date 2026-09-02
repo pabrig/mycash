@@ -18,6 +18,7 @@ function snapshot(partial: Partial<LocalSnapshot> = {}): LocalSnapshot {
     sharedEnabled: false,
     sharedFunding: "payer",
     usdEnabled: true,
+    carryoverEnabled: false,
     ...partial,
   };
 }
@@ -55,6 +56,7 @@ describe("hasLocalToMigrate", () => {
     expect(hasLocalToMigrate(snapshot({ sharedEnabled: true }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ sharedFunding: "pool" }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ usdEnabled: false }))).toBe(true);
+    expect(hasLocalToMigrate(snapshot({ carryoverEnabled: true }))).toBe(true);
     expect(
       hasLocalToMigrate(
         snapshot({
@@ -85,6 +87,13 @@ describe("parseUserSettings", () => {
     expect(parseUserSettings({}).sharedFunding).toBe("payer");
     expect(parseUserSettings({ shared_funding: "pool" }).sharedFunding).toBe(
       "pool",
+    );
+  });
+
+  it("defaults carryover to off", () => {
+    expect(parseUserSettings(null).carryoverEnabled).toBe(false);
+    expect(parseUserSettings({ carryover_enabled: true }).carryoverEnabled).toBe(
+      true,
     );
   });
 });

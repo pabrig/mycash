@@ -1,9 +1,11 @@
 import { toArs, toUsd } from "./currency";
-import { filterByMonth, filterByYear } from "./summary";
+import { filterByMonth, filterByYear, getRateForMonth } from "./summary";
 import type {
+  MonthBalance,
   MonthlyRate,
   Movement,
   SplitAnnualSummary,
+  SplitMonthBalance,
   SplitMonthlySummary,
   Wallet,
   WalletBucketSummary,
@@ -73,6 +75,44 @@ export function computeSplitMonthlySummary(
     vida,
     ahorro,
     equivalentTotalArs: vida.disponible + ahorro.disponible * rate.usdToArs,
+  };
+}
+
+function bucketBalance(
+  carryover: number,
+  monthDisponible: number,
+): MonthBalance {
+  return {
+    monthDisponible,
+    carryoverDisponible: carryover,
+    totalDisponible: carryover + monthDisponible,
+  };
+}
+
+export function computeSplitMonthBalance(
+  movements: Movement[],
+  rates: MonthlyRate[],
+  year: number,
+  month: number,
+): SplitMonthBalance {
+  let carryoverVida = 0;
+  let carryoverAhorro = 0;
+
+  for (let m = 1; m < month; m++) {
+    const monthMovements = filterByMonth(movements, year, m);
+    const rate = getRateForMonth(rates, year, m);
+    const split = computeSplitMonthlySummary(monthMovements, rate);
+    carryoverVida += split.vida.disponible;
+    carryoverAhorro += split.ahorro.disponible;
+  }
+
+  const monthMovements = filterByMonth(movements, year, month);
+  const rate = getRateForMonth(rates, year, month);
+  const split = computeSplitMonthlySummary(monthMovements, rate);
+
+  return {
+    vida: bucketBalance(carryoverVida, split.vida.disponible),
+    ahorro: bucketBalance(carryoverAhorro, split.ahorro.disponible),
   };
 }
 

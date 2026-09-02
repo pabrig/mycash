@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeSplitAnnualSummary,
+  computeSplitMonthBalance,
   computeSplitMonthlySummary,
   resolveWallet,
   walletBucketToUsd,
@@ -91,6 +92,42 @@ describe("computeSplitMonthlySummary", () => {
     expect(split.equivalentTotalArs).toBe(
       split.vida.disponible + split.ahorro.disponible * 1200,
     );
+  });
+});
+
+describe("computeSplitMonthBalance", () => {
+  it("accumulates each bucket from prior months", () => {
+    const janRate: MonthlyRate = { year: 2026, month: 1, usdToArs: 1000 };
+    const janMovements: Movement[] = [
+      {
+        id: "5",
+        type: "expense",
+        date: "2026-01-10",
+        amount: 50000,
+        currency: "ARS",
+        description: "Enero",
+        scope: "personal",
+        kind: "variable",
+        category: "otros",
+        createdAt: "2026-01-10T00:00:00Z",
+      },
+    ];
+    const rates = [janRate, rate];
+    const balance = computeSplitMonthBalance(
+      [...janMovements, ...movements],
+      rates,
+      2026,
+      2,
+    );
+    const february = computeSplitMonthlySummary(movements, rate);
+
+    expect(balance.vida.carryoverDisponible).toBe(-50000);
+    expect(balance.vida.monthDisponible).toBe(february.vida.disponible);
+    expect(balance.vida.totalDisponible).toBe(
+      balance.vida.carryoverDisponible + balance.vida.monthDisponible,
+    );
+    expect(balance.ahorro.carryoverDisponible).toBe(0);
+    expect(balance.ahorro.monthDisponible).toBe(february.ahorro.disponible);
   });
 });
 

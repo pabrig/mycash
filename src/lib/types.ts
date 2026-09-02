@@ -125,6 +125,18 @@ export interface MonthlySummary {
   disponible: number;
 }
 
+/** Disponible del mes con arrastre acumulado desde enero del mismo año. */
+export interface MonthBalance {
+  monthDisponible: number;
+  carryoverDisponible: number;
+  totalDisponible: number;
+}
+
+export interface SplitMonthBalance {
+  vida: MonthBalance;
+  ahorro: MonthBalance;
+}
+
 export interface MonthSnapshot {
   year: number;
   month: number;

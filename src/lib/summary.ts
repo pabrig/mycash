@@ -2,10 +2,12 @@ import { toArs, toUsd, getDefaultRate } from "./currency";
 import type {
   AnnualSummary,
   Currency,
+  MonthBalance,
   MonthSnapshot,
   MonthlyRate,
   MonthlySummary,
   Movement,
+  SplitMonthBalance,
 } from "./types";
 
 type AmountConverter = (
@@ -175,6 +177,70 @@ export function monthlySummaryToUsd(
     sharedExpenses: convert(summary.sharedExpenses),
     totalExpenses: convert(summary.totalExpenses),
     disponible: convert(summary.disponible),
+  };
+}
+
+/** Suma el disponible de enero hasta el mes anterior (mismo año). */
+export function computeCarryoverDisponible(
+  movements: Movement[],
+  rates: MonthlyRate[],
+  year: number,
+  month: number,
+): number {
+  let carryover = 0;
+
+  for (let m = 1; m < month; m++) {
+    const monthMovements = filterByMonth(movements, year, m);
+    const rate = getRateForMonth(rates, year, m);
+    carryover += computeMonthlySummary(monthMovements, rate).disponible;
+  }
+
+  return carryover;
+}
+
+export function computeMonthBalance(
+  movements: Movement[],
+  rates: MonthlyRate[],
+  year: number,
+  month: number,
+): MonthBalance {
+  const carryoverDisponible = computeCarryoverDisponible(
+    movements,
+    rates,
+    year,
+    month,
+  );
+  const monthMovements = filterByMonth(movements, year, month);
+  const rate = getRateForMonth(rates, year, month);
+  const monthDisponible = computeMonthlySummary(monthMovements, rate).disponible;
+
+  return {
+    monthDisponible,
+    carryoverDisponible,
+    totalDisponible: carryoverDisponible + monthDisponible,
+  };
+}
+
+export function withCarryoverPreference(
+  balance: MonthBalance,
+  enabled: boolean,
+): MonthBalance {
+  if (enabled) return balance;
+  return {
+    monthDisponible: balance.monthDisponible,
+    carryoverDisponible: 0,
+    totalDisponible: balance.monthDisponible,
+  };
+}
+
+export function withSplitCarryoverPreference(
+  balance: SplitMonthBalance,
+  enabled: boolean,
+): SplitMonthBalance {
+  if (enabled) return balance;
+  return {
+    vida: withCarryoverPreference(balance.vida, false),
+    ahorro: withCarryoverPreference(balance.ahorro, false),
   };
 }
 
