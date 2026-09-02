@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import { AppHeader } from "@/components/AppHeader";
 import { DisponibleHero } from "@/components/DisponibleHero";
@@ -13,12 +13,24 @@ import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { ExportStatementSheet } from "@/components/ExportStatementSheet";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { IconDownload } from "@/components/ui/Icons";
+import { useMonthSwipe } from "@/hooks/useMonthSwipe";
+import { shiftPeriod } from "@/lib/format";
 import type { SummaryScope } from "@/lib/types";
 
 export default function HomePage() {
-  const { ready, walletMode } = useFinance();
+  const { ready, walletMode, year, month, setPeriod } = useFinance();
   const [scope, setScope] = useState<SummaryScope>("month");
   const [exportOpen, setExportOpen] = useState(false);
+
+  const shiftMonth = useCallback(
+    (delta: number) => {
+      const next = shiftPeriod(year, month, delta);
+      setPeriod(next.year, next.month);
+    },
+    [year, month, setPeriod],
+  );
+
+  const monthSwipe = useMonthSwipe(shiftMonth);
 
   if (!ready) return <LoadingScreen variant="dashboard" />;
 
@@ -51,7 +63,10 @@ export default function HomePage() {
       {scope === "year" ? (
         <YearReview onOpenMonth={() => setScope("month")} />
       ) : (
-        <div className="mx-auto grid w-full grid-cols-1 items-start gap-4 md:grid-cols-12 md:gap-6">
+        <div
+          className="mx-auto grid w-full touch-pan-y grid-cols-1 items-start gap-4 md:grid-cols-12 md:gap-6"
+          {...monthSwipe}
+        >
           <div className="flex flex-col gap-4 md:col-span-7 lg:col-span-8">
             <DisponibleHero />
             <BalanceBar />
