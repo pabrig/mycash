@@ -24,6 +24,7 @@ export function DisponibleHero() {
   } = useFinance();
   const fmt = useDisplayAmount();
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [goalsOpen, setGoalsOpen] = useState(false);
 
   if (walletMode === "split") {
     return <SplitHero />;
@@ -41,7 +42,6 @@ export function DisponibleHero() {
     goalsEnabled &&
     goalsReservedArs > 0;
   const freeAfterGoals = totalDisponible - goalsReservedArs;
-  const [goalsOpen, setGoalsOpen] = useState(false);
 
   return (
     <section className="animate-slide-up space-y-3">

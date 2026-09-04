@@ -755,7 +755,8 @@ export async function upsertSavingsGoalRemote(
   if (!error) return;
   if (isMissingGoalsTable(error)) return;
   if (isMissingColumn(error, "deduct_from_disponible")) {
-    const { deduct_from_disponible: _omit, ...without } = row;
+    const { deduct_from_disponible: _, ...without } = row;
+    void _;
     const retry = await supabase
       .from("savings_goals")
       .upsert(without, { onConflict: "id" });

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { ChoiceOption } from "@/components/ChoiceOption";
 import { useFinance } from "@/context/FinanceContext";
 import {

@@ -49,7 +49,6 @@ function SetupWizard() {
   const askShared = members.length <= 1;
   const joinedGroup = members.length > 1;
   const name = greetingName(profile?.displayName);
-  const showSharedHowTo = joinedGroup || financeShared;
   const includeGoalsHowTo = isFeatureEnabled("savingsGoals");
 
   const [step, setStep] = useState<OnboardingStep>("welcome");
@@ -67,7 +66,7 @@ function SetupWizard() {
     moneyProfile,
     askShared,
     sharedEnabled: usesShared ? true : sharedEnabled,
-    showSharedHowTo: usesShared,
+    showSharedHowTo: usesShared || financeShared,
     includeGoalsHowTo,
   });
   const current = steps.includes(step) ? step : (steps[0] ?? "welcome");
