@@ -248,7 +248,8 @@ describe("HOWTO_GOALS", () => {
     ].join(" ");
     expect(text).toMatch(/opcionales/i);
     expect(text).toMatch(/cuenta/i);
-    expect(text).toMatch(/recordatorio|resta del disponible/i);
+    expect(text).toMatch(/diario|ahorro/i);
+    expect(text).toMatch(/recordatorio|reservar/i);
   });
 });
 

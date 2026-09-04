@@ -18,6 +18,7 @@ function goal(partial: Partial<SavingsGoal>): SavingsGoal {
     savedAmount: 25_000,
     monthlyPlan: 10_000,
     deductFromDisponible: true,
+    place: "disponible",
     targetDate: null,
     createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
@@ -49,7 +50,7 @@ describe("goalProgressCopy", () => {
     expect(copy.status).toMatch(/25\.000/);
     expect(copy.status).toMatch(/100\.000/);
     expect(copy.detail).toMatch(/te falta/i);
-    expect(copy.planModeLabel).toMatch(/resta del disponible/i);
+    expect(copy.planModeLabel).toMatch(/resta del libre/i);
   });
 
   it("labels guide-only plans as reminder", () => {
@@ -57,7 +58,20 @@ describe("goalProgressCopy", () => {
       goal({ deductFromDisponible: false, monthlyPlan: 8_000 }),
     );
     expect(copy.planModeLabel).toMatch(/recordatorio/i);
-    expect(copy.plan).toMatch(/no baja el disponible/i);
+    expect(copy.plan).toMatch(/no baja el libre/i);
+  });
+
+  it("never treats ahorro goals as deducting libre", () => {
+    const copy = goalProgressCopy(
+      goal({
+        place: "ahorro",
+        currency: "USD",
+        deductFromDisponible: true,
+        monthlyPlan: 50,
+      }),
+    );
+    expect(copy.planModeLabel).toMatch(/recordatorio/i);
+    expect(copy.placeLabel).toBe("Ahorro");
   });
 
   it("marks completed goals clearly", () => {
@@ -74,7 +88,14 @@ describe("goalsReservedCopy", () => {
     const copy = goalsReservedCopy(20_000, 80_000, (n) => `$${n}`);
     expect(copy?.reserved).toMatch(/ya contado en metas/i);
     expect(copy?.free).toMatch(/libre para gastar/i);
-    expect(copy?.hint).toMatch(/resta del disponible/i);
+    expect(copy?.hint).toMatch(/resta del libre/i);
+  });
+
+  it("names Diario when the account is split", () => {
+    const copy = goalsReservedCopy(20_000, 80_000, (n) => `$${n}`, {
+      split: true,
+    });
+    expect(copy?.free).toMatch(/libre en diario/i);
   });
 });
 
@@ -121,11 +142,12 @@ describe("goalsYearNoteCopy", () => {
 });
 
 describe("goalFormCopy", () => {
-  it("names both plan modes clearly", () => {
+  it("names place, plan and contribute clearly", () => {
     const copy = goalFormCopy(false);
-    expect(copy.planModeGuide).toMatch(/recuerda/i);
-    expect(copy.planModeDeduct).toMatch(/disponible/i);
-    expect(copy.planModeDeductHint).toMatch(/libre este mes/i);
+    expect(copy.placeLabel).toMatch(/de qué plata/i);
+    expect(copy.planModeGuide).toMatch(/recordame/i);
+    expect(copy.planModeDeduct).toMatch(/reservo/i);
+    expect(copy.contribute).toBe("Apartar");
     expect(copy.targetLabel).toMatch(/juntar/i);
   });
 });
