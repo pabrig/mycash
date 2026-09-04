@@ -2,9 +2,11 @@ import {
   effectiveMonthlyPlan,
   goalProgressPercent,
   goalRemaining,
+  goalReservesFromLibre,
   isGoalComplete,
   monthsUntilDate,
   suggestedMonthlyPlan,
+  type GoalPlace,
   type SavingsGoal,
 } from "./goals";
 import { formatMoney, formatUsd } from "./format";
@@ -20,6 +22,17 @@ function monthNameFromIso(iso: string): string | null {
   const month = Number(match[2]);
   if (month < 1 || month > 12) return null;
   return MONTH_NAMES[month - 1]?.toLowerCase() ?? null;
+}
+
+export function goalPlaceLabel(place: GoalPlace): string {
+  switch (place) {
+    case "diario":
+      return "Diario";
+    case "ahorro":
+      return "Ahorro";
+    case "disponible":
+      return "Tu libre";
+  }
 }
 
 export function goalsSettingsCopy(): {
@@ -50,7 +63,7 @@ export function goalsHomeCopy(hasGoals: boolean): {
       : "Un lugar para lo que estás juntando aparte del día a día.",
     emptyTitle: "Todavía no tenés metas",
     emptyBody:
-      "Creá una con un monto y, si querés, una fecha. Después vas sumando lo que apartás.",
+      "Creá una con un monto y, si querés, de qué plata es. Después vas apartando lo que guardás.",
     add: "Nueva meta",
     doneSection: "Completadas",
   };
@@ -62,7 +75,9 @@ export function goalProgressCopy(goal: SavingsGoal): {
   plan: string | null;
   planMode: "guide" | "deduct" | null;
   planModeLabel: string | null;
+  placeLabel: string;
 } {
+  const placeLabel = goalPlaceLabel(goal.place);
   const pct = goalProgressPercent(goal);
   if (isGoalComplete(goal)) {
     return {
@@ -71,6 +86,7 @@ export function goalProgressCopy(goal: SavingsGoal): {
       plan: null,
       planMode: null,
       planModeLabel: null,
+      placeLabel,
     };
   }
 
@@ -78,20 +94,23 @@ export function goalProgressCopy(goal: SavingsGoal): {
   const planAmount = effectiveMonthlyPlan(goal);
   const suggested = suggestedMonthlyPlan(goal);
   const hasExplicitPlan = goal.monthlyPlan != null && goal.monthlyPlan > 0;
+  const reserves = goalReservesFromLibre(goal);
 
   let plan: string | null = null;
   let planMode: "guide" | "deduct" | null = null;
   let planModeLabel: string | null = null;
 
   if (planAmount > 0) {
-    planMode = goal.deductFromDisponible ? "deduct" : "guide";
-    planModeLabel = goal.deductFromDisponible
-      ? "Resta del disponible"
+    planMode = reserves ? "deduct" : "guide";
+    planModeLabel = reserves
+      ? goal.place === "diario"
+        ? "Resta del Diario"
+        : "Resta del libre"
       : "Solo recordatorio";
-    if (hasExplicitPlan || goal.deductFromDisponible) {
-      plan = goal.deductFromDisponible
+    if (hasExplicitPlan || reserves) {
+      plan = reserves
         ? `Este mes cuenta ${money(planAmount, goal.currency)} como ya apartados`
-        : `Este mes: apartá ${money(planAmount, goal.currency)} (no baja el disponible)`;
+        : `Este mes: apartá ${money(planAmount, goal.currency)} (no baja el libre)`;
     } else if (suggested && suggested > 0) {
       plan = `Para llegar a tiempo: ~${money(suggested, goal.currency)} por mes`;
     }
@@ -113,6 +132,7 @@ export function goalProgressCopy(goal: SavingsGoal): {
     plan,
     planMode,
     planModeLabel,
+    placeLabel,
   };
 }
 
@@ -120,12 +140,17 @@ export function goalsReservedCopy(
   reservedArs: number,
   freeArs: number,
   formatArs: (n: number) => string,
+  opts?: { split?: boolean },
 ): { reserved: string; free: string; hint: string } | null {
   if (reservedArs <= 0) return null;
+  const freeLabel = opts?.split ? "Libre en Diario" : "Libre para gastar";
+  const hint = opts?.split
+    ? "Suma de metas del Diario con “resta del libre” este mes."
+    : "Suma de metas con “resta del libre” este mes.";
   return {
     reserved: `Ya contado en metas: ${formatArs(reservedArs)}`,
-    free: `Libre para gastar: ${formatArs(freeArs)}`,
-    hint: "Suma de metas con “resta del disponible” este mes.",
+    free: `${freeLabel}: ${formatArs(freeArs)}`,
+    hint,
   };
 }
 
@@ -194,6 +219,11 @@ export function goalFormCopy(isEdit: boolean): {
   dateLabel: string;
   dateHint: string;
   suggestedPrefix: string;
+  placeLabel: string;
+  placeDiario: string;
+  placeDiarioHint: string;
+  placeAhorro: string;
+  placeAhorroHint: string;
   planLabel: string;
   planHint: string;
   planModeLabel: string;
@@ -201,6 +231,7 @@ export function goalFormCopy(isEdit: boolean): {
   planModeGuideHint: string;
   planModeDeduct: string;
   planModeDeductHint: string;
+  planModeAhorroHint: string;
   savedLabel: string;
   savedHint: string;
   save: string;
@@ -208,8 +239,13 @@ export function goalFormCopy(isEdit: boolean): {
   deleteConfirm: string;
   contribute: string;
   contributeHint: string;
+  contributeHintAhorro: string;
   contributeAction: string;
+  contributeUsePlan: string;
+  editMeta: string;
   cancel: string;
+  moreOptions: string;
+  moreOptionsHint: string;
 } {
   return {
     title: isEdit ? "Editar meta" : "Nueva meta",
@@ -220,22 +256,36 @@ export function goalFormCopy(isEdit: boolean): {
     dateLabel: "Fecha objetivo",
     dateHint: "Opcional. Sirve para sugerirte un aporte por mes.",
     suggestedPrefix: "Sugerido:",
-    planLabel: "Aporte este mes",
-    planHint: "Opcional. Cuánto pensás apartar ahora.",
-    planModeLabel: "Ese aporte…",
-    planModeGuide: "Solo me lo recuerda",
-    planModeGuideHint: "No cambia el número de “te queda”.",
-    planModeDeduct: "Baja lo disponible",
+    placeLabel: "¿De qué plata es esta meta?",
+    placeDiario: "Diario",
+    placeDiarioHint: "Sale del día a día en pesos. Podés reservar del libre.",
+    placeAhorro: "Ahorro",
+    placeAhorroHint:
+      "Vive en el bolsillo USD. Cuando pases el sobrante a dólares, anotá el aporte acá.",
+    planLabel: "Plan de este mes",
+    planHint: "Opcional. Cuánto pensás apartar.",
+    planModeLabel: "¿Contarlo en “te queda”?",
+    planModeGuide: "No, solo recordame",
+    planModeGuideHint: "Te lo mostramos en la meta, sin tocar el libre.",
+    planModeDeduct: "Sí, ya lo reservo",
     planModeDeductHint:
       "Se resta de lo libre este mes, como si ya lo hubieras apartado.",
+    planModeAhorroHint:
+      "Las metas de Ahorro no tocan el Diario: el plan es solo un recordatorio.",
     savedLabel: "Ya juntaste",
     savedHint: "Opcional. Lo que ya tenés guardado hoy.",
     save: isEdit ? "Guardar cambios" : "Crear meta",
     delete: "Borrar meta",
     deleteConfirm: "¿Borrar esta meta? No se puede deshacer.",
-    contribute: "Sumar un aporte",
-    contributeHint: "Cuando apartás plata, anotalo acá para ver el progreso.",
-    contributeAction: "Sumar",
+    contribute: "Apartar",
+    contributeHint: "Cuando apartás plata, anotalo para ver el progreso.",
+    contributeHintAhorro:
+      "Cuando pases el sobrante a dólares, anotá el aporte acá. Comprar USD no suma solo a la meta.",
+    contributeAction: "Apartar",
+    contributeUsePlan: "Usar el plan",
+    editMeta: "Editar meta",
     cancel: "Cancelar",
+    moreOptions: "Más opciones",
+    moreOptionsHint: "Fecha, lo ya juntado y el plan del mes.",
   };
 }

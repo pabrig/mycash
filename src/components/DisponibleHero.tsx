@@ -108,7 +108,7 @@ export function DisponibleHero() {
                     </span>
                   </p>
                   <p className="text-[11px] leading-snug text-zinc-400">
-                    Aportes con “resta del disponible”. El total de arriba no
+                    Planes con “resta del libre”. El total de arriba no
                     cambia; esto es lo que te queda libre para gastar.
                   </p>
                 </div>
@@ -211,11 +211,19 @@ function MacroStat({
 }
 
 function SplitHero() {
-  const { splitSummary, splitMonthBalance, rate, month } = useFinance();
+  const {
+    splitSummary,
+    splitMonthBalance,
+    rate,
+    month,
+    goalsEnabled,
+    goalsReservedArs,
+  } = useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
   const [ahorroOpen, setAhorroOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
+  const [goalsOpen, setGoalsOpen] = useState(false);
 
   const cotidiano = splitSummary.vida;
   const ahorro = splitSummary.ahorro;
@@ -226,6 +234,11 @@ function SplitHero() {
   const hasAhorroCarryover = ahorroBalance.carryoverDisponible !== 0;
   const ahorroArs = ahorro.disponible * rate.usdToArs;
   const positive = vidaBalance.totalDisponible >= 0;
+  const showGoalsReserve =
+    isFeatureEnabled("savingsGoals") &&
+    goalsEnabled &&
+    goalsReservedArs > 0;
+  const freeAfterGoals = vidaBalance.totalDisponible - goalsReservedArs;
 
   return (
     <section className="animate-slide-up space-y-3">
@@ -256,6 +269,51 @@ function SplitHero() {
           ) : (
             <p className="meta mt-2">Lo que te queda este mes</p>
           )}
+
+          {showGoalsReserve ? (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setGoalsOpen((v) => !v)}
+                aria-expanded={goalsOpen}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl bg-[var(--card-muted)] px-3.5 py-3 text-left transition active:opacity-80"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium text-zinc-400">
+                    Tras metas del Diario
+                  </p>
+                  <p
+                    className={`mt-0.5 text-sm font-semibold tabular-nums ${
+                      freeAfterGoals >= 0
+                        ? "text-zinc-800 dark:text-zinc-100"
+                        : "amount-negative"
+                    }`}
+                  >
+                    Libre {formatArs(freeAfterGoals)}
+                  </p>
+                </div>
+                <IconChevronDown
+                  className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
+                    goalsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {goalsOpen ? (
+                <div className="mt-2 space-y-1 px-1">
+                  <p className="text-xs text-zinc-500">
+                    Contado en metas:{" "}
+                    <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
+                      {formatArs(goalsReservedArs)}
+                    </span>
+                  </p>
+                  <p className="text-[11px] leading-snug text-zinc-400">
+                    Metas del Diario con “resta del libre”. El total de arriba no
+                    cambia; esto es lo que te queda libre para gastar.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div className="grid grid-cols-2 gap-2 bg-[var(--card-muted)] px-4 py-4">
           <MacroStat
