@@ -4,16 +4,22 @@ import type { SharedCategorySlice } from "@/lib/types";
 
 const CATEGORY_SWATCH: Record<string, string> = {
   alimentacion: "bg-rose-500",
-  transporte: "bg-teal-500",
-  salidas: "bg-fuchsia-400",
   servicios: "bg-cyan-400",
+  transporte: "bg-teal-500",
+  educacion: "bg-purple-400",
+  deporte: "bg-green-400",
+  cultura: "bg-violet-400",
+  entretenimiento: "bg-pink-400",
   salud: "bg-rose-300",
   streaming: "bg-teal-300",
   seguros: "bg-zinc-400",
   alquiler: "bg-orange-400",
+  salidas: "bg-fuchsia-400",
+  extras: "bg-amber-400",
+  otros: "bg-zinc-300 dark:bg-zinc-500",
+  /** Ids viejos en datos guardados */
   escuela: "bg-purple-400",
   deportes: "bg-green-400",
-  otros: "bg-zinc-300 dark:bg-zinc-500"
 };
 
 const FALLBACK_SWATCH = [

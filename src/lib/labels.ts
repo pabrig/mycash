@@ -2,15 +2,36 @@
 
 export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   alimentacion: "Alimentación",
-  transporte: "Transporte",
-  salidas: "Salidas",
   servicios: "Servicios",
+  transporte: "Transporte",
+  educacion: "Educación",
+  deporte: "Deporte",
+  cultura: "Cultura",
+  entretenimiento: "Entretenimiento",
   salud: "Salud",
   streaming: "Streaming",
   seguros: "Seguros",
   alquiler: "Alquiler",
+  salidas: "Salidas",
   extras: "Extras",
   otros: "Otros",
+};
+
+export const EXPENSE_CATEGORY_ICONS: Record<string, string> = {
+  alimentacion: "🛒",
+  servicios: "💡",
+  transporte: "⛽",
+  educacion: "🎓",
+  deporte: "🏃",
+  cultura: "🎭",
+  entretenimiento: "🎥",
+  salud: "🏥",
+  streaming: "📺",
+  seguros: "🛡️",
+  alquiler: "🏠",
+  salidas: "🍽️",
+  extras: "📦",
+  otros: "•••",
 };
 
 export const INCOME_SOURCE_LABELS: Record<string, string> = {
@@ -37,7 +58,16 @@ export const EXPENSE_KIND_LABELS = {
 
 export function expenseCategoryLabel(id: string | undefined): string {
   if (!id) return "";
+  if (id === "escuela") return EXPENSE_CATEGORY_LABELS.educacion;
+  if (id === "deportes") return EXPENSE_CATEGORY_LABELS.deporte;
   return EXPENSE_CATEGORY_LABELS[id] ?? humanizeSlug(id);
+}
+
+export function expenseCategoryIcon(id: string | undefined): string {
+  if (!id) return "";
+  if (id === "escuela") return EXPENSE_CATEGORY_ICONS.educacion ?? "";
+  if (id === "deportes") return EXPENSE_CATEGORY_ICONS.deporte ?? "";
+  return EXPENSE_CATEGORY_ICONS[id] ?? "";
 }
 
 export function incomeSourceLabel(id: string | undefined): string {

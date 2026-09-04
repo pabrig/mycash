@@ -189,13 +189,17 @@ export interface SharedMonthSnapshot {
 
 export const EXPENSE_CATEGORIES = [
   "alimentacion",
-  "transporte",
-  "salidas",
   "servicios",
+  "transporte",
+  "educacion",
+  "deporte",
+  "cultura",
+  "entretenimiento",
   "salud",
   "streaming",
   "seguros",
   "alquiler",
+  "salidas",
   "extras",
   "otros",
 ] as const;
