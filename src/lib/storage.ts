@@ -193,6 +193,10 @@ function parseSavingsGoal(raw: unknown): SavingsGoal | null {
       : typeof monthlyPlanRaw === "number"
         ? monthlyPlanRaw
         : Number(monthlyPlanRaw);
+  const place =
+    raw.place === "diario" || raw.place === "ahorro" || raw.place === "disponible"
+      ? raw.place
+      : "disponible";
   return {
     id: raw.id,
     name: typeof raw.name === "string" ? raw.name : "Mi meta",
@@ -201,7 +205,9 @@ function parseSavingsGoal(raw: unknown): SavingsGoal | null {
     savedAmount,
     monthlyPlan:
       monthlyPlan === null || !Number.isFinite(monthlyPlan) ? null : monthlyPlan,
-    deductFromDisponible: raw.deductFromDisponible !== false,
+    deductFromDisponible:
+      place === "ahorro" ? false : raw.deductFromDisponible !== false,
+    place,
     targetDate:
       typeof raw.targetDate === "string" && raw.targetDate
         ? raw.targetDate

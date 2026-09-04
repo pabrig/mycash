@@ -10,9 +10,11 @@ import {
   completedGoals,
   goalProgressPercent,
   isGoalComplete,
+  normalizeGoalPlace,
   type SavingsGoal,
 } from "@/lib/goals";
 import {
+  goalPlaceLabel,
   goalProgressCopy,
   goalsHomeCopy,
   goalsReservedCopy,
@@ -31,11 +33,16 @@ export function GoalsHomeCard() {
     savingsGoals,
     goalsReservedArs,
     monthBalance,
+    splitMonthBalance,
+    walletMode,
   } = useFinance();
   const formatArs = useFormatMoney();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [sheetMode, setSheetMode] = useState<"contribute" | "edit">(
+    "contribute",
+  );
 
   if (!isFeatureEnabled("savingsGoals") || !goalsEnabled) return null;
 
@@ -43,14 +50,19 @@ export function GoalsHomeCard() {
   const done = completedGoals(savingsGoals);
   const hasGoals = active.length + done.length > 0;
   const copy = goalsHomeCopy(hasGoals);
-  const freeArs = monthBalance.totalDisponible - goalsReservedArs;
+  const isSplit = walletMode === "split";
+  const baseDisponible = isSplit
+    ? splitMonthBalance.vida.totalDisponible
+    : monthBalance.totalDisponible;
+  const freeArs = baseDisponible - goalsReservedArs;
   const reserved = goalsReservedCopy(
     goalsReservedArs,
     freeArs,
     formatArs,
+    { split: isSplit },
   );
-  const editing = editingId
-    ? savingsGoals.find((g) => g.id === editingId) ?? null
+  const activeGoal = activeId
+    ? savingsGoals.find((g) => g.id === activeId) ?? null
     : null;
 
   const summaryLine = !hasGoals
@@ -60,6 +72,11 @@ export function GoalsHomeCard() {
       : active.length === 1
         ? active[0].name
         : `${active.length} activas${done.length ? ` · ${done.length} hechas` : ""}`;
+
+  function openGoal(id: string, complete: boolean) {
+    setActiveId(id);
+    setSheetMode(complete ? "edit" : "contribute");
+  }
 
   return (
     <>
@@ -121,7 +138,8 @@ export function GoalsHomeCard() {
                       <GoalRow
                         key={goal.id}
                         goal={goal}
-                        onOpen={() => setEditingId(goal.id)}
+                        walletMode={walletMode}
+                        onOpen={() => openGoal(goal.id, false)}
                       />
                     ))}
                   </ul>
@@ -137,7 +155,8 @@ export function GoalsHomeCard() {
                         <GoalRow
                           key={goal.id}
                           goal={goal}
-                          onOpen={() => setEditingId(goal.id)}
+                          walletMode={walletMode}
+                          onOpen={() => openGoal(goal.id, true)}
                         />
                       ))}
                     </ul>
@@ -156,22 +175,31 @@ export function GoalsHomeCard() {
           title="Nueva meta"
         >
           <GoalEditor
+            mode="create"
             onDone={() => setCreating(false)}
             onCancel={() => setCreating(false)}
           />
         </DetailSheet>
       ) : null}
 
-      {editing ? (
+      {activeGoal ? (
         <DetailSheet
           open
-          onClose={() => setEditingId(null)}
-          title={editing.name}
+          onClose={() => setActiveId(null)}
+          title={
+            sheetMode === "contribute" ? `Apartar · ${activeGoal.name}` : activeGoal.name
+          }
         >
           <GoalEditor
-            goal={editing}
-            onDone={() => setEditingId(null)}
-            onCancel={() => setEditingId(null)}
+            goal={activeGoal}
+            mode={sheetMode}
+            onDone={() => setActiveId(null)}
+            onCancel={() => setActiveId(null)}
+            onEditRequest={
+              sheetMode === "contribute"
+                ? () => setSheetMode("edit")
+                : undefined
+            }
           />
         </DetailSheet>
       ) : null}
@@ -181,9 +209,11 @@ export function GoalsHomeCard() {
 
 function GoalRow({
   goal,
+  walletMode,
   onOpen,
 }: {
   goal: SavingsGoal;
+  walletMode: "unified" | "split";
   onOpen: () => void;
 }) {
   const progress = goalProgressPercent(goal);
@@ -191,6 +221,8 @@ function GoalRow({
   const done = isGoalComplete(goal);
   const fmt = formatGoalMoney(goal);
   const barWidth = done ? 100 : Math.max(progress, progress > 0 ? 4 : 0);
+  const place = normalizeGoalPlace(goal.place, walletMode);
+  const showPlace = walletMode === "split";
 
   return (
     <li>
@@ -202,6 +234,11 @@ function GoalRow({
         <div className="flex items-baseline justify-between gap-3">
           <p className="min-w-0 truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
             {goal.name}
+            {showPlace ? (
+              <span className="ml-1.5 font-normal text-zinc-400">
+                · {goalPlaceLabel(place)}
+              </span>
+            ) : null}
           </p>
           <p className="shrink-0 text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
             {done ? copy.status : fmt(goal.savedAmount)}

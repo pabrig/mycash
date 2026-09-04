@@ -218,15 +218,15 @@ export const HOWTO_GOALS = {
     },
     {
       title: "Creás un objetivo",
-      body: "Nombre, monto total a juntar y, si querés, una fecha. Con fecha te sugerimos cuánto apartar por mes.",
+      body: "Nombre, monto total y, si usás Dos lugares, de qué plata es: Diario o Ahorro. Con fecha te sugerimos un plan por mes.",
     },
     {
-      title: "Vas sumando aportes",
-      body: "Cuando apartás plata, lo anatás en la meta. Ves cuánto juntaste, cuánto falta y el %.",
+      title: "Vas apartando",
+      body: "Cuando guardás plata para esa meta, lo anatás ahí. Ves cuánto juntaste, cuánto falta y el %. Comprar dólares no suma solo a la meta.",
     },
     {
-      title: "Recordatorio o resta del disponible",
-      body: "Solo recordatorio: te muestra el aporte del mes, pero “te queda” no cambia. Resta del disponible: ese aporte se resta de lo libre este mes, como si ya lo hubieras apartado.",
+      title: "Plan y libre del mes",
+      body: "En metas del Diario (o Todo junto) podés reservar el plan: baja “te queda”. En metas de Ahorro el plan es solo recordatorio: no toca el Diario.",
     },
   ],
 } as const;

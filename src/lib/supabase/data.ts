@@ -676,12 +676,17 @@ type DbSavingsGoal = {
   saved_amount: number;
   monthly_plan: number | null;
   deduct_from_disponible?: boolean | null;
+  place?: string | null;
   target_date: string | null;
   created_at: string;
   completed_at: string | null;
 };
 
 function mapGoal(row: DbSavingsGoal): SavingsGoal {
+  const place =
+    row.place === "diario" || row.place === "ahorro" || row.place === "disponible"
+      ? row.place
+      : "disponible";
   return {
     id: row.id,
     name: row.name || "Mi meta",
@@ -692,7 +697,9 @@ function mapGoal(row: DbSavingsGoal): SavingsGoal {
       row.monthly_plan === null || row.monthly_plan === undefined
         ? null
         : Number(row.monthly_plan),
-    deductFromDisponible: row.deduct_from_disponible !== false,
+    deductFromDisponible:
+      place === "ahorro" ? false : row.deduct_from_disponible !== false,
+    place,
     targetDate: row.target_date,
     createdAt: row.created_at,
     completedAt: row.completed_at,
@@ -709,6 +716,7 @@ function goalToRow(goal: SavingsGoal, userId: string) {
     saved_amount: goal.savedAmount,
     monthly_plan: goal.monthlyPlan,
     deduct_from_disponible: goal.deductFromDisponible,
+    place: goal.place,
     target_date: goal.targetDate,
     created_at: goal.createdAt,
     completed_at: goal.completedAt,
@@ -720,6 +728,7 @@ export async function fetchSavingsGoals(
   userId: string,
 ): Promise<SavingsGoal[]> {
   const attempts = [
+    "id, user_id, name, target_amount, currency, saved_amount, monthly_plan, deduct_from_disponible, place, target_date, created_at, completed_at",
     "id, user_id, name, target_amount, currency, saved_amount, monthly_plan, deduct_from_disponible, target_date, created_at, completed_at",
     "id, user_id, name, target_amount, currency, saved_amount, monthly_plan, target_date, created_at, completed_at",
   ];
@@ -737,7 +746,9 @@ export async function fetchSavingsGoals(
     }
     lastError = error;
     if (isMissingGoalsTable(error)) return [];
-    if (!isMissingColumn(error, "deduct_from_disponible")) throw error;
+    const missingPlace = isMissingColumn(error, "place");
+    const missingDeduct = isMissingColumn(error, "deduct_from_disponible");
+    if (!missingPlace && !missingDeduct) throw error;
   }
 
   throw lastError ?? new Error("No se pudieron leer las metas");
@@ -754,6 +765,25 @@ export async function upsertSavingsGoalRemote(
     .upsert(row, { onConflict: "id" });
   if (!error) return;
   if (isMissingGoalsTable(error)) return;
+  if (isMissingColumn(error, "place")) {
+    const { place: _, ...withoutPlace } = row;
+    void _;
+    const retry = await supabase
+      .from("savings_goals")
+      .upsert(withoutPlace, { onConflict: "id" });
+    if (!retry.error) return;
+    if (isMissingGoalsTable(retry.error)) return;
+    if (isMissingColumn(retry.error, "deduct_from_disponible")) {
+      const { deduct_from_disponible: __, ...withoutBoth } = withoutPlace;
+      void __;
+      const retry2 = await supabase
+        .from("savings_goals")
+        .upsert(withoutBoth, { onConflict: "id" });
+      if (retry2.error && !isMissingGoalsTable(retry2.error)) throw retry2.error;
+      return;
+    }
+    throw retry.error;
+  }
   if (isMissingColumn(error, "deduct_from_disponible")) {
     const { deduct_from_disponible: _, ...without } = row;
     void _;
@@ -793,10 +823,20 @@ export async function replaceSavingsGoalsRemote(
     throw delError;
   }
   if (goals.length === 0) return;
-  const { error } = await supabase
-    .from("savings_goals")
-    .insert(goals.map((goal) => goalToRow(goal, userId)));
-  if (error && !isMissingGoalsTable(error)) throw error;
+  const rows = goals.map((goal) => goalToRow(goal, userId));
+  const { error } = await supabase.from("savings_goals").insert(rows);
+  if (!error) return;
+  if (isMissingGoalsTable(error)) return;
+  if (isMissingColumn(error, "place")) {
+    const withoutPlace = rows.map(({ place: _, ...rest }) => {
+      void _;
+      return rest;
+    });
+    const retry = await supabase.from("savings_goals").insert(withoutPlace);
+    if (retry.error && !isMissingGoalsTable(retry.error)) throw retry.error;
+    return;
+  }
+  throw error;
 }
 
 export async function fetchWalletMode(
