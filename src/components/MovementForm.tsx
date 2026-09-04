@@ -14,7 +14,7 @@ import {
   MAX_REPEAT_COUNT,
   notesInPeriodLabel,
   seriesPreview,
-  type RepeatMode,
+  type RepeatMode
 } from "@/lib/schedule";
 import {
   EXPENSE_CATEGORIES,
@@ -25,31 +25,19 @@ import {
   type IncomeKind,
   type Movement,
   type MovementType,
-  type Wallet,
+  type Wallet
 } from "@/lib/types";
 import {
   EXPENSE_KIND_LABELS,
   INCOME_KIND_LABELS,
+  expenseCategoryIcon,
   expenseCategoryLabel,
   incomeSourceLabel,
-  normalizeIncomeSource,
+  normalizeIncomeSource
 } from "@/lib/labels";
 import { friendlyError } from "@/lib/errors";
 
 const CURRENCIES: Currency[] = ["ARS", "USD"];
-
-const CATEGORY_ICONS: Record<string, string> = {
-  alimentacion: "🛒",
-  transporte: "⛽",
-  salidas: "🍽️",
-  servicios: "💡",
-  salud: "🏥",
-  streaming: "📺",
-  seguros: "🛡️",
-  alquiler: "🏠",
-  extras: "📦",
-  otros: "•••",
-};
 
 type WalletChoice = "auto" | Wallet;
 
@@ -66,7 +54,7 @@ function buildPayload({
   incomeKind,
   source,
   walletChoice,
-  householdId,
+  householdId
 }: {
   mode: "full" | "shared";
   type: MovementType;
@@ -82,8 +70,7 @@ function buildPayload({
   walletChoice: WalletChoice;
   householdId?: string;
 }): Omit<Movement, "id" | "createdAt" | "createdByUserId" | "createdByName"> {
-  const wallet =
-    walletChoice === "auto" ? undefined : walletChoice;
+  const wallet = walletChoice === "auto" ? undefined : walletChoice;
   const sharedHousehold =
     mode === "shared" || scope === "shared" ? householdId : undefined;
 
@@ -99,7 +86,7 @@ function buildPayload({
         incomeKind,
         source,
         ...(wallet ? { wallet } : {}),
-        ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
+        ...(sharedHousehold ? { householdId: sharedHousehold } : {})
       };
     }
     return {
@@ -112,7 +99,7 @@ function buildPayload({
       kind,
       category,
       ...(wallet ? { wallet } : {}),
-      ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
+      ...(sharedHousehold ? { householdId: sharedHousehold } : {})
     };
   }
 
@@ -126,7 +113,7 @@ function buildPayload({
       scope,
       kind,
       category,
-      ...(wallet ? { wallet } : {}),
+      ...(wallet ? { wallet } : {})
     };
   }
 
@@ -138,7 +125,7 @@ function buildPayload({
     description,
     incomeKind,
     source,
-    ...(wallet ? { wallet } : {}),
+    ...(wallet ? { wallet } : {})
   };
 }
 
@@ -146,7 +133,7 @@ export function MovementForm({
   mode = "full",
   redirectTo = "/",
   initial,
-  prefill,
+  prefill
 }: {
   mode?: "full" | "shared";
   redirectTo?: string;
@@ -170,45 +157,39 @@ export function MovementForm({
     usdEnabled,
     year,
     month,
-    setPeriod,
+    setPeriod
   } = useFinance();
   const { households, household, configured } = useAuth();
   const isEdit = Boolean(initial);
 
-  const [type, setType] = useState<MovementType>(
-    initial?.type ?? "expense",
-  );
+  const [type, setType] = useState<MovementType>(initial?.type ?? "expense");
   const [date, setDate] = useState(
-    initial?.date ?? defaultDateForPeriod(year, month),
+    initial?.date ?? defaultDateForPeriod(year, month)
   );
   const [amount, setAmount] = useState(
-    initial ? String(initial.amount) : (prefill?.amount ?? ""),
+    initial ? String(initial.amount) : (prefill?.amount ?? "")
   );
   const [currency, setCurrency] = useState<Currency>(
-    initial?.currency ?? "ARS",
+    initial?.currency ?? "ARS"
   );
   const [description, setDescription] = useState(
-    initial?.description ?? prefill?.description ?? "",
+    initial?.description ?? prefill?.description ?? ""
   );
   const [scope, setScope] = useState<ExpenseScope>(
-    mode === "shared"
-      ? "shared"
-      : (initial?.scope ?? "personal"),
+    mode === "shared" ? "shared" : (initial?.scope ?? "personal")
   );
-  const [kind, setKind] = useState<ExpenseKind>(
-    initial?.kind ?? "variable",
-  );
+  const [kind, setKind] = useState<ExpenseKind>(initial?.kind ?? "variable");
   const [category, setCategory] = useState(
-    initial?.category ?? prefill?.category ?? "otros",
+    initial?.category ?? prefill?.category ?? "otros"
   );
   const [incomeKind, setIncomeKind] = useState<IncomeKind>(
-    initial?.incomeKind ?? "active",
+    initial?.incomeKind ?? "active"
   );
   const [source, setSource] = useState(
-    normalizeIncomeSource(initial?.source ?? "otros"),
+    normalizeIncomeSource(initial?.source ?? "otros")
   );
   const [walletChoice, setWalletChoice] = useState<WalletChoice>(
-    initial?.wallet ?? "auto",
+    initial?.wallet ?? "auto"
   );
   const [householdId, setHouseholdId] = useState(initial?.householdId ?? "");
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("once");
@@ -249,7 +230,7 @@ export function MovementForm({
         startIso: date,
         count: seriesCount,
         firstInstallment,
-        totalInstallments,
+        totalInstallments
       })
     : "";
 
@@ -260,9 +241,7 @@ export function MovementForm({
     if (seriesCount > MAX_REPEAT_COUNT) return;
 
     const effectiveKind: ExpenseKind = repeating ? "fixed" : kind;
-    const dates = repeating
-      ? expandMonthlyDates(date, seriesCount)
-      : [date];
+    const dates = repeating ? expandMonthlyDates(date, seriesCount) : [date];
 
     const payloads = dates.map((entryDate, index) => {
       const label =
@@ -270,7 +249,7 @@ export function MovementForm({
           ? installmentLabel(
               description.trim(),
               firstInstallment + index,
-              totalInstallments,
+              totalInstallments
             )
           : description.trim();
       return buildPayload({
@@ -286,7 +265,7 @@ export function MovementForm({
         incomeKind,
         source,
         walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
-        householdId: isSharedMovement ? selectedHouseholdId : undefined,
+        householdId: isSharedMovement ? selectedHouseholdId : undefined
       });
     });
 
@@ -311,10 +290,9 @@ export function MovementForm({
   }
 
   const hasMore =
-    ((type === "expense") && !repeating) ||
+    (type === "expense" && !repeating) ||
     type === "income" ||
     (walletMode === "split" && usdEnabled);
-
 
   return (
     <form onSubmit={handleSubmit} className="animate-slide-up space-y-6">
@@ -391,25 +369,25 @@ export function MovementForm({
       {(type === "expense" || (type === "income" && allowSharedIncome)) &&
         !isSharedMode &&
         sharedEnabled && (
-        <div className="flex gap-2">
-          {(["personal", "shared"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setScope(s)}
-              className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all active:scale-95 ${
-                scope === s
-                  ? s === "shared"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
-              }`}
-            >
-              {s === "personal" ? "Mío" : "Compartido"}
-            </button>
-          ))}
-        </div>
-      )}
+          <div className="flex gap-2">
+            {(["personal", "shared"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setScope(s)}
+                className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all active:scale-95 ${
+                  scope === s
+                    ? s === "shared"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
+                }`}
+              >
+                {s === "personal" ? "Mío" : "Compartido"}
+              </button>
+            ))}
+          </div>
+        )}
 
       {isSharedMovement && configured && !isEdit && households.length > 1 && (
         <div className="space-y-2">
@@ -462,7 +440,7 @@ export function MovementForm({
               onClick={() => setCategory(c)}
               className={`chip ${category === c ? "chip-active" : "chip-inactive"}`}
             >
-              {CATEGORY_ICONS[c]} {expenseCategoryLabel(c)}
+              {expenseCategoryIcon(c)} {expenseCategoryLabel(c)}
             </button>
           ))}
         </div>
@@ -538,7 +516,9 @@ export function MovementForm({
 
           {type === "income" && (
             <div>
-              <label className="mb-1 block text-xs text-zinc-500">De dónde sale</label>
+              <label className="mb-1 block text-xs text-zinc-500">
+                De dónde sale
+              </label>
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
@@ -563,7 +543,7 @@ export function MovementForm({
                   [
                     { id: "auto" as const, label: "Según moneda" },
                     { id: "vida" as const, label: "Diario" },
-                    { id: "ahorro" as const, label: "Ahorro USD" },
+                    { id: "ahorro" as const, label: "Ahorro USD" }
                   ] as const
                 ).map(({ id, label }) => (
                   <button
@@ -585,7 +565,11 @@ export function MovementForm({
         <p className="text-center text-sm text-red-500">{formError}</p>
       )}
 
-      <button type="submit" disabled={submitting} className="btn-primary w-full">
+      <button
+        type="submit"
+        disabled={submitting}
+        className="btn-primary w-full"
+      >
         {submitting
           ? "Guardando…"
           : isEdit
@@ -613,7 +597,7 @@ function DateField({
   date,
   onChange,
   year,
-  month,
+  month
 }: {
   date: string;
   onChange: (value: string) => void;
@@ -628,7 +612,7 @@ function DateField({
       : []),
     { label: "Ayer", value: addDaysIso(today, -1) },
     { label: "Hoy", value: today },
-    { label: "Mañana", value: addDaysIso(today, 1) },
+    { label: "Mañana", value: addDaysIso(today, 1) }
   ];
 
   return (
@@ -670,7 +654,7 @@ function RepeatField({
   onFirstInstallment,
   totalInstallments,
   onTotalInstallments,
-  preview,
+  preview
 }: {
   type: MovementType;
   repeatMode: RepeatMode;
@@ -687,12 +671,12 @@ function RepeatField({
     type === "income"
       ? [
           { id: "once", label: "Una vez" },
-          { id: "monthly", label: "Todos los meses" },
+          { id: "monthly", label: "Todos los meses" }
         ]
       : [
           { id: "once", label: "Una vez" },
           { id: "monthly", label: "Todos los meses" },
-          { id: "installments", label: "En cuotas" },
+          { id: "installments", label: "En cuotas" }
         ];
 
   return (
@@ -745,7 +729,9 @@ function RepeatField({
       {repeatMode === "installments" && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs text-zinc-500">Cuotas en total</label>
+            <label className="mb-1 block text-xs text-zinc-500">
+              Cuotas en total
+            </label>
             <input
               type="number"
               min={2}
@@ -754,7 +740,7 @@ function RepeatField({
               onChange={(e) => {
                 const next = Math.min(
                   MAX_REPEAT_COUNT,
-                  Math.max(2, Number(e.target.value) || 2),
+                  Math.max(2, Number(e.target.value) || 2)
                 );
                 onTotalInstallments(next);
                 if (firstInstallment > next) onFirstInstallment(1);
@@ -763,7 +749,9 @@ function RepeatField({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-500">Esta es la n°</label>
+            <label className="mb-1 block text-xs text-zinc-500">
+              Esta es la n°
+            </label>
             <input
               type="number"
               min={1}
@@ -773,8 +761,8 @@ function RepeatField({
                 onFirstInstallment(
                   Math.min(
                     totalInstallments,
-                    Math.max(1, Number(e.target.value) || 1),
-                  ),
+                    Math.max(1, Number(e.target.value) || 1)
+                  )
                 )
               }
               className="input-field"

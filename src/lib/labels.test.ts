@@ -11,6 +11,12 @@ describe("labels", () => {
   it("shows category names people actually use", () => {
     expect(expenseCategoryLabel("alimentacion")).toBe("Alimentación");
     expect(expenseCategoryLabel("salidas")).toBe("Salidas");
+    expect(expenseCategoryLabel("educacion")).toBe("Educación");
+    expect(expenseCategoryLabel("deporte")).toBe("Deporte");
+    expect(expenseCategoryLabel("cultura")).toBe("Cultura");
+    expect(expenseCategoryLabel("entretenimiento")).toBe("Entretenimiento");
+    expect(expenseCategoryLabel("escuela")).toBe("Educación");
+    expect(expenseCategoryLabel("deportes")).toBe("Deporte");
   });
 
   it("shows generic income sources", () => {
