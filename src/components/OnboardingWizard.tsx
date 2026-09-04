@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChoiceOption } from "@/components/ChoiceOption";
+import { GuideFaq } from "@/components/GuideFaq";
 import { IconCheck, IconChevronLeft, IconMyCash, IconPlus, IconSplit } from "@/components/ui/Icons";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import {
   canContinueOnboarding,
   greetingName,
+  HOWTO_GOALS,
   HOWTO_MOVEMENTS,
   HOWTO_PERIOD,
   HOWTO_SHARED,
@@ -24,17 +26,31 @@ import {
   type OnboardingStep,
 } from "@/lib/account-setup";
 import { friendlyError } from "@/lib/errors";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import type { MoneyProfile } from "@/lib/money-profile";
 import type { SharedFunding, WalletMode } from "@/lib/types";
 
 export function OnboardingWizard() {
+  const searchParams = useSearchParams();
+  const guideOnly = searchParams.get("guia") === "1";
+
+  if (guideOnly) {
+    return <GuideFaq />;
+  }
+
+  return <SetupWizard />;
+}
+
+function SetupWizard() {
   const router = useRouter();
   const { profile, members } = useAuth();
-  const { completeAccountSetup } = useFinance();
+  const { completeAccountSetup, sharedEnabled: financeShared } = useFinance();
 
   const askShared = members.length <= 1;
   const joinedGroup = members.length > 1;
   const name = greetingName(profile?.displayName);
+  const showSharedHowTo = joinedGroup || financeShared;
+  const includeGoalsHowTo = isFeatureEnabled("savingsGoals");
 
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [moneyProfile, setMoneyProfile] = useState<MoneyProfile | null>(null);
@@ -52,8 +68,9 @@ export function OnboardingWizard() {
     askShared,
     sharedEnabled: usesShared ? true : sharedEnabled,
     showSharedHowTo: usesShared,
+    includeGoalsHowTo,
   });
-  const current = steps.includes(step) ? step : "money";
+  const current = steps.includes(step) ? step : (steps[0] ?? "welcome");
   const index = Math.max(0, steps.indexOf(current));
   const total = steps.length;
   const progress = (index + 1) / total;
@@ -184,6 +201,12 @@ export function OnboardingWizard() {
             items={HOWTO_PERIOD.items}
             preview={<PeriodPreview />}
           />
+        ) : current === "howto_goals" ? (
+          <HowToStep
+            title={HOWTO_GOALS.title}
+            sub={HOWTO_GOALS.sub}
+            items={HOWTO_GOALS.items}
+          />
         ) : current === "howto_split" ? (
           <HowToStep
             title={HOWTO_SPLIT.title}
@@ -245,12 +268,13 @@ function WelcomeStep({ name }: { name: string }) {
         </h1>
         <p className="mx-auto max-w-sm text-base leading-relaxed text-zinc-500">
           Primero acomodamos la app a cómo usás la plata. Después te mostramos
-          cómo anotar, cómo mirar el mes y el año, y cómo dividir una cuenta.
+          cómo anotar, cómo mirar el mes y el año, las metas y cómo dividir una
+          cuenta.
         </p>
       </div>
       <p className="text-sm leading-relaxed text-zinc-400">
-        No hay respuestas incorrectas. Si más adelante cambia tu forma de
-        manejar la plata, lo cambiás en Cuenta.
+        No hay respuestas incorrectas. Si más adelante cambia tu forma de manejar
+        la plata, lo cambiás en Cuenta. Ahí también está la ayuda, tema por tema.
       </p>
     </div>
   );
@@ -396,7 +420,13 @@ function SharedStep({
   );
 }
 
-function DoneStep({ name, lines }: { name: string; lines: string[] }) {
+function DoneStep({
+  name,
+  lines,
+}: {
+  name: string;
+  lines: string[];
+}) {
   return (
     <section className="space-y-6 text-center">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300">
@@ -421,7 +451,8 @@ function DoneStep({ name, lines }: { name: string; lines: string[] }) {
         ))}
       </ul>
       <p className="text-sm leading-relaxed text-zinc-400">
-        Si cambia cómo manejás la plata, andá a Cuenta y lo cambiás.
+        Si cambia cómo manejás la plata, andá a Cuenta y lo cambiás. Ahí también
+        está la ayuda, tema por tema.
       </p>
     </section>
   );

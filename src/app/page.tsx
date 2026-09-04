@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
 import { AppHeader } from "@/components/AppHeader";
 import { DisponibleHero } from "@/components/DisponibleHero";
+import { GoalsHomeCard } from "@/components/GoalsHomeCard";
 import { BalanceBar } from "@/components/BalanceBar";
 import { YearReview } from "@/components/YearReview";
 import { MovementList } from "@/components/MovementList";
@@ -69,6 +70,7 @@ export default function HomePage() {
         >
           <div className="flex flex-col gap-4 md:col-span-7 lg:col-span-8">
             <DisponibleHero />
+            <GoalsHomeCard />
             <BalanceBar />
             <div className="md:hidden">
               <MovementList />

@@ -104,6 +104,7 @@ export type OnboardingStep =
   | "shared_funding"
   | "howto_movements"
   | "howto_period"
+  | "howto_goals"
   | "howto_split"
   | "howto_shared"
   | "done";
@@ -146,6 +147,86 @@ export const HOWTO_PERIOD = {
     {
       title: "Año",
       body: "Junta lo que te fue quedando mes a mes. Sirve para ver cómo venís en el año, no cada gasto.",
+    },
+  ],
+} as const;
+
+export const HOWTO_CARRYOVER = {
+  title: "Arrastre anual",
+  sub: "Es un interruptor en Cuenta. Cambia cómo se calcula “te queda” en la vista Mes.",
+  items: [
+    {
+      title: "Encendido",
+      body: "En Mes suma lo que te fue quedando desde enero. Útil si querés ver el acumulado del año mientras mirás el mes.",
+    },
+    {
+      title: "Apagado",
+      body: "En Mes solo ves el mes actual. El Año sigue juntando mes a mes igual.",
+    },
+    {
+      title: "Lo podés cambiar",
+      body: "En Cuenta → Arrastre anual. No borra movimientos: solo cambia cómo se muestra el número.",
+    },
+  ],
+} as const;
+
+export const HOWTO_MONEY = {
+  title: "Cómo es tu plata",
+  sub: "En Cuenta elegís cómo cobrás y si usás dólares. Se puede cambiar cuando quieras.",
+  items: [
+    {
+      title: "Solo pesos",
+      body: "Todo se ve en pesos. Simple si no manejás dólares.",
+    },
+    {
+      title: "Pesos y ahorro en dólares",
+      body: "Cobrás en pesos y podés pasar sobrante a dólares cuando quieras.",
+    },
+    {
+      title: "Pesos y dólares",
+      body: "Cargás las dos monedas. Después elegís si las ves juntas o en dos lugares.",
+    },
+  ],
+} as const;
+
+export const HOWTO_VIEW = {
+  title: "Cómo querés verla",
+  sub: "Solo aparece si usás pesos y dólares. Elegís un número solo o Diario y Ahorro aparte.",
+  items: [
+    {
+      title: "Todo junto",
+      body: "Un solo disponible. Pesos y dólares se muestran convertidos al tipo de cambio del mes.",
+    },
+    {
+      title: "Diario y ahorro",
+      body: "Dos lugares: lo del día a día en pesos, y el ahorro en dólares. No se mezclan en el número principal.",
+    },
+    {
+      title: "Dónde se cambia",
+      body: "Cuenta → Cómo es tu plata → Pesos y dólares → Cómo querés verla.",
+    },
+  ],
+} as const;
+
+export const HOWTO_GOALS = {
+  title: "Metas",
+  sub: "Son opcionales. Sirven para juntar plata con un objetivo concreto (viaje, fondo, auto). Si no las usás, la app sigue igual.",
+  items: [
+    {
+      title: "Se activan en Cuenta",
+      body: "En Cuenta → Metas. Apagado: no aparece la sección. Encendido: las ves en Inicio.",
+    },
+    {
+      title: "Creás un objetivo",
+      body: "Nombre, monto total a juntar y, si querés, una fecha. Con fecha te sugerimos cuánto apartar por mes.",
+    },
+    {
+      title: "Vas sumando aportes",
+      body: "Cuando apartás plata, lo anatás en la meta. Ves cuánto juntaste, cuánto falta y el %.",
+    },
+    {
+      title: "Recordatorio o resta del disponible",
+      body: "Solo recordatorio: te muestra el aporte del mes, pero “te queda” no cambia. Resta del disponible: ese aporte se resta de lo libre este mes, como si ya lo hubieras apartado.",
     },
   ],
 } as const;
@@ -194,15 +275,168 @@ export function onboardingSteps(input: {
   askShared: boolean;
   sharedEnabled: boolean | null;
   showSharedHowTo: boolean;
+  includeGoalsHowTo?: boolean;
 }): OnboardingStep[] {
   const steps: OnboardingStep[] = ["welcome", "money"];
   if (input.moneyProfile === "dual") steps.push("view");
   if (input.askShared) steps.push("shared");
   if (input.sharedEnabled === true) steps.push("shared_funding");
-  steps.push("howto_movements", "howto_period", "howto_split");
+  steps.push("howto_movements", "howto_period");
+  if (input.includeGoalsHowTo !== false) steps.push("howto_goals");
+  steps.push("howto_split");
   if (input.showSharedHowTo) steps.push("howto_shared");
   steps.push("done");
   return steps;
+}
+
+/**
+ * Guía opcional (tipo FAQ): solo explica cómo funciona, sin volver a armar la cuenta.
+ */
+export function onboardingGuideSteps(input: {
+  showSharedHowTo: boolean;
+  includeGoalsHowTo?: boolean;
+}): OnboardingStep[] {
+  const steps: OnboardingStep[] = [
+    "welcome",
+    "howto_movements",
+    "howto_period",
+  ];
+  if (input.includeGoalsHowTo !== false) steps.push("howto_goals");
+  steps.push("howto_split");
+  if (input.showSharedHowTo) steps.push("howto_shared");
+  steps.push("done");
+  return steps;
+}
+
+/** Temas de la guía tipo FAQ (después del login, desde Cuenta). */
+export const GUIDE_TOPIC_IDS = [
+  "anotar",
+  "mes-ano",
+  "arrastre",
+  "plata",
+  "vista",
+  "metas",
+  "dividir",
+  "compartido",
+] as const;
+
+export type GuideTopicId = (typeof GUIDE_TOPIC_IDS)[number];
+
+export type GuideHowTo = {
+  title: string;
+  sub: string;
+  items: readonly { title: string; body: string }[];
+};
+
+export type GuideTopic = {
+  id: GuideTopicId;
+  title: string;
+  blurb: string;
+  /** Agrupa en el índice FAQ. */
+  group: "uso" | "cuenta";
+  content: GuideHowTo;
+  /** Ocultar si el feature no aplica. */
+  requires?: "goals" | "shared";
+};
+
+const GUIDE_TOPICS: GuideTopic[] = [
+  {
+    id: "anotar",
+    title: HOWTO_MOVEMENTS.title,
+    blurb: "El botón +, ingresos, gastos y cómo corregir.",
+    group: "uso",
+    content: HOWTO_MOVEMENTS,
+  },
+  {
+    id: "mes-ano",
+    title: HOWTO_PERIOD.title,
+    blurb: "Qué muestra Mes y qué muestra Año.",
+    group: "uso",
+    content: HOWTO_PERIOD,
+  },
+  {
+    id: "dividir",
+    title: HOWTO_SPLIT.title,
+    blurb: "Asado, viaje o finde: partes iguales, aparte del mes.",
+    group: "uso",
+    content: HOWTO_SPLIT,
+  },
+  {
+    id: "arrastre",
+    title: HOWTO_CARRYOVER.title,
+    blurb: "Si el mes suma lo que te fue quedando desde enero.",
+    group: "cuenta",
+    content: HOWTO_CARRYOVER,
+  },
+  {
+    id: "plata",
+    title: HOWTO_MONEY.title,
+    blurb: "Pesos, dólares y cómo cobrás.",
+    group: "cuenta",
+    content: HOWTO_MONEY,
+  },
+  {
+    id: "vista",
+    title: HOWTO_VIEW.title,
+    blurb: "Todo junto o Diario y Ahorro aparte.",
+    group: "cuenta",
+    content: HOWTO_VIEW,
+  },
+  {
+    id: "metas",
+    title: HOWTO_GOALS.title,
+    blurb: "Objetivos opcionales y si restan del disponible.",
+    group: "cuenta",
+    content: HOWTO_GOALS,
+    requires: "goals",
+  },
+  {
+    id: "compartido",
+    title: HOWTO_SHARED.title,
+    blurb: "Grupos, de dónde sale la plata e invitaciones.",
+    group: "cuenta",
+    content: HOWTO_SHARED,
+    requires: "shared",
+  },
+];
+
+export function parseGuideTopic(raw: string | null | undefined): GuideTopicId | null {
+  if (!raw) return null;
+  const value = raw.trim().toLowerCase();
+  return (GUIDE_TOPIC_IDS as readonly string[]).includes(value)
+    ? (value as GuideTopicId)
+    : null;
+}
+
+/** Link a la guía FAQ. Con tema abre ese artículo. */
+export function guideHref(topic?: GuideTopicId | null): string {
+  if (!topic) return "/onboarding?guia=1";
+  return `/onboarding?guia=1&tema=${topic}`;
+}
+
+export function getGuideTopic(id: GuideTopicId): GuideTopic | null {
+  return GUIDE_TOPICS.find((t) => t.id === id) ?? null;
+}
+
+export function listGuideTopics(input: {
+  includeGoals?: boolean;
+  includeShared?: boolean;
+}): GuideTopic[] {
+  return GUIDE_TOPICS.filter((topic) => {
+    if (topic.requires === "goals" && input.includeGoals === false) return false;
+    if (topic.requires === "shared" && input.includeShared === false) return false;
+    return true;
+  });
+}
+
+export function guideTopicsByGroup(topics: GuideTopic[]): {
+  uso: GuideTopic[];
+  cuenta: GuideTopic[];
+} {
+  return {
+    uso: topics.filter((t) => t.group === "uso"),
+    cuenta: topics.filter((t) => t.group === "cuenta"),
+  };
 }
 
 export function isSetupQuestionStep(step: OnboardingStep): boolean {
@@ -298,6 +532,7 @@ export function canContinueOnboarding(
     case "welcome":
     case "howto_movements":
     case "howto_period":
+    case "howto_goals":
     case "howto_split":
     case "howto_shared":
     case "done":

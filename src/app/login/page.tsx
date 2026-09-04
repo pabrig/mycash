@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { loginQueryError } from "@/lib/errors";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { safeNextPath } from "@/lib/movement-access";
 import { IconMyCash } from "@/components/ui/Icons";
 
@@ -29,6 +29,7 @@ function loginCopy(next: string, reason: string | null) {
 }
 
 function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNextPath(searchParams.get("next"));
   const reason = searchParams.get("reason");
@@ -39,6 +40,14 @@ function LoginForm() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(loginQueryError(searchParams.get("error")) ?? "");
   const [loading, setLoading] = useState(false);
+  const skipAuth = isFeatureEnabled("skipAuth");
+
+  // Local sin login: no mostrar pantalla de auth.
+  useEffect(() => {
+    if (skipAuth || !configured) {
+      router.replace("/");
+    }
+  }, [skipAuth, configured, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,18 +69,8 @@ function LoginForm() {
     setSent(true);
   }
 
-  if (!configured) {
-    return (
-      <div className="space-y-4 py-8 text-center">
-        <h1 className="text-lg font-bold">No se puede entrar</h1>
-        <p className="text-sm text-zinc-500">
-          Configurá Supabase en <code className="text-xs">.env.local</code>
-        </p>
-        <Link href="/" className="btn-primary inline-block px-6">
-          Volver
-        </Link>
-      </div>
-    );
+  if (skipAuth || !configured) {
+    return <LoadingScreen variant="auth" />;
   }
 
   return (

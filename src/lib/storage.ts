@@ -1,4 +1,5 @@
 import type { DisplayCurrency, MonthlyRate, Movement, SharedFunding, WalletMode } from "./types";
+import type { SavingsGoal } from "./goals";
 import type { SplitEvent, SplitExpense, SplitPerson } from "./split-bill";
 import { getDefaultRate } from "./currency";
 
@@ -10,6 +11,8 @@ const SHARED_ENABLED_KEY = "mycash_shared_enabled";
 const SHARED_FUNDING_KEY = "mycash_shared_funding";
 const USD_ENABLED_KEY = "mycash_usd_enabled";
 const CARRYOVER_ENABLED_KEY = "mycash_carryover_enabled";
+const GOALS_ENABLED_KEY = "mycash_goals_enabled";
+const SAVINGS_GOALS_KEY = "mycash_savings_goals";
 const AMOUNTS_HIDDEN_KEY = "mycash_amounts_hidden";
 const ONBOARDING_REPLAY_KEY = "mycash_onboarding_replay";
 
@@ -159,6 +162,71 @@ export function saveCarryoverEnabled(enabled: boolean): void {
   localStorage.setItem(CARRYOVER_ENABLED_KEY, enabled ? "true" : "false");
 }
 
+/** Default false: las metas son opcionales. */
+export function loadGoalsEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  migrateLegacyStorage();
+  return localStorage.getItem(GOALS_ENABLED_KEY) === "true";
+}
+
+export function saveGoalsEnabled(enabled: boolean): void {
+  localStorage.setItem(GOALS_ENABLED_KEY, enabled ? "true" : "false");
+}
+
+function parseSavingsGoal(raw: unknown): SavingsGoal | null {
+  if (!isRecord(raw) || typeof raw.id !== "string") return null;
+  const targetAmount =
+    typeof raw.targetAmount === "number"
+      ? raw.targetAmount
+      : Number(raw.targetAmount);
+  const savedAmount =
+    typeof raw.savedAmount === "number"
+      ? raw.savedAmount
+      : Number(raw.savedAmount ?? 0);
+  if (!Number.isFinite(targetAmount) || !Number.isFinite(savedAmount)) {
+    return null;
+  }
+  const monthlyPlanRaw = raw.monthlyPlan;
+  const monthlyPlan =
+    monthlyPlanRaw === null || monthlyPlanRaw === undefined
+      ? null
+      : typeof monthlyPlanRaw === "number"
+        ? monthlyPlanRaw
+        : Number(monthlyPlanRaw);
+  return {
+    id: raw.id,
+    name: typeof raw.name === "string" ? raw.name : "Mi meta",
+    targetAmount,
+    currency: raw.currency === "USD" ? "USD" : "ARS",
+    savedAmount,
+    monthlyPlan:
+      monthlyPlan === null || !Number.isFinite(monthlyPlan) ? null : monthlyPlan,
+    deductFromDisponible: raw.deductFromDisponible !== false,
+    targetDate:
+      typeof raw.targetDate === "string" && raw.targetDate
+        ? raw.targetDate
+        : null,
+    createdAt:
+      typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
+    completedAt:
+      typeof raw.completedAt === "string" && raw.completedAt
+        ? raw.completedAt
+        : null,
+  };
+}
+
+export function loadSavingsGoals(): SavingsGoal[] {
+  const raw = readJson<unknown>(SAVINGS_GOALS_KEY, []);
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(parseSavingsGoal)
+    .filter((goal): goal is SavingsGoal => goal !== null);
+}
+
+export function saveSavingsGoals(goals: SavingsGoal[]): void {
+  writeJson(SAVINGS_GOALS_KEY, goals);
+}
+
 /** Solo este dispositivo — útil en un lugar público. */
 export function loadAmountsHidden(): boolean {
   if (typeof window === "undefined") return false;
@@ -251,6 +319,8 @@ const SYNCED_KEYS = [
   SHARED_FUNDING_KEY,
   USD_ENABLED_KEY,
   CARRYOVER_ENABLED_KEY,
+  GOALS_ENABLED_KEY,
+  SAVINGS_GOALS_KEY,
 ] as const;
 
 /** Snapshot para migrar a la nube en el primer login. */
@@ -264,6 +334,8 @@ export function loadLocalSnapshot() {
     sharedFunding: loadSharedFunding(),
     usdEnabled: loadUsdEnabled(),
     carryoverEnabled: loadCarryoverEnabled(),
+    goalsEnabled: loadGoalsEnabled(),
+    savingsGoals: loadSavingsGoals(),
   };
 }
 

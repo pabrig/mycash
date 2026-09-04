@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isOnboardingDone } from "@/lib/account-setup";
+import type { SavingsGoal } from "@/lib/goals";
 import { normalizeHouseholdName, parseSharedFunding } from "@/lib/household";
 import type {
   DisplayCurrency,
@@ -22,6 +23,8 @@ export type LocalSnapshot = {
   sharedFunding: SharedFunding;
   usdEnabled: boolean;
   carryoverEnabled: boolean;
+  goalsEnabled?: boolean;
+  savingsGoals?: SavingsGoal[];
 };
 
 /** Hay algo local que vale la pena subir en el primer login. */
@@ -35,7 +38,9 @@ export function hasLocalToMigrate(local: LocalSnapshot): boolean {
     local.sharedEnabled ||
     local.sharedFunding === "pool" ||
     local.usdEnabled === false ||
-    local.carryoverEnabled
+    local.carryoverEnabled ||
+    local.goalsEnabled === true ||
+    (local.savingsGoals?.length ?? 0) > 0
   );
 }
 
@@ -447,6 +452,7 @@ export type UserSettings = {
   sharedFunding: SharedFunding;
   usdEnabled: boolean;
   carryoverEnabled: boolean;
+  goalsEnabled: boolean;
   onboardingCompleted: boolean;
   /** False si la columna todavía no existe en la base. */
   onboardingTracked: boolean;
@@ -471,6 +477,26 @@ export function isMissingCarryoverColumn(error: {
   message?: string;
 } | null): boolean {
   return isMissingColumn(error, "carryover_enabled");
+}
+
+export function isMissingGoalsEnabledColumn(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  return isMissingColumn(error, "goals_enabled");
+}
+
+export function isMissingGoalsTable(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    message.includes("savings_goals")
+  );
 }
 
 export function isMissingRpc(
@@ -508,6 +534,7 @@ export function parseUserSettings(
     shared_funding?: string | null;
     usd_enabled?: boolean | null;
     carryover_enabled?: boolean | null;
+    goals_enabled?: boolean | null;
     onboarding_completed?: boolean | null;
   } | null,
 ): UserSettings {
@@ -518,6 +545,7 @@ export function parseUserSettings(
     sharedFunding: parseSharedFunding(data?.shared_funding),
     usdEnabled: data?.usd_enabled !== false,
     carryoverEnabled: data?.carryover_enabled === true,
+    goalsEnabled: data?.goals_enabled === true,
     onboardingCompleted: isOnboardingDone(data?.onboarding_completed),
     onboardingTracked:
       data != null && Object.prototype.hasOwnProperty.call(data, "onboarding_completed"),
@@ -525,7 +553,7 @@ export function parseUserSettings(
 }
 
 const SETTINGS_CORE =
-  "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled";
+  "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, goals_enabled";
 
 export async function fetchUserSettings(
   supabase: SupabaseClient,
@@ -535,6 +563,8 @@ export async function fetchUserSettings(
     `${SETTINGS_CORE}, shared_funding, onboarding_completed`,
     `${SETTINGS_CORE}, onboarding_completed`,
     `${SETTINGS_CORE}, shared_funding`,
+    "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, shared_funding, onboarding_completed",
+    "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, onboarding_completed",
     "display_currency, wallet_mode, shared_enabled, usd_enabled, shared_funding, onboarding_completed",
     "display_currency, wallet_mode, shared_enabled, usd_enabled, onboarding_completed",
     "display_currency, wallet_mode, shared_enabled, usd_enabled",
@@ -556,7 +586,8 @@ export async function fetchUserSettings(
     if (
       !isMissingOnboardingColumn(result.error) &&
       !isMissingSharedFundingColumn(result.error) &&
-      !isMissingCarryoverColumn(result.error)
+      !isMissingCarryoverColumn(result.error) &&
+      !isMissingGoalsEnabledColumn(result.error)
     ) {
       throw result.error;
     }
@@ -622,6 +653,149 @@ export async function saveCarryoverEnabledRemote(
     carryover_enabled: enabled,
   });
   if (error && !isMissingCarryoverColumn(error)) throw error;
+}
+
+export async function saveGoalsEnabledRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("user_settings").upsert({
+    user_id: userId,
+    goals_enabled: enabled,
+  });
+  if (error && !isMissingGoalsEnabledColumn(error)) throw error;
+}
+
+type DbSavingsGoal = {
+  id: string;
+  user_id: string;
+  name: string;
+  target_amount: number;
+  currency: string;
+  saved_amount: number;
+  monthly_plan: number | null;
+  deduct_from_disponible?: boolean | null;
+  target_date: string | null;
+  created_at: string;
+  completed_at: string | null;
+};
+
+function mapGoal(row: DbSavingsGoal): SavingsGoal {
+  return {
+    id: row.id,
+    name: row.name || "Mi meta",
+    targetAmount: Number(row.target_amount),
+    currency: row.currency === "USD" ? "USD" : "ARS",
+    savedAmount: Number(row.saved_amount),
+    monthlyPlan:
+      row.monthly_plan === null || row.monthly_plan === undefined
+        ? null
+        : Number(row.monthly_plan),
+    deductFromDisponible: row.deduct_from_disponible !== false,
+    targetDate: row.target_date,
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
+  };
+}
+
+function goalToRow(goal: SavingsGoal, userId: string) {
+  return {
+    id: goal.id,
+    user_id: userId,
+    name: goal.name,
+    target_amount: goal.targetAmount,
+    currency: goal.currency,
+    saved_amount: goal.savedAmount,
+    monthly_plan: goal.monthlyPlan,
+    deduct_from_disponible: goal.deductFromDisponible,
+    target_date: goal.targetDate,
+    created_at: goal.createdAt,
+    completed_at: goal.completedAt,
+  };
+}
+
+export async function fetchSavingsGoals(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SavingsGoal[]> {
+  const attempts = [
+    "id, user_id, name, target_amount, currency, saved_amount, monthly_plan, deduct_from_disponible, target_date, created_at, completed_at",
+    "id, user_id, name, target_amount, currency, saved_amount, monthly_plan, target_date, created_at, completed_at",
+  ];
+
+  let lastError: { code?: string; message?: string } | null = null;
+  for (const columns of attempts) {
+    const { data, error } = await supabase
+      .from("savings_goals")
+      .select(columns)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+
+    if (!error) {
+      return ((data as unknown as DbSavingsGoal[] | null) ?? []).map(mapGoal);
+    }
+    lastError = error;
+    if (isMissingGoalsTable(error)) return [];
+    if (!isMissingColumn(error, "deduct_from_disponible")) throw error;
+  }
+
+  throw lastError ?? new Error("No se pudieron leer las metas");
+}
+
+export async function upsertSavingsGoalRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  goal: SavingsGoal,
+): Promise<void> {
+  const row = goalToRow(goal, userId);
+  const { error } = await supabase
+    .from("savings_goals")
+    .upsert(row, { onConflict: "id" });
+  if (!error) return;
+  if (isMissingGoalsTable(error)) return;
+  if (isMissingColumn(error, "deduct_from_disponible")) {
+    const { deduct_from_disponible: _omit, ...without } = row;
+    const retry = await supabase
+      .from("savings_goals")
+      .upsert(without, { onConflict: "id" });
+    if (retry.error && !isMissingGoalsTable(retry.error)) throw retry.error;
+    return;
+  }
+  throw error;
+}
+
+export async function deleteSavingsGoalRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  goalId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("savings_goals")
+    .delete()
+    .eq("id", goalId)
+    .eq("user_id", userId);
+  if (error && !isMissingGoalsTable(error)) throw error;
+}
+
+export async function replaceSavingsGoalsRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  goals: SavingsGoal[],
+): Promise<void> {
+  const { error: delError } = await supabase
+    .from("savings_goals")
+    .delete()
+    .eq("user_id", userId);
+  if (delError) {
+    if (isMissingGoalsTable(delError)) return;
+    throw delError;
+  }
+  if (goals.length === 0) return;
+  const { error } = await supabase
+    .from("savings_goals")
+    .insert(goals.map((goal) => goalToRow(goal, userId)));
+  if (error && !isMissingGoalsTable(error)) throw error;
 }
 
 export async function fetchWalletMode(
@@ -995,6 +1169,7 @@ export async function migrateLocalIfEmpty(
     shared_enabled: local.sharedEnabled,
     usd_enabled: local.usdEnabled,
     carryover_enabled: local.carryoverEnabled,
+    goals_enabled: local.goalsEnabled === true,
     onboarding_completed: true,
   };
   const firstSettings = await supabase.from("user_settings").upsert(settingsPayload);
@@ -1006,9 +1181,49 @@ export async function migrateLocalIfEmpty(
       shared_enabled: settingsPayload.shared_enabled,
       usd_enabled: settingsPayload.usd_enabled,
       carryover_enabled: settingsPayload.carryover_enabled,
+      goals_enabled: settingsPayload.goals_enabled,
     });
-    if (retry.error) throw retry.error;
+    if (retry.error && isMissingGoalsEnabledColumn(retry.error)) {
+      const retryNoGoals = await supabase.from("user_settings").upsert({
+        user_id: settingsPayload.user_id,
+        display_currency: settingsPayload.display_currency,
+        wallet_mode: settingsPayload.wallet_mode,
+        shared_enabled: settingsPayload.shared_enabled,
+        usd_enabled: settingsPayload.usd_enabled,
+        carryover_enabled: settingsPayload.carryover_enabled,
+      });
+      if (retryNoGoals.error) throw retryNoGoals.error;
+    } else if (retry.error) {
+      throw retry.error;
+    }
+  } else if (firstSettings.error && isMissingGoalsEnabledColumn(firstSettings.error)) {
+    const retry = await supabase.from("user_settings").upsert({
+      user_id: settingsPayload.user_id,
+      display_currency: settingsPayload.display_currency,
+      wallet_mode: settingsPayload.wallet_mode,
+      shared_enabled: settingsPayload.shared_enabled,
+      usd_enabled: settingsPayload.usd_enabled,
+      carryover_enabled: settingsPayload.carryover_enabled,
+      onboarding_completed: true,
+    });
+    if (retry.error && isMissingOnboardingColumn(retry.error)) {
+      const retryCore = await supabase.from("user_settings").upsert({
+        user_id: settingsPayload.user_id,
+        display_currency: settingsPayload.display_currency,
+        wallet_mode: settingsPayload.wallet_mode,
+        shared_enabled: settingsPayload.shared_enabled,
+        usd_enabled: settingsPayload.usd_enabled,
+        carryover_enabled: settingsPayload.carryover_enabled,
+      });
+      if (retryCore.error) throw retryCore.error;
+    } else if (retry.error) {
+      throw retry.error;
+    }
   } else if (firstSettings.error) {
     throw firstSettings.error;
+  }
+
+  if ((local.savingsGoals?.length ?? 0) > 0) {
+    await replaceSavingsGoalsRemote(supabase, userId, local.savingsGoals ?? []);
   }
 }

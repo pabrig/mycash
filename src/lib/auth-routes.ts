@@ -7,6 +7,19 @@ export function isPublicPath(pathname: string): boolean {
   );
 }
 
+/** Guía FAQ post-setup: `/onboarding?guia=1` (con o sin `tema`). */
+export function isGuideRequest(
+  pathname: string,
+  search: string | URLSearchParams | null | undefined,
+): boolean {
+  if (pathname !== "/onboarding") return false;
+  const params =
+    typeof search === "string"
+      ? new URLSearchParams(search.startsWith("?") ? search.slice(1) : search)
+      : search ?? new URLSearchParams();
+  return params.get("guia") === "1";
+}
+
 /** Login / join / primer armado de cuenta: sin sidebar ni nav. */
 export function isAuthShellPath(pathname: string): boolean {
   return (

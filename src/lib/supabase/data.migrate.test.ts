@@ -95,6 +95,8 @@ describe("parseUserSettings", () => {
     expect(parseUserSettings({ carryover_enabled: true }).carryoverEnabled).toBe(
       true,
     );
+    expect(parseUserSettings(null).goalsEnabled).toBe(false);
+    expect(parseUserSettings({ goals_enabled: true }).goalsEnabled).toBe(true);
   });
 });
 

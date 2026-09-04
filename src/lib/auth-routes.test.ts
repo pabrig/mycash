@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isAuthShellPath,
+  isGuideRequest,
   isLocalDevHost,
   isOnboardingPath,
   isPublicPath,
@@ -37,6 +38,18 @@ describe("isOnboardingPath", () => {
     expect(isOnboardingPath("/onboarding")).toBe(true);
     expect(isOnboardingPath("/cuenta")).toBe(false);
     expect(isOnboardingPath("/login")).toBe(false);
+  });
+});
+
+describe("isGuideRequest", () => {
+  it("detects FAQ guide query on onboarding", () => {
+    expect(isGuideRequest("/onboarding", "guia=1")).toBe(true);
+    expect(isGuideRequest("/onboarding", "?guia=1&tema=metas")).toBe(true);
+    expect(
+      isGuideRequest("/onboarding", new URLSearchParams("guia=1&tema=arrastre")),
+    ).toBe(true);
+    expect(isGuideRequest("/onboarding", "")).toBe(false);
+    expect(isGuideRequest("/cuenta", "guia=1")).toBe(false);
   });
 });
 

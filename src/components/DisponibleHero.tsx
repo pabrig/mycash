@@ -9,10 +9,19 @@ import {
 } from "@/hooks/useDisplayAmount";
 import { formatMoney, todayIso } from "@/lib/format";
 import { priorMonthsRangeLabel } from "@/lib/carryover-copy";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { IconChevronDown } from "@/components/ui/Icons";
 
 export function DisponibleHero() {
-  const { walletMode, summary, monthBalance, month, sharedEnabled } = useFinance();
+  const {
+    walletMode,
+    summary,
+    monthBalance,
+    month,
+    sharedEnabled,
+    goalsEnabled,
+    goalsReservedArs,
+  } = useFinance();
   const fmt = useDisplayAmount();
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -27,6 +36,12 @@ export function DisponibleHero() {
   const expenses = summary.totalExpenses;
   const shared = summary.sharedExpenses;
   const priorRange = priorMonthsRangeLabel(month);
+  const showGoalsReserve =
+    isFeatureEnabled("savingsGoals") &&
+    goalsEnabled &&
+    goalsReservedArs > 0;
+  const freeAfterGoals = totalDisponible - goalsReservedArs;
+  const [goalsOpen, setGoalsOpen] = useState(false);
 
   return (
     <section className="animate-slide-up space-y-3">
@@ -55,6 +70,51 @@ export function DisponibleHero() {
               {fmt(monthDisponible)}
             </p>
           )}
+
+          {showGoalsReserve ? (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setGoalsOpen((v) => !v)}
+                aria-expanded={goalsOpen}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl bg-[var(--card-muted)] px-3.5 py-3 text-left transition active:opacity-80"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium text-zinc-400">
+                    Tras metas este mes
+                  </p>
+                  <p
+                    className={`mt-0.5 text-sm font-semibold tabular-nums ${
+                      freeAfterGoals >= 0
+                        ? "text-zinc-800 dark:text-zinc-100"
+                        : "amount-negative"
+                    }`}
+                  >
+                    Libre {fmt(freeAfterGoals)}
+                  </p>
+                </div>
+                <IconChevronDown
+                  className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
+                    goalsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {goalsOpen ? (
+                <div className="mt-2 space-y-1 px-1">
+                  <p className="text-xs text-zinc-500">
+                    Contado en metas:{" "}
+                    <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
+                      {fmt(goalsReservedArs)}
+                    </span>
+                  </p>
+                  <p className="text-[11px] leading-snug text-zinc-400">
+                    Aportes con “resta del disponible”. El total de arriba no
+                    cambia; esto es lo que te queda libre para gastar.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <button
             type="button"
@@ -95,6 +155,20 @@ export function DisponibleHero() {
                 tone="shared"
                 className="col-span-2 sm:col-span-1"
               />
+            )}
+            {showGoalsReserve && (
+              <>
+                <MacroStat
+                  label="Metas (mes)"
+                  value={fmt(goalsReservedArs)}
+                  tone="shared"
+                />
+                <MacroStat
+                  label="Libre tras metas"
+                  value={fmt(freeAfterGoals)}
+                  tone={freeAfterGoals >= 0 ? "income" : "expense"}
+                />
+              </>
             )}
           </div>
         )}

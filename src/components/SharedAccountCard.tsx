@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { ChoiceOption } from "@/components/ChoiceOption";
 import { SharedSetupSheet } from "@/components/SharedSetupSheet";
 import { UserAvatar } from "@/components/UserAvatar";
-import { SHARED_FUNDING_OPTIONS } from "@/lib/account-setup";
+import { guideHref, SHARED_FUNDING_OPTIONS } from "@/lib/account-setup";
 import {
   closeHouseholdConfirmMessage,
   HOUSEHOLD_NAME_MAX,
@@ -241,6 +242,12 @@ export function SharedAccountCard() {
             />
           </button>
         </div>
+        <Link
+          href={guideHref("compartido")}
+          className="text-left text-xs font-semibold text-teal-700 dark:text-teal-400"
+        >
+          ¿Cómo funciona Compartido?
+        </Link>
 
         {sharedEnabled && configured && households.length > 0 && (
           <div className="space-y-2">

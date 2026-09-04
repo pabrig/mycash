@@ -2,11 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   canContinueOnboarding,
   greetingName,
+  guideHref,
+  HOWTO_GOALS,
   HOWTO_MOVEMENTS,
   HOWTO_SHARED,
   HOWTO_SPLIT,
   isOnboardingDone,
+  listGuideTopics,
+  onboardingGuideSteps,
   onboardingSteps,
+  parseGuideTopic,
   resolveOnboardingCompleted,
   resolvedWalletMode,
   setupSummaryLines,
@@ -28,6 +33,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_goals",
       "howto_split",
       "done",
     ]);
@@ -44,6 +50,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_goals",
       "howto_split",
       "done",
     ]);
@@ -65,6 +72,7 @@ describe("onboardingSteps", () => {
       "shared_funding",
       "howto_movements",
       "howto_period",
+      "howto_goals",
       "howto_split",
       "howto_shared",
       "done",
@@ -85,6 +93,7 @@ describe("onboardingSteps", () => {
       "shared_funding",
       "howto_movements",
       "howto_period",
+      "howto_goals",
       "howto_split",
       "howto_shared",
       "done",
@@ -105,6 +114,7 @@ describe("onboardingSteps", () => {
       "shared",
       "howto_movements",
       "howto_period",
+      "howto_goals",
       "howto_split",
       "done",
     ]);
@@ -139,6 +149,75 @@ describe("onboardingSteps", () => {
       }),
     ).toContain("howto_split");
   });
+
+  it("always explains savings goals", () => {
+    expect(
+      onboardingSteps({
+        moneyProfile: "ars_only",
+        askShared: false,
+        sharedEnabled: false,
+        showSharedHowTo: false,
+      }),
+    ).toContain("howto_goals");
+  });
+
+  it("can hide the goals how-to behind a feature flag", () => {
+    expect(
+      onboardingSteps({
+        moneyProfile: "ars_only",
+        askShared: false,
+        sharedEnabled: false,
+        showSharedHowTo: false,
+        includeGoalsHowTo: false,
+      }),
+    ).not.toContain("howto_goals");
+  });
+});
+
+describe("onboardingGuideSteps", () => {
+  it("skips setup questions and keeps the how-to screens", () => {
+    expect(onboardingGuideSteps({ showSharedHowTo: false })).toEqual([
+      "welcome",
+      "howto_movements",
+      "howto_period",
+      "howto_goals",
+      "howto_split",
+      "done",
+    ]);
+    expect(onboardingGuideSteps({ showSharedHowTo: true })).toContain(
+      "howto_shared",
+    );
+  });
+
+  it("can omit goals how-to", () => {
+    expect(
+      onboardingGuideSteps({
+        showSharedHowTo: false,
+        includeGoalsHowTo: false,
+      }),
+    ).not.toContain("howto_goals");
+  });
+});
+
+describe("guide FAQ topics", () => {
+  it("parses tema ids and builds hrefs", () => {
+    expect(parseGuideTopic("metas")).toBe("metas");
+    expect(parseGuideTopic("nope")).toBeNull();
+    expect(guideHref()).toBe("/onboarding?guia=1");
+    expect(guideHref("arrastre")).toBe("/onboarding?guia=1&tema=arrastre");
+  });
+
+  it("lists cuenta options for settings help", () => {
+    const topics = listGuideTopics({ includeGoals: true, includeShared: true });
+    const ids = topics.map((t) => t.id);
+    expect(ids).toContain("arrastre");
+    expect(ids).toContain("plata");
+    expect(ids).toContain("metas");
+    expect(ids).toContain("compartido");
+    expect(listGuideTopics({ includeGoals: false }).map((t) => t.id)).not.toContain(
+      "metas",
+    );
+  });
 });
 
 describe("SHARED_FUNDING_OPTIONS", () => {
@@ -158,6 +237,18 @@ describe("HOWTO_MOVEMENTS", () => {
     ].join(" ");
     expect(text).toMatch(/ya pasó/i);
     expect(text).toMatch(/viene/i);
+  });
+});
+
+describe("HOWTO_GOALS", () => {
+  it("explains optional goals in plain language", () => {
+    const text = [
+      HOWTO_GOALS.sub,
+      ...HOWTO_GOALS.items.map((item) => `${item.title} ${item.body}`),
+    ].join(" ");
+    expect(text).toMatch(/opcionales/i);
+    expect(text).toMatch(/cuenta/i);
+    expect(text).toMatch(/recordatorio|resta del disponible/i);
   });
 });
 

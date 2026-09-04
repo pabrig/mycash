@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { type ReactNode, Suspense, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { FinanceProvider, useFinance } from "@/context/FinanceContext";
 import { BottomNav } from "@/components/BottomNav";
@@ -13,7 +13,7 @@ import {
   variantFromPath,
 } from "@/components/ui/LoadingScreen";
 import { useIsClient } from "@/hooks/useIsClient";
-import { isAuthShellPath, isLocalDevHost, isOnboardingPath } from "@/lib/auth-routes";
+import { isAuthShellPath, isGuideRequest, isLocalDevHost, isOnboardingPath } from "@/lib/auth-routes";
 
 function isStandaloneDisplay() {
   const nav = navigator as Navigator & { standalone?: boolean };
@@ -48,9 +48,11 @@ export function Providers({ children }: { children: ReactNode }) {
           className="h-[env(safe-area-inset-top,0px)] shrink-0 bg-[var(--primary)] md:hidden"
           aria-hidden
         />
-        <AppFrame pathname={pathname} hydrated={hydrated}>
-          {children}
-        </AppFrame>
+        <Suspense fallback={null}>
+          <AppFrame pathname={pathname} hydrated={hydrated}>
+            {children}
+          </AppFrame>
+        </Suspense>
         <ServiceWorkerRegister />
       </FinanceProvider>
     </AuthProvider>
@@ -67,13 +69,15 @@ function AppFrame({
   hydrated: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { configured, isAuthenticated } = useAuth();
   const { ready, onboardingCompleted } = useFinance();
+  const guideOnly = isGuideRequest(pathname, searchParams);
 
   const onOnboarding = isOnboardingPath(pathname);
   const onJoin = pathname.startsWith("/join/");
   const needsOnboarding =
-    configured && isAuthenticated && ready && !onboardingCompleted;
+    configured && isAuthenticated && ready && !onboardingCompleted && !guideOnly;
   const blockApp = needsOnboarding && !onOnboarding && !onJoin;
   const hideChrome = isAuthShellPath(pathname) || blockApp;
 
@@ -83,7 +87,10 @@ function AppFrame({
   }, [needsOnboarding, onOnboarding, onJoin, router]);
 
   useEffect(() => {
-    if (!onOnboarding || !configured || !isAuthenticated) return;
+    if (!onOnboarding) return;
+    // FAQ / guía: siempre permitida (local o producción).
+    if (guideOnly) return;
+    if (!configured || !isAuthenticated) return;
     if (!ready || !onboardingCompleted) return;
     if (isLocalDevHost(window.location.hostname)) return;
     router.replace("/");
@@ -93,6 +100,7 @@ function AppFrame({
     isAuthenticated,
     ready,
     onboardingCompleted,
+    guideOnly,
     router,
   ]);
 

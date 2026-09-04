@@ -15,6 +15,11 @@ import {
   yearHeroCopy,
   yearListCopy,
 } from "@/lib/annual-copy";
+import { goalsYearNoteCopy } from "@/lib/goals-copy";
+import {
+  projectedYearReserved,
+} from "@/lib/goals";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import {
   buildFinanceInsights,
   buildMonthEvolution,
@@ -43,6 +48,9 @@ export function YearReview({
     annualSummary,
     annualSummaryArs,
     sharedEnabled,
+    goalsEnabled,
+    savingsGoals,
+    goalsReservedArs,
     setPeriod,
   } = useFinance();
   const formatArs = useFormatMoney();
@@ -100,6 +108,25 @@ export function YearReview({
   );
 
   const categoryCopy = financeCategoryCopy();
+
+  const goalsYear = useMemo(() => {
+    if (!isFeatureEnabled("savingsGoals") || !goalsEnabled) return null;
+    const yearProjected = projectedYearReserved(goalsReservedArs, year);
+    return goalsYearNoteCopy({
+      goals: savingsGoals,
+      yearDisponibleArs: annualSummaryArs.disponible,
+      monthlyReservedArs: goalsReservedArs,
+      yearProjectedReservedArs: yearProjected,
+      formatArs,
+    });
+  }, [
+    goalsEnabled,
+    savingsGoals,
+    goalsReservedArs,
+    year,
+    annualSummaryArs.disponible,
+    formatArs,
+  ]);
 
   const openMonth = (nextMonth: number) => {
     setPeriod(year, nextMonth);
@@ -179,7 +206,7 @@ export function YearReview({
           />
         </div>
 
-        {(mix || shared) && (
+        {(mix || shared || goalsYear) && (
           <div className="space-y-5 border-t border-zinc-100 px-4 py-5 dark:border-zinc-800/80 sm:px-6">
             {mix && (
               <ShareBlock
@@ -212,6 +239,29 @@ export function YearReview({
                 }}
               />
             )}
+            {goalsYear ? (
+              <div>
+                <p className="text-[11px] font-medium text-zinc-400">
+                  {goalsYear.title}
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                  {goalsYear.progress}
+                </p>
+                {goalsYear.planLine ? (
+                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+                    {goalsYear.planLine}
+                  </p>
+                ) : null}
+                {goalsYear.freeLine ? (
+                  <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
+                    {goalsYear.freeLine}
+                  </p>
+                ) : null}
+                <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">
+                  {goalsYear.hint}
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

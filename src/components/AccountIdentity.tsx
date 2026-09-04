@@ -4,10 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useFinance } from "@/context/FinanceContext";
 import { UserAvatar } from "@/components/UserAvatar";
-import { useIsClient } from "@/hooks/useIsClient";
-import { isLocalDevHost } from "@/lib/auth-routes";
+import { guideHref } from "@/lib/account-setup";
 
 export function AccountIdentity() {
   const {
@@ -18,11 +16,7 @@ export function AccountIdentity() {
     signOut,
     updateDisplayName,
   } = useAuth();
-  const { replayOnboarding } = useFinance();
   const router = useRouter();
-  const isClient = useIsClient();
-  const canReplayOnboarding =
-    isClient && isLocalDevHost(window.location.hostname);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile?.displayName ?? "");
   const [busy, setBusy] = useState(false);
@@ -35,6 +29,12 @@ export function AccountIdentity() {
         <p className="text-xs leading-relaxed text-zinc-400">
           Esta app guarda todo en este celular.
         </p>
+        <Link
+          href={guideHref()}
+          className="block w-full rounded-xl border border-zinc-200 py-2.5 text-center text-sm text-zinc-600 dark:border-zinc-700"
+        >
+          Cómo funciona
+        </Link>
       </section>
     );
   }
@@ -55,6 +55,12 @@ export function AccountIdentity() {
         <p className="text-[11px] leading-relaxed text-zinc-400">
           Te mandamos un link al mail. Sin contraseña.
         </p>
+        <Link
+          href={guideHref()}
+          className="block text-center text-xs font-semibold text-teal-700 dark:text-teal-400"
+        >
+          Cómo funciona
+        </Link>
       </section>
     );
   }
@@ -135,18 +141,12 @@ export function AccountIdentity() {
       <p className="text-xs text-teal-600 dark:text-teal-400">
         Estás adentro. Tu plata se guarda en la nube.
       </p>
-      {canReplayOnboarding ? (
-        <button
-          type="button"
-          onClick={() => {
-            replayOnboarding();
-            router.push("/onboarding");
-          }}
-          className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
-        >
-          Ver el recorrido de nuevo
-        </button>
-      ) : null}
+      <Link
+        href={guideHref()}
+        className="block w-full rounded-xl border border-zinc-200 py-2.5 text-center text-sm text-zinc-600 dark:border-zinc-700"
+      >
+        Cómo funciona
+      </Link>
       <button
         type="button"
         onClick={() => {
