@@ -32,13 +32,21 @@ export function categorySwatch(category: string, index: number): string {
 export function SharedCategoryMix({
   categories,
   formatArs,
-  formatUsd
+  formatUsd,
+  title,
+  empty,
 }: {
   categories: SharedCategorySlice[];
   formatArs: (amount: number) => string;
   formatUsd: (amount: number) => string;
+  title?: string;
+  empty?: string;
 }) {
-  const copy = sharedCategoryCopy();
+  const defaults = sharedCategoryCopy();
+  const copy = {
+    title: title ?? defaults.title,
+    empty: empty ?? defaults.empty,
+  };
   const headline = categories.slice(0, 2);
 
   return (

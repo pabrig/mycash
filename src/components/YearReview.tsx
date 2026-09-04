@@ -2,6 +2,9 @@
 
 import { useMemo } from "react";
 import { useFinance } from "@/context/FinanceContext";
+import { FinanceEvolution } from "@/components/FinanceEvolution";
+import { FinanceInsights } from "@/components/FinanceInsights";
+import { SharedCategoryMix } from "@/components/SharedCategoryMix";
 import { useFormatMoney, useFormatUsd } from "@/hooks/useDisplayAmount";
 import { currentPeriod, formatMoney } from "@/lib/format";
 import {
@@ -12,6 +15,14 @@ import {
   yearHeroCopy,
   yearListCopy,
 } from "@/lib/annual-copy";
+import {
+  buildFinanceInsights,
+  buildMonthEvolution,
+  computeExpenseCategoryMix,
+  financeCategoryCopy,
+  monthDeltaCopy,
+  monthDeltaTone,
+} from "@/lib/finance-analysis";
 import {
   computeMonthlyBreakdown,
   getRateForMonth,
@@ -61,6 +72,39 @@ export function YearReview({
       computeMonthlyBreakdown(balanceMovements, year, rates).slice(0, monthsShown),
     [balanceMovements, year, rates, monthsShown],
   );
+
+  const evolution = useMemo(
+    () => buildMonthEvolution(breakdown, monthsShown),
+    [breakdown, monthsShown],
+  );
+
+  const categories = useMemo(
+    () => computeExpenseCategoryMix(balanceMovements, year, rates),
+    [balanceMovements, year, rates],
+  );
+
+  const insights = useMemo(
+    () =>
+      buildFinanceInsights(
+        evolution,
+        categories,
+        annualSummaryArs.totalIncome,
+        annualSummaryArs.disponible,
+      ),
+    [
+      evolution,
+      categories,
+      annualSummaryArs.totalIncome,
+      annualSummaryArs.disponible,
+    ],
+  );
+
+  const categoryCopy = financeCategoryCopy();
+
+  const openMonth = (nextMonth: number) => {
+    setPeriod(year, nextMonth);
+    onOpenMonth(nextMonth);
+  };
 
   const positive = annualSummaryArs.disponible >= 0;
 
@@ -172,6 +216,27 @@ export function YearReview({
         )}
       </div>
 
+      <FinanceInsights insights={insights} />
+
+      <FinanceEvolution
+        points={evolution}
+        selectedMonth={month}
+        formatArs={formatArs}
+        onSelectMonth={openMonth}
+      />
+
+      {categories.length > 0 && (
+        <div className="bento !px-4 !py-5 sm:!px-6">
+          <SharedCategoryMix
+            categories={categories}
+            formatArs={formatArs}
+            formatUsd={formatUsd}
+            title={categoryCopy.title}
+            empty={categoryCopy.empty}
+          />
+        </div>
+      )}
+
       <div>
         <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
           {list.title}
@@ -198,15 +263,15 @@ export function YearReview({
             const monthRate = getRateForMonth(rates, snap.year, snap.month);
             const usd = monthlySummaryToUsd(snap.summary, monthRate);
             const savedPositive = snap.summary.disponible >= 0;
+            const point = evolution.find((p) => p.month === snap.month);
+            const delta = monthDeltaCopy(point?.vsPrevDisponible ?? null);
+            const deltaTone = monthDeltaTone(point?.vsPrevDisponible ?? null);
 
             return (
               <li key={snap.month}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setPeriod(year, snap.month);
-                    onOpenMonth(snap.month);
-                  }}
+                  onClick={() => openMonth(snap.month)}
                   className={`w-full px-4 py-3.5 text-left transition ${
                     isSelected
                       ? "bg-[var(--card-muted)]"
@@ -223,7 +288,20 @@ export function YearReview({
                           </span>
                         )}
                       </span>
-                      {hasActivity && (
+                      {hasActivity && delta && (
+                        <span
+                          className={`mt-0.5 block text-[10px] font-medium tabular-nums ${
+                            deltaTone === "positive"
+                              ? "text-teal-600 dark:text-teal-400"
+                              : deltaTone === "warning"
+                                ? "text-rose-500"
+                                : "text-zinc-400"
+                          }`}
+                        >
+                          {delta === "Igual" ? "Igual al mes ant." : `Vs ant. ${delta}`}
+                        </span>
+                      )}
+                      {hasActivity && !delta && (
                         <span className="mt-0.5 block text-[10px] tabular-nums text-zinc-400">
                           {isCurrent ? "dólar" : "cierre"}{" "}
                           {formatMoney(monthRate.usdToArs)}

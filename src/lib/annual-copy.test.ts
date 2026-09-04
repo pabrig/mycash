@@ -78,6 +78,6 @@ describe("year mix copy", () => {
 
   it("hides shared when nothing was annotated with others", () => {
     expect(sharedYearCopy(0, 100)).toBeNull();
-    expect(yearListCopy().subtitle).toContain("Ahorro");
+    expect(yearListCopy().subtitle).toContain("ahorro");
   });
 });
