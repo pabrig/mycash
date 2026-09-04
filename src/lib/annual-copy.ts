@@ -107,8 +107,8 @@ export function savingsRateCopy(
 
 export function yearListCopy(): { title: string; subtitle: string } {
   return {
-    title: "Mes a mes",
-    subtitle: "La columna Ahorro es solo ese mes. El total está arriba.",
+    title: "Detalle mes a mes",
+    subtitle: "Ingreso, gasto y ahorro de cada mes. El total del año está arriba.",
   };
 }
 
