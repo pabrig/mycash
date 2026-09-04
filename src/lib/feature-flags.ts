@@ -22,12 +22,13 @@ const FLAG_ENV: Record<FeatureFlag, string> = {
 };
 
 /**
- * Defaults seguros:
- * - skipAuth: siempre off (solo a mano en local)
- * - features nuevos: on en development, off en production
+ * Defaults:
+ * - skipAuth: off (solo a mano en local)
+ * - savingsGoals: on (feature releaseada; apagá con NEXT_PUBLIC_FF_SAVINGS_GOALS=0)
  */
 function defaultFor(flag: FeatureFlag): boolean {
   if (flag === "skipAuth") return false;
+  if (flag === "savingsGoals") return true;
   return process.env.NODE_ENV === "development";
 }
 
