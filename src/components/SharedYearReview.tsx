@@ -22,24 +22,14 @@ export function SharedYearReview({
   onOpenMonth: (month: number) => void;
 }) {
   const { household } = useAuth();
-  const {
-    year,
-    month,
-    sharedMovements,
-    rates,
-    cloudEnabled,
-    setPeriod,
-  } = useFinance();
+  const { year, month, sharedMovements, rates, cloudEnabled, setPeriod } =
+    useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
 
   const ofGroup = useMemo(
     () =>
-      householdSharedMovements(
-        sharedMovements,
-        household?.id,
-        cloudEnabled,
-      ),
+      householdSharedMovements(sharedMovements, household?.id, cloudEnabled),
     [sharedMovements, household?.id, cloudEnabled],
   );
 
@@ -79,19 +69,19 @@ export function SharedYearReview({
       />
 
       <div>
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        <h2 className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
           {list.title}
         </h2>
-        <p className="mt-0.5 text-xs text-zinc-400">{list.subtitle}</p>
+        <p className="mt-0.5 text-xs text-[var(--muted-fg)]">{list.subtitle}</p>
       </div>
 
       <div className="bento overflow-hidden !p-0">
-        <div className="grid grid-cols-[minmax(4.5rem,1fr)_1fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+        <div className="grid grid-cols-[minmax(4.5rem,1fr)_1fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
           <span>Mes</span>
           <span className="text-right">Total</span>
         </div>
 
-        <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+        <ul className="divide-y divide-[var(--card-border)]/80">
           {breakdown.map((snap) => {
             const isCurrent =
               snap.year === now.year &&
@@ -108,18 +98,14 @@ export function SharedYearReview({
                     setPeriod(year, snap.month);
                     onOpenMonth(snap.month);
                   }}
-                  className={`w-full px-4 py-3.5 text-left transition ${
-                    isSelected
-                      ? "bg-[var(--card-muted)]"
-                      : "active:bg-[var(--card-muted)]"
-                  }`}
+                  className={`w-full px-4 py-3.5 text-left transition ${ isSelected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]" }`}
                 >
                   <div className="grid grid-cols-[minmax(4.5rem,1fr)_1fr] items-start gap-x-2">
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold">
                         {MONTH_NAMES[snap.month - 1].slice(0, 3)}
                         {isCurrent && (
-                          <span className="ml-1.5 text-[10px] font-medium text-teal-600">
+                          <span className="ml-1.5 text-[10px] font-medium text-primary">
                             hoy
                           </span>
                         )}
@@ -131,12 +117,12 @@ export function SharedYearReview({
                         <span className="block truncate text-sm font-semibold tabular-nums amount-negative">
                           {formatArs(snap.totalArs)}
                         </span>
-                        <span className="mt-0.5 block truncate text-[10px] tabular-nums text-zinc-400">
+                        <span className="mt-0.5 block truncate text-[10px] tabular-nums text-[var(--muted-fg)]">
                           {formatUsd(snap.totalUsd)}
                         </span>
                       </span>
                     ) : (
-                      <span className="self-center text-right text-xs text-zinc-300 dark:text-zinc-600">
+                      <span className="self-center text-right text-xs text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
                         Sin nada
                       </span>
                     )}
@@ -148,7 +134,7 @@ export function SharedYearReview({
         </ul>
       </div>
 
-      <p className="text-center text-xs text-zinc-400">
+      <p className="text-center text-xs text-[var(--muted-fg)]">
         Tocá un mes para ver el día a día
       </p>
     </section>

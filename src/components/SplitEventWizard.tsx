@@ -42,17 +42,19 @@ export function SplitEventWizard() {
 
   return (
     <div className="space-y-6">
-      <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+      <p className="text-xs font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
         Paso {step} de 2
       </p>
 
       {step === 1 ? (
         <section className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold tracking-tight">¿Qué están compartiendo?</h2>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500">
-              Un viaje, un asado, un finde. Después vas cargando lo que pague cada
-              uno.
+            <h2 className="text-xl font-bold tracking-tight">
+              ¿Qué están compartiendo?
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
+              Un viaje, un asado, un finde. Después vas cargando lo que pague
+              cada uno.
             </p>
           </div>
           <input
@@ -65,7 +67,9 @@ export function SplitEventWizard() {
           />
           <div className="grid grid-cols-2 gap-3">
             <label className="space-y-1.5">
-              <span className="text-xs font-medium text-zinc-500">Desde</span>
+              <span className="text-xs font-medium text-[var(--muted-fg)]">
+                Desde
+              </span>
               <input
                 type="date"
                 value={startDate}
@@ -74,7 +78,9 @@ export function SplitEventWizard() {
               />
             </label>
             <label className="space-y-1.5">
-              <span className="text-xs font-medium text-zinc-500">Hasta</span>
+              <span className="text-xs font-medium text-[var(--muted-fg)]">
+                Hasta
+              </span>
               <input
                 type="date"
                 value={endDate}
@@ -84,9 +90,13 @@ export function SplitEventWizard() {
             </label>
           </div>
           {!datesOk && (
-            <p className="text-sm text-rose-500">La fecha hasta no puede ser antes.</p>
+            <p className="text-sm text-[var(--expense)]">
+              La fecha hasta no puede ser antes.
+            </p>
           )}
-          <p className="text-xs text-zinc-400">Las fechas son opcionales.</p>
+          <p className="text-xs text-[var(--muted-fg)]">
+            Las fechas son opcionales.
+          </p>
           <button
             type="button"
             disabled={!canContinue}
@@ -100,9 +110,9 @@ export function SplitEventWizard() {
         <section className="space-y-4">
           <div>
             <h2 className="text-xl font-bold tracking-tight">¿Quiénes van?</h2>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500">
-              Marcate a vos. Si alguien no pagó nada, igual entra: se divide entre
-              todos.
+            <p className="mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
+              Marcate a vos. Si alguien no pagó nada, igual entra: se divide
+              entre todos.
             </p>
           </div>
           <ul className="space-y-2">
@@ -117,7 +127,9 @@ export function SplitEventWizard() {
                   onChange={(e) =>
                     setPeople((prev) =>
                       prev.map((p) =>
-                        p.key === person.key ? { ...p, name: e.target.value } : p,
+                        p.key === person.key
+                          ? { ...p, name: e.target.value }
+                          : p,
                       ),
                     )
                   }
@@ -128,11 +140,7 @@ export function SplitEventWizard() {
                 <button
                   type="button"
                   onClick={() => setMe(person.key)}
-                  className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold transition active:scale-95 ${
-                    person.isMe
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "text-zinc-400"
-                  }`}
+                  className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold transition active:scale-95 ${ person.isMe ? "bg-[var(--cta)] text-[var(--cta-fg)]" : "text-[var(--muted-fg)]" }`}
                 >
                   yo
                 </button>
@@ -141,11 +149,12 @@ export function SplitEventWizard() {
                   onClick={() => {
                     if (people.length <= 2) return;
                     const next = people.filter((p) => p.key !== person.key);
-                    if (person.isMe && next[0]) next[0] = { ...next[0], isMe: true };
+                    if (person.isMe && next[0])
+                      next[0] = { ...next[0], isMe: true };
                     setPeople(next);
                   }}
                   disabled={people.length <= 2}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition active:scale-95 disabled:opacity-30"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--muted-fg)] transition active:scale-95 disabled:opacity-30"
                   aria-label="Quitar"
                 >
                   <IconClose className="h-4 w-4" />
@@ -161,7 +170,7 @@ export function SplitEventWizard() {
                 { key: `p${nextKey.current++}`, name: "", isMe: false },
               ])
             }
-            className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-zinc-600 dark:text-zinc-300"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-[var(--muted-fg)]"
           >
             <IconPlus className="h-4 w-4" />
             Agregar persona

@@ -1,34 +1,101 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f2f2f3;
-  --foreground: #09090b;
-  --card: #ffffff;
-  --card-muted: #f7f7f8;
-  --primary: #0d9488;
-  --primary-dark: #0f766e;
-  --income: #0d9488;
+/* Dark mode por clase `.dark` (selección del usuario). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Myca$h — Ciruela
+  data-theme="indigo" · primary #6d28d9
+*/
+:root,
+[data-theme="indigo"] {
+  --background: #f7f4fc;
+  --background-deep: #eee8f8;
+  --foreground: #1f1235;
+  --card: #faf8fd;
+  --card-muted: #eee6f8;
+  --card-border: rgb(31 18 53 / 0.08);
+  --muted-fg: #655a78;
+  --primary: #6d28d9;
+  --primary-dark: #5b21b6;
+  --primary-soft: #8b5cf6;
+  --primary-muted: #ede9fe;
+  --cta: #5b21b6;
+  --cta-fg: #ffffff;
+  --cta-hover: #6d28d9;
+  --income: #047857;
   --expense: #e11d48;
-  --shared: #0d9488;
-  --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shared: #6d28d9;
+  --ring: rgb(109 40 217 / 0.32);
+  --surface-elevated: 0 1px 2px rgb(31 18 53 / 0.04),
+    0 8px 24px rgb(31 18 53 / 0.07);
+  --glow-cta: 0 10px 28px rgb(91 33 182 / 0.24);
   --app-bottom-gap: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  --bg-glow: radial-gradient(
+      ellipse 110% 70% at 50% -15%,
+      rgb(139 92 246 / 0.28),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 100% 90%,
+      rgb(237 233 254 / 0.95),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 55% 40% at 0% 70%,
+      rgb(247 244 252 / 0.85),
+      transparent 50%
+    ),
+    linear-gradient(165deg, #faf8fd 0%, #f7f4fc 42%, #eee8f8 100%);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-cta: var(--cta);
+  --color-muted-fg: var(--muted-fg);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-shared: var(--shared);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #050506;
-    --foreground: #fafafa;
-    --card: #121214;
-    --card-muted: #1a1a1d;
-    --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.35);
-  }
+.dark,
+.dark[data-theme="indigo"] {
+  --background: #100a18;
+  --background-deep: #140c1e;
+  --foreground: #f3eefc;
+  --card: #1c1428;
+  --card-muted: #261c36;
+  --card-border: rgb(243 238 252 / 0.09);
+  --muted-fg: #a89bb8;
+  --primary: #c4b5fd;
+  --primary-dark: #ddd6fe;
+  --primary-soft: #c4b5fd;
+  --primary-muted: #2e1f4a;
+  --cta: #6d28d9;
+  --cta-fg: #ffffff;
+  --cta-hover: #7c3aed;
+  --income: #34d399;
+  --expense: #fb7185;
+  --shared: #c4b5fd;
+  --ring: rgb(196 181 253 / 0.4);
+  --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.4),
+    0 12px 32px rgb(0 0 0 / 0.35);
+  --glow-cta: 0 10px 32px rgb(109 40 217 / 0.35);
+  --bg-glow: radial-gradient(
+      ellipse 100% 60% at 50% -10%,
+      rgb(109 40 217 / 0.4),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 100% 100%,
+      rgb(46 31 74 / 0.65),
+      transparent 50%
+    ),
+    linear-gradient(165deg, #140c1e 0%, #100a18 50%, #0c0814 100%);
 }
 
 /* iOS: el buscador va abajo y el inset se suma a esa altura. Capamos
@@ -47,17 +114,43 @@
   }
 }
 
-/* iOS "Add to Home Screen": display-mode a veces no matchea; lo setea JS. */
 html[data-display="standalone"] {
   --app-bottom-gap: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
 
-body {
+html {
   background: var(--background);
+}
+
+body {
+  min-height: 100%;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01" on, "cv11" on;
   -webkit-tap-highlight-color: transparent;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  background-color: var(--background);
+  background-image: var(--bg-glow);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.brand-wordmark {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" on, "ss01" on;
 }
 
 input,
@@ -126,7 +219,7 @@ textarea {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  box-shadow: 0 0 0 2px currentColor;
+  box-shadow: 0 0 0 2px var(--cta);
   animation: fab-ping 2.2s cubic-bezier(0, 0, 0.2, 1) 0.7s infinite;
   pointer-events: none;
 }
@@ -152,6 +245,10 @@ textarea {
   .fab-add-icon {
     transition: none;
   }
+
+  body {
+    background-attachment: scroll;
+  }
 }
 
 .animate-slide-up {
@@ -174,15 +271,18 @@ textarea {
   animation: slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
 }
 
-/* Surface: flat / soft — sin bordes rígidos */
 .card {
   @apply rounded-3xl bg-[var(--card)];
   box-shadow: var(--surface-elevated);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(8px);
 }
 
 .bento {
   @apply rounded-3xl bg-[var(--card)] p-5;
   box-shadow: var(--surface-elevated);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(8px);
 }
 
 .chip {
@@ -190,23 +290,56 @@ textarea {
 }
 
 .chip-active {
-  @apply bg-zinc-900 text-white dark:bg-white dark:text-zinc-900;
+  background: var(--cta);
+  color: var(--cta-fg);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--cta) 22%, transparent);
 }
 
 .chip-inactive {
-  @apply bg-transparent text-zinc-500 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60;
+  color: var(--muted-fg);
+  background: transparent;
+}
+
+.chip-inactive:hover {
+  background: color-mix(in srgb, var(--primary-muted) 70%, transparent);
+  color: var(--foreground);
 }
 
 .btn-primary {
-  @apply rounded-2xl bg-zinc-900 py-3.5 font-semibold text-white transition-all active:scale-[0.98] hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100;
+  @apply rounded-2xl py-3.5 font-semibold transition-all active:scale-[0.98] disabled:opacity-50;
+  color: var(--cta-fg);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--cta-hover) 35%, var(--cta)) 0%,
+    var(--cta) 55%,
+    var(--cta) 100%
+  );
+  box-shadow: var(--glow-cta);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(
+    165deg,
+    var(--cta-hover) 0%,
+    color-mix(in srgb, var(--cta-hover) 70%, var(--cta)) 100%
+  );
+  filter: brightness(1.03);
 }
 
 .input-field {
-  @apply w-full rounded-2xl bg-[var(--card-muted)] px-4 py-3.5 text-base outline-none transition ring-0 focus:ring-2 focus:ring-teal-500/30 dark:bg-zinc-900;
+  @apply w-full rounded-2xl bg-[var(--card-muted)] px-4 py-3.5 text-base outline-none transition ring-0 focus:ring-2;
+  --tw-ring-color: var(--ring);
+  border: 1px solid transparent;
+}
+
+.input-field:focus {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: var(--card);
 }
 
 .skeleton {
-  @apply relative overflow-hidden rounded-2xl bg-zinc-200/80 dark:bg-zinc-800/80;
+  @apply relative overflow-hidden rounded-2xl;
+  background: color-mix(in srgb, var(--primary-muted) 65%, var(--card-muted));
 }
 
 .skeleton::after {
@@ -217,21 +350,10 @@ textarea {
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(255 255 255 / 0.35),
+    rgb(255 255 255 / 0.4),
     transparent
   );
   animation: shimmer 1.4s infinite;
-}
-
-@media (prefers-color-scheme: dark) {
-  .skeleton::after {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgb(255 255 255 / 0.06),
-      transparent
-    );
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -240,14 +362,41 @@ textarea {
   }
 }
 
+.dark .skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.06),
+    transparent
+  );
+}
+
 .amount-positive {
-  @apply text-teal-600 dark:text-teal-400;
+  color: var(--income);
+  font-weight: 700;
 }
 
 .amount-negative {
-  @apply text-rose-600 dark:text-rose-400;
+  color: var(--expense);
+  font-weight: 700;
+}
+
+.nav-active {
+  color: var(--primary-dark);
+}
+
+.fab-cta {
+  color: var(--cta-fg);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--cta-hover) 40%, var(--cta)) 0%,
+    var(--cta) 100%
+  );
+  box-shadow: var(--glow-cta);
 }
 
 .meta {
-  @apply text-sm text-zinc-400;
+  @apply text-sm;
+  color: var(--muted-fg);
+  letter-spacing: -0.01em;
 }

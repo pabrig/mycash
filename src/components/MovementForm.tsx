@@ -14,7 +14,7 @@ import {
   MAX_REPEAT_COUNT,
   notesInPeriodLabel,
   seriesPreview,
-  type RepeatMode
+  type RepeatMode,
 } from "@/lib/schedule";
 import {
   EXPENSE_CATEGORIES,
@@ -25,7 +25,7 @@ import {
   type IncomeKind,
   type Movement,
   type MovementType,
-  type Wallet
+  type Wallet,
 } from "@/lib/types";
 import {
   EXPENSE_KIND_LABELS,
@@ -33,7 +33,7 @@ import {
   expenseCategoryIcon,
   expenseCategoryLabel,
   incomeSourceLabel,
-  normalizeIncomeSource
+  normalizeIncomeSource,
 } from "@/lib/labels";
 import { friendlyError } from "@/lib/errors";
 
@@ -54,7 +54,7 @@ function buildPayload({
   incomeKind,
   source,
   walletChoice,
-  householdId
+  householdId,
 }: {
   mode: "full" | "shared";
   type: MovementType;
@@ -86,7 +86,7 @@ function buildPayload({
         incomeKind,
         source,
         ...(wallet ? { wallet } : {}),
-        ...(sharedHousehold ? { householdId: sharedHousehold } : {})
+        ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
       };
     }
     return {
@@ -99,7 +99,7 @@ function buildPayload({
       kind,
       category,
       ...(wallet ? { wallet } : {}),
-      ...(sharedHousehold ? { householdId: sharedHousehold } : {})
+      ...(sharedHousehold ? { householdId: sharedHousehold } : {}),
     };
   }
 
@@ -113,7 +113,7 @@ function buildPayload({
       scope,
       kind,
       category,
-      ...(wallet ? { wallet } : {})
+      ...(wallet ? { wallet } : {}),
     };
   }
 
@@ -125,7 +125,7 @@ function buildPayload({
     description,
     incomeKind,
     source,
-    ...(wallet ? { wallet } : {})
+    ...(wallet ? { wallet } : {}),
   };
 }
 
@@ -133,7 +133,7 @@ export function MovementForm({
   mode = "full",
   redirectTo = "/",
   initial,
-  prefill
+  prefill,
 }: {
   mode?: "full" | "shared";
   redirectTo?: string;
@@ -157,39 +157,39 @@ export function MovementForm({
     usdEnabled,
     year,
     month,
-    setPeriod
+    setPeriod,
   } = useFinance();
   const { households, household, configured } = useAuth();
   const isEdit = Boolean(initial);
 
   const [type, setType] = useState<MovementType>(initial?.type ?? "expense");
   const [date, setDate] = useState(
-    initial?.date ?? defaultDateForPeriod(year, month)
+    initial?.date ?? defaultDateForPeriod(year, month),
   );
   const [amount, setAmount] = useState(
-    initial ? String(initial.amount) : (prefill?.amount ?? "")
+    initial ? String(initial.amount) : (prefill?.amount ?? ""),
   );
   const [currency, setCurrency] = useState<Currency>(
-    initial?.currency ?? "ARS"
+    initial?.currency ?? "ARS",
   );
   const [description, setDescription] = useState(
-    initial?.description ?? prefill?.description ?? ""
+    initial?.description ?? prefill?.description ?? "",
   );
   const [scope, setScope] = useState<ExpenseScope>(
-    mode === "shared" ? "shared" : (initial?.scope ?? "personal")
+    mode === "shared" ? "shared" : (initial?.scope ?? "personal"),
   );
   const [kind, setKind] = useState<ExpenseKind>(initial?.kind ?? "variable");
   const [category, setCategory] = useState(
-    initial?.category ?? prefill?.category ?? "otros"
+    initial?.category ?? prefill?.category ?? "otros",
   );
   const [incomeKind, setIncomeKind] = useState<IncomeKind>(
-    initial?.incomeKind ?? "active"
+    initial?.incomeKind ?? "active",
   );
   const [source, setSource] = useState(
-    normalizeIncomeSource(initial?.source ?? "otros")
+    normalizeIncomeSource(initial?.source ?? "otros"),
   );
   const [walletChoice, setWalletChoice] = useState<WalletChoice>(
-    initial?.wallet ?? "auto"
+    initial?.wallet ?? "auto",
   );
   const [householdId, setHouseholdId] = useState(initial?.householdId ?? "");
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("once");
@@ -230,7 +230,7 @@ export function MovementForm({
         startIso: date,
         count: seriesCount,
         firstInstallment,
-        totalInstallments
+        totalInstallments,
       })
     : "";
 
@@ -249,7 +249,7 @@ export function MovementForm({
           ? installmentLabel(
               description.trim(),
               firstInstallment + index,
-              totalInstallments
+              totalInstallments,
             )
           : description.trim();
       return buildPayload({
@@ -265,7 +265,7 @@ export function MovementForm({
         incomeKind,
         source,
         walletChoice: usdEnabled ? walletChoice : (initial?.wallet ?? "auto"),
-        householdId: isSharedMovement ? selectedHouseholdId : undefined
+        householdId: isSharedMovement ? selectedHouseholdId : undefined,
       });
     });
 
@@ -297,7 +297,7 @@ export function MovementForm({
   return (
     <form onSubmit={handleSubmit} className="animate-slide-up space-y-6">
       {(!isSharedMode || allowSharedIncome) && (
-        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[var(--card-muted)] p-1 dark:bg-[var(--card-muted)]">
           {(["expense", "income"] as const).map((t) => (
             <button
               key={t}
@@ -309,13 +309,7 @@ export function MovementForm({
                   setScope("personal");
                 }
               }}
-              className={`rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 ${
-                type === t
-                  ? t === "expense"
-                    ? "bg-white text-red-600 shadow-sm dark:bg-zinc-900"
-                    : "bg-white text-teal-600 shadow-sm dark:bg-zinc-900"
-                  : "text-zinc-500"
-              }`}
+              className={`rounded-xl py-3 text-sm font-semibold transition-all active:scale-95 ${ type === t ? t === "expense" ? "bg-[var(--card)] text-red-600 shadow-sm dark:bg-[var(--card)]" : "bg-[var(--card)] text-primary shadow-sm dark:bg-[var(--card)]" : "text-[var(--muted-fg)]" }`}
             >
               {t === "expense" ? "↓ Gasto" : "↑ Ingreso"}
             </button>
@@ -324,7 +318,7 @@ export function MovementForm({
       )}
 
       <div className="card p-5 text-center">
-        <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <label className="text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
           Monto
         </label>
         <div className="mt-2 flex items-center justify-center gap-2">
@@ -375,13 +369,7 @@ export function MovementForm({
                 key={s}
                 type="button"
                 onClick={() => setScope(s)}
-                className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all active:scale-95 ${
-                  scope === s
-                    ? s === "shared"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800"
-                }`}
+                className={`flex-1 rounded-xl py-3 text-sm font-medium transition-all active:scale-95 ${ scope === s ? s === "shared" ? "bg-[var(--shared)] text-[var(--cta-fg)]" : "bg-[var(--cta)] text-[var(--cta-fg)]" : "bg-[var(--card-muted)] text-[var(--muted-fg)] dark:bg-[var(--card-muted)]" }`}
               >
                 {s === "personal" ? "Mío" : "Compartido"}
               </button>
@@ -391,7 +379,7 @@ export function MovementForm({
 
       {isSharedMovement && configured && !isEdit && households.length > 1 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-zinc-400">Grupo</p>
+          <p className="text-xs font-medium text-[var(--muted-fg)]">Grupo</p>
           <div className="flex flex-wrap gap-2">
             {households.map((h) => (
               <button
@@ -405,9 +393,7 @@ export function MovementForm({
                     if (!isSharedMode) setScope("shared");
                   }
                 }}
-                className={`chip ${
-                  selectedHouseholdId === h.id ? "chip-active" : "chip-inactive"
-                }`}
+                className={`chip ${ selectedHouseholdId === h.id ? "chip-active" : "chip-inactive" }`}
               >
                 {h.name}
               </button>
@@ -417,15 +403,15 @@ export function MovementForm({
       )}
 
       {isSharedMovement && configured && !isEdit && households.length === 1 && (
-        <p className="text-center text-xs text-zinc-400">
+        <p className="text-center text-xs text-[var(--muted-fg)]">
           Va a {households[0]?.name ?? "el grupo"}
         </p>
       )}
 
       {isSharedMovement && configured && households.length === 0 && (
-        <p className="text-center text-sm text-zinc-500">
+        <p className="text-center text-sm text-[var(--muted-fg)]">
           Primero creá o uníte a un grupo en{" "}
-          <Link href="/cuenta" className="font-semibold text-teal-600">
+          <Link href="/cuenta" className="font-semibold text-primary">
             Cuenta
           </Link>
         </p>
@@ -454,15 +440,13 @@ export function MovementForm({
                 key={k}
                 type="button"
                 onClick={() => setIncomeKind(k)}
-                className={`flex-1 rounded-xl py-3 text-sm font-medium active:scale-95 ${
-                  incomeKind === k ? "chip-active" : "chip-inactive"
-                }`}
+                className={`flex-1 rounded-xl py-3 text-sm font-medium active:scale-95 ${ incomeKind === k ? "chip-active" : "chip-inactive" }`}
               >
                 {INCOME_KIND_LABELS[k]}
               </button>
             ))}
           </div>
-          <p className="text-center text-xs text-zinc-400">
+          <p className="text-center text-xs text-[var(--muted-fg)]">
             {incomeKind === "active"
               ? "Sueldo, freelance, changas"
               : "Alquileres u otra plata que entra sola"}
@@ -491,7 +475,7 @@ export function MovementForm({
         <button
           type="button"
           onClick={() => setShowMore(!showMore)}
-          className="w-full text-center text-sm text-zinc-500"
+          className="w-full text-center text-sm text-[var(--muted-fg)]"
         >
           {showMore ? "Menos" : "Más opciones"}
         </button>
@@ -516,7 +500,7 @@ export function MovementForm({
 
           {type === "income" && (
             <div>
-              <label className="mb-1 block text-xs text-zinc-500">
+              <label className="mb-1 block text-xs text-[var(--muted-fg)]">
                 De dónde sale
               </label>
               <select
@@ -535,7 +519,7 @@ export function MovementForm({
 
           {walletMode === "split" && usdEnabled && (
             <div>
-              <label className="mb-1 block text-xs text-zinc-500">
+              <label className="mb-1 block text-xs text-[var(--muted-fg)]">
                 ¿A qué bolsillo va?
               </label>
               <div className="flex gap-2">
@@ -543,7 +527,7 @@ export function MovementForm({
                   [
                     { id: "auto" as const, label: "Según moneda" },
                     { id: "vida" as const, label: "Diario" },
-                    { id: "ahorro" as const, label: "Ahorro USD" }
+                    { id: "ahorro" as const, label: "Ahorro USD" },
                   ] as const
                 ).map(({ id, label }) => (
                   <button
@@ -585,7 +569,7 @@ export function MovementForm({
 
       <Link
         href={redirectTo}
-        className="block w-full py-2 text-center text-sm text-zinc-500"
+        className="block w-full py-2 text-center text-sm text-[var(--muted-fg)]"
       >
         Cancelar
       </Link>
@@ -597,7 +581,7 @@ function DateField({
   date,
   onChange,
   year,
-  month
+  month,
 }: {
   date: string;
   onChange: (value: string) => void;
@@ -612,12 +596,12 @@ function DateField({
       : []),
     { label: "Ayer", value: addDaysIso(today, -1) },
     { label: "Hoy", value: today },
-    { label: "Mañana", value: addDaysIso(today, 1) }
+    { label: "Mañana", value: addDaysIso(today, 1) },
   ];
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs font-medium uppercase tracking-wide text-zinc-400">
+      <label className="block text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
         Fecha
       </label>
       <div className="flex flex-wrap gap-2">
@@ -639,7 +623,9 @@ function DateField({
         onChange={(e) => onChange(e.target.value)}
         className="input-field"
       />
-      <p className="text-xs text-zinc-400">{notesInPeriodLabel(date)}</p>
+      <p className="text-xs text-[var(--muted-fg)]">
+        {notesInPeriodLabel(date)}
+      </p>
     </div>
   );
 }
@@ -654,7 +640,7 @@ function RepeatField({
   onFirstInstallment,
   totalInstallments,
   onTotalInstallments,
-  preview
+  preview,
 }: {
   type: MovementType;
   repeatMode: RepeatMode;
@@ -671,18 +657,18 @@ function RepeatField({
     type === "income"
       ? [
           { id: "once", label: "Una vez" },
-          { id: "monthly", label: "Todos los meses" }
+          { id: "monthly", label: "Todos los meses" },
         ]
       : [
           { id: "once", label: "Una vez" },
           { id: "monthly", label: "Todos los meses" },
-          { id: "installments", label: "En cuotas" }
+          { id: "installments", label: "En cuotas" },
         ];
 
   return (
     <div className="space-y-3">
       <div>
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--muted-fg)]">
           ¿Se repite?
         </p>
         <div className="flex flex-wrap gap-2">
@@ -697,7 +683,7 @@ function RepeatField({
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+        <p className="mt-2 text-xs leading-relaxed text-[var(--muted-fg)]">
           {repeatMode === "monthly"
             ? type === "income"
               ? "Sueldo u otra entrada que llega todos los meses."
@@ -710,7 +696,7 @@ function RepeatField({
 
       {repeatMode === "monthly" && (
         <div>
-          <p className="mb-2 text-xs text-zinc-500">¿Cuántos meses?</p>
+          <p className="mb-2 text-xs text-[var(--muted-fg)]">¿Cuántos meses?</p>
           <div className="flex flex-wrap gap-2">
             {[3, 6, 12, 24].map((n) => (
               <button
@@ -729,7 +715,7 @@ function RepeatField({
       {repeatMode === "installments" && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs text-zinc-500">
+            <label className="mb-1 block text-xs text-[var(--muted-fg)]">
               Cuotas en total
             </label>
             <input
@@ -740,7 +726,7 @@ function RepeatField({
               onChange={(e) => {
                 const next = Math.min(
                   MAX_REPEAT_COUNT,
-                  Math.max(2, Number(e.target.value) || 2)
+                  Math.max(2, Number(e.target.value) || 2),
                 );
                 onTotalInstallments(next);
                 if (firstInstallment > next) onFirstInstallment(1);
@@ -749,7 +735,7 @@ function RepeatField({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-500">
+            <label className="mb-1 block text-xs text-[var(--muted-fg)]">
               Esta es la n°
             </label>
             <input
@@ -761,8 +747,8 @@ function RepeatField({
                 onFirstInstallment(
                   Math.min(
                     totalInstallments,
-                    Math.max(1, Number(e.target.value) || 1)
-                  )
+                    Math.max(1, Number(e.target.value) || 1),
+                  ),
                 )
               }
               className="input-field"
@@ -772,7 +758,7 @@ function RepeatField({
       )}
 
       {preview && (
-        <p className="text-xs font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">
+        <p className="text-xs font-medium leading-relaxed text-[var(--muted-fg)]">
           {preview}
         </p>
       )}

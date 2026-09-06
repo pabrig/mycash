@@ -3,9 +3,9 @@
 import { initials } from "@/lib/format";
 
 const TONES = [
-  "bg-teal-500/15 text-teal-700 dark:text-teal-300",
-  "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900",
-  "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  "bg-primary/15 text-primary",
+  "bg-[var(--cta)] text-[var(--cta-fg)]",
+  "bg-[var(--expense)]/15 text-[var(--expense)]",
   "bg-amber-500/15 text-amber-800 dark:text-amber-300",
 ];
 
@@ -21,7 +21,11 @@ export function UserAvatar({
   className?: string;
 }) {
   const box =
-    size === "sm" ? "h-8 w-8 text-[10px]" : size === "lg" ? "h-12 w-12 text-sm" : "h-10 w-10 text-xs";
+    size === "sm"
+      ? "h-8 w-8 text-[10px]"
+      : size === "lg"
+        ? "h-12 w-12 text-sm"
+        : "h-10 w-10 text-xs";
 
   return (
     <div

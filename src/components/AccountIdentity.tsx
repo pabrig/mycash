@@ -26,12 +26,12 @@ export function AccountIdentity() {
     return (
       <section className="bento space-y-2">
         <p className="text-sm font-semibold tracking-tight">Tu usuario</p>
-        <p className="text-xs leading-relaxed text-zinc-400">
+        <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
           Esta app guarda todo en este celular.
         </p>
         <Link
           href={guideHref()}
-          className="block w-full rounded-xl border border-zinc-200 py-2.5 text-center text-sm text-zinc-600 dark:border-zinc-700"
+          className="block w-full rounded-xl border border-[var(--card-border)] py-2.5 text-center text-sm text-[var(--muted-fg)] dark:border-[var(--card-border)]"
         >
           Cómo funciona
         </Link>
@@ -49,15 +49,18 @@ export function AccountIdentity() {
             plata en cualquier lado.
           </p>
         </div>
-        <Link href="/login?reason=account" className="btn-primary block text-center text-sm">
+        <Link
+          href="/login?reason=account"
+          className="btn-primary block text-center text-sm"
+        >
           Entrar con email
         </Link>
-        <p className="text-[11px] leading-relaxed text-zinc-400">
+        <p className="text-[11px] leading-relaxed text-[var(--muted-fg)]">
           Te mandamos un link al mail. Sin contraseña.
         </p>
         <Link
           href={guideHref()}
-          className="block text-center text-xs font-semibold text-teal-700 dark:text-teal-400"
+          className="block text-center text-xs font-semibold text-primary"
         >
           Cómo funciona
         </Link>
@@ -83,11 +86,14 @@ export function AccountIdentity() {
       <div className="flex items-start gap-3">
         <UserAvatar name={profile?.displayName} size="lg" />
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <p className="text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
             Tu usuario
           </p>
           {editing ? (
-            <form onSubmit={(e) => void handleSaveName(e)} className="mt-2 space-y-2">
+            <form
+              onSubmit={(e) => void handleSaveName(e)}
+              className="mt-2 space-y-2"
+            >
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -96,7 +102,9 @@ export function AccountIdentity() {
                 autoFocus
                 maxLength={40}
               />
-              {error && <p className="text-xs text-rose-500">{error}</p>}
+              {error && (
+                <p className="text-xs text-[var(--expense)]">{error}</p>
+              )}
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -123,14 +131,16 @@ export function AccountIdentity() {
               <p className="mt-0.5 truncate text-lg font-bold tracking-tight">
                 {profile?.displayName || "Usuario"}
               </p>
-              <p className="truncate text-sm text-zinc-500">{user?.email}</p>
+              <p className="truncate text-sm text-[var(--muted-fg)]">
+                {user?.email}
+              </p>
               <button
                 type="button"
                 onClick={() => {
                   setName(profile?.displayName ?? "");
                   setEditing(true);
                 }}
-                className="mt-1 text-xs font-semibold text-teal-700 dark:text-teal-400"
+                className="mt-1 text-xs font-semibold text-primary"
               >
                 Cambiar nombre
               </button>
@@ -138,12 +148,12 @@ export function AccountIdentity() {
           )}
         </div>
       </div>
-      <p className="text-xs text-teal-600 dark:text-teal-400">
+      <p className="text-xs text-primary">
         Estás adentro. Tu plata se guarda en la nube.
       </p>
       <Link
         href={guideHref()}
-        className="block w-full rounded-xl border border-zinc-200 py-2.5 text-center text-sm text-zinc-600 dark:border-zinc-700"
+        className="block w-full rounded-xl border border-[var(--card-border)] py-2.5 text-center text-sm text-[var(--muted-fg)] dark:border-[var(--card-border)]"
       >
         Cómo funciona
       </Link>
@@ -152,7 +162,7 @@ export function AccountIdentity() {
         onClick={() => {
           void signOut().then(() => router.replace("/login"));
         }}
-        className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
+        className="w-full rounded-xl border border-[var(--card-border)] py-2.5 text-sm text-[var(--muted-fg)] dark:border-[var(--card-border)]"
       >
         Cerrar sesión
       </button>

@@ -1,0 +1,63 @@
+# Myca$h — Prompt para generador de icono (IA)
+
+Usá la imagen `icon-original.png` como referencia de concepto (billetera = finanzas personales).
+NO copies el estilo line-art ni el teal. Rediseñá con la marca Ciruela.
+
+---
+
+## Prompt (copiar / pegar)
+
+```
+App icon for “Myca$h”, a personal-finance PWA (Spanish-speaking users, Argentina). Purpose: track income and expenses and see how much money you have left. The icon must read instantly as a WALLET (billetera), not a folder, camera, printer, or chart.
+
+REFERENCE INTENT (from the original icon): a wallet symbolizing money management. Keep that meaning. Do NOT keep the thin stroke line-art style, the teal accent, the upward chart/sparkline, or the near-black plate.
+
+BRAND — Ciruela (plum / violet):
+- Plate / background: #5b21b6 (deep plum)
+- Primary accent: #6d28d9
+- Soft lavender: #c4b5fd, #ede9fe, #a78bfa
+- Wallet body / light surfaces: #faf8fd or soft white
+- High contrast only within this purple family + white. No teal, green, orange, gold, or neon.
+
+COMPOSITION (squircle app icon, 1:1):
+- Solid #5b21b6 rounded-square background
+- Centered horizontal bifold wallet in white / soft lavender
+- Clear fold/seam across the wallet
+- Right-side clasp strap with a single solid dark plum circular snap (not a camera lens / concentric rings)
+- Cash bills fanned out from the top opening, with a bold fully-visible “$” on the front bill in #5b21b6
+- Flat vector, minimal, modern fintech, no gradients, no shadows, no gloss, no 3D, no photo realism, no text other than “$”
+- Legible at small sizes (favicon / home screen)
+
+Style keywords: flat vector, SF Symbols clarity, fintech, minimal, high contrast, PWA app icon.
+Negative: chart, sparkline, graph, folder, briefcase, camera, radio, toaster, leather texture photo, gradients, glow, skeuomorphism, busy details.
+```
+
+---
+
+## Prompt corto (Midjourney / similares)
+
+```
+flat vector PWA app icon, squircle, deep plum #5b21b6 background, clear white bifold wallet with lavender soft accents #c4b5fd #ede9fe, cash bills fanning out with bold $, solid plum snap clasp on the right, personal finance Myca$h, minimal fintech, no chart no folder no camera, high contrast, crisp edges --stylize 50 --v 6
+```
+
+---
+
+## Paleta (hex)
+
+| Rol            | Hex     |
+|----------------|---------|
+| Placa / CTA    | #5b21b6 |
+| Primary        | #6d28d9 |
+| Soft           | #8b5cf6 |
+| Lavanda claro  | #c4b5fd |
+| Lavanda mute   | #ede9fe |
+| Fondo app      | #f7f4fc |
+| Card / wallet  | #faf8fd |
+| Texto oscuro   | #1f1235 |
+
+---
+
+## Archivos
+
+- `icon-original.png` — icono original (billetera + chart, referencia de concepto)
+- `icon-ciruela-ref.png` — dirección actual Ciruela (billetera + billetes + $)

@@ -2,7 +2,12 @@
 
 import { useMemo, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconChevronLeft, IconMyCash, IconPlus, IconSplit } from "@/components/ui/Icons";
+import {
+  IconChevronLeft,
+  IconMyCash,
+  IconPlus,
+  IconSplit,
+} from "@/components/ui/Icons";
 import { useFinance } from "@/context/FinanceContext";
 import {
   getGuideTopic,
@@ -60,11 +65,11 @@ export function GuideFaq() {
           >
             <IconChevronLeft className="h-5 w-5" />
           </button>
-          <p className="text-sm font-semibold text-zinc-500">Ayuda</p>
+          <p className="text-sm font-semibold text-[var(--muted-fg)]">Ayuda</p>
           <button
             type="button"
             onClick={exit}
-            className="h-11 shrink-0 px-2 text-sm font-semibold text-zinc-500"
+            className="h-11 shrink-0 px-2 text-sm font-semibold text-[var(--muted-fg)]"
           >
             Salir
           </button>
@@ -90,7 +95,7 @@ export function GuideFaq() {
           <button
             type="button"
             onClick={exit}
-            className="w-full py-3 text-sm font-semibold text-zinc-500"
+            className="w-full py-3 text-sm font-semibold text-[var(--muted-fg)]"
           >
             Volver a Cuenta
           </button>
@@ -103,11 +108,11 @@ export function GuideFaq() {
     <div className="flex min-h-[calc(100dvh-6rem)] flex-col">
       <div className="flex items-center justify-between gap-3 pt-2">
         <span className="h-11 w-11" />
-        <p className="text-sm font-semibold text-zinc-500">Ayuda</p>
+        <p className="text-sm font-semibold text-[var(--muted-fg)]">Ayuda</p>
         <button
           type="button"
           onClick={exit}
-          className="h-11 shrink-0 px-2 text-sm font-semibold text-zinc-500"
+          className="h-11 shrink-0 px-2 text-sm font-semibold text-[var(--muted-fg)]"
         >
           Salir
         </button>
@@ -118,12 +123,12 @@ export function GuideFaq() {
           <IconMyCash className="mx-auto h-12 w-12" />
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight">Cómo funciona</h1>
-            <p className="mx-auto max-w-sm text-base leading-relaxed text-zinc-500">
+            <p className="mx-auto max-w-sm text-base leading-relaxed text-[var(--muted-fg)]">
               Elegí un tema. Sirve cuando cambiás algo en Cuenta y querés
               entender qué hace.
             </p>
           </div>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-[var(--muted-fg)]">
             No cambia tu cuenta ni tu plata.
           </p>
         </div>
@@ -158,7 +163,7 @@ function TopicGroup({
   if (topics.length === 0) return null;
   return (
     <section className="space-y-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
         {label}
       </p>
       <ul className="space-y-2">
@@ -170,19 +175,22 @@ function TopicGroup({
               className="flex w-full items-start justify-between gap-3 rounded-2xl bg-[var(--card)] px-4 py-3.5 text-left transition active:scale-[0.99]"
             >
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                <p className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
                   {topic.title}
                   {topic.id === "compartido" && badgeShared ? (
-                    <span className="ml-1.5 text-[10px] font-medium text-teal-600 dark:text-teal-400">
+                    <span className="ml-1.5 text-[10px] font-medium text-primary">
                       activo
                     </span>
                   ) : null}
                 </p>
-                <p className="mt-0.5 text-xs leading-snug text-zinc-400">
+                <p className="mt-0.5 text-xs leading-snug text-[var(--muted-fg)]">
                   {topic.blurb}
                 </p>
               </div>
-              <span className="shrink-0 text-zinc-300 dark:text-zinc-600" aria-hidden>
+              <span
+                className="shrink-0 text-[var(--muted-fg)] dark:text-[var(--muted-fg)]"
+                aria-hidden
+              >
                 ›
               </span>
             </button>
@@ -208,14 +216,20 @@ function HowToArticle({
     <section className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 text-base leading-relaxed text-zinc-500">{sub}</p>
+        <p className="mt-2 text-base leading-relaxed text-[var(--muted-fg)]">
+          {sub}
+        </p>
       </div>
       {preview}
       <ul className="space-y-2.5">
         {items.map((item) => (
           <li key={item.title} className="rounded-2xl bg-[var(--card)] p-4">
-            <p className="text-base font-semibold tracking-tight">{item.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500">{item.body}</p>
+            <p className="text-base font-semibold tracking-tight">
+              {item.title}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
+              {item.body}
+            </p>
           </li>
         ))}
       </ul>
@@ -230,10 +244,12 @@ function previewFor(id: GuideTopicId): ReactNode {
         className="flex items-center justify-center gap-3 rounded-2xl bg-[var(--card)] px-4 py-5"
         aria-hidden
       >
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--cta)] text-[var(--cta-fg)]">
           <IconPlus className="h-6 w-6" />
         </span>
-        <p className="text-sm font-semibold text-zinc-500">Cargar un movimiento</p>
+        <p className="text-sm font-semibold text-[var(--muted-fg)]">
+          Cargar un movimiento
+        </p>
       </div>
     );
   }
@@ -243,10 +259,10 @@ function previewFor(id: GuideTopicId): ReactNode {
         className="flex justify-center gap-2 rounded-2xl bg-[var(--card)] px-4 py-4"
         aria-hidden
       >
-        <span className="rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-semibold text-white dark:bg-white dark:text-zinc-900">
+        <span className="rounded-full bg-[var(--foreground)] px-4 py-1.5 text-sm font-semibold text-white dark:bg-[var(--card)] dark:text-[var(--foreground)]">
           Mes
         </span>
-        <span className="rounded-full bg-zinc-100 px-4 py-1.5 text-sm font-semibold text-zinc-500 dark:bg-zinc-800">
+        <span className="rounded-full bg-[var(--card-muted)] px-4 py-1.5 text-sm font-semibold text-[var(--muted-fg)] dark:bg-[var(--card-muted)]">
           Año
         </span>
       </div>
@@ -258,8 +274,10 @@ function previewFor(id: GuideTopicId): ReactNode {
         className="flex items-center justify-center gap-3 rounded-2xl bg-[var(--card)] px-4 py-5"
         aria-hidden
       >
-        <IconSplit className="h-8 w-8 text-zinc-500" />
-        <p className="text-sm font-semibold text-zinc-500">Partes iguales</p>
+        <IconSplit className="h-8 w-8 text-[var(--muted-fg)]" />
+        <p className="text-sm font-semibold text-[var(--muted-fg)]">
+          Partes iguales
+        </p>
       </div>
     );
   }

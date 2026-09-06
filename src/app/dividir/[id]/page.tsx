@@ -21,7 +21,7 @@ export default function SplitEventPage() {
         <p className="font-medium">No encontramos este evento</p>
         <Link
           href="/dividir"
-          className="text-sm font-semibold text-zinc-900 dark:text-white"
+          className="text-sm font-semibold text-[var(--foreground)]"
         >
           Volver a Dividir
         </Link>
@@ -40,7 +40,9 @@ export default function SplitEventPage() {
           ‹
         </Link>
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-bold md:text-2xl">{event.title}</h1>
+          <h1 className="truncate text-lg font-bold md:text-2xl">
+            {event.title}
+          </h1>
           <p className="meta text-xs">En partes iguales</p>
         </div>
       </div>

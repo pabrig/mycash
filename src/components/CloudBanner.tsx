@@ -19,7 +19,7 @@ export function CloudBanner() {
         {sessionExpired ? (
           <Link
             href="/login"
-            className="text-xs font-semibold text-zinc-900 dark:text-white"
+            className="text-xs font-semibold text-[var(--foreground)]"
           >
             Entrar
           </Link>
@@ -27,7 +27,7 @@ export function CloudBanner() {
           <button
             type="button"
             onClick={() => void refreshData()}
-            className="text-xs font-semibold text-zinc-900 dark:text-white"
+            className="text-xs font-semibold text-[var(--foreground)]"
           >
             Reintentar
           </button>
@@ -35,7 +35,7 @@ export function CloudBanner() {
         <button
           type="button"
           onClick={clearSyncError}
-          className="text-xs text-zinc-400"
+          className="text-xs text-[var(--muted-fg)]"
           aria-label="Cerrar"
         >
           ✕

@@ -24,7 +24,7 @@ export default function CompartidoNuevoPage() {
       <div className="mb-5 flex items-center gap-3">
         <Link
           href="/compartido"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm active:scale-95 dark:bg-zinc-900"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--card)] text-lg shadow-sm active:scale-95 dark:bg-[var(--card)]"
           aria-label="Volver"
         >
           ‹

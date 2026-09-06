@@ -49,7 +49,7 @@ export function DetailSheet({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-zinc-950/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[var(--foreground)]/35 backdrop-blur-[2px]"
         aria-label="Cerrar"
         onClick={onClose}
       />
@@ -57,14 +57,14 @@ export function DetailSheet({
       {/* Mobile bottom sheet */}
       <div className="absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col overflow-hidden animate-slide-up rounded-t-3xl bg-[var(--card)] shadow-2xl md:hidden">
         <div className="flex shrink-0 justify-center pt-3">
-          <div className="h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+          <div className="h-1 w-10 rounded-full bg-[var(--muted-fg)]/35" />
         </div>
         <div className="flex shrink-0 items-center justify-between px-5 pt-3 pb-2">
           <h2 className="text-lg font-bold tracking-tight">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--card-muted)] text-zinc-500"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--card-muted)] text-[var(--muted-fg)]"
             aria-label="Cerrar"
           >
             <IconClose className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function DetailSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card-muted)] text-zinc-500 transition hover:text-zinc-900"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card-muted)] text-[var(--muted-fg)] transition hover:text-[var(--foreground)]"
             aria-label="Cerrar"
           >
             <IconClose className="h-4 w-4" />

@@ -8,7 +8,7 @@ import { downloadStatement } from "@/lib/export-download";
 import {
   buildStatement,
   STATEMENT_FORMATS,
-  type StatementFormat
+  type StatementFormat,
 } from "@/lib/export-statement";
 import { friendlyError } from "@/lib/errors";
 import { formatMonth } from "@/lib/format";
@@ -17,7 +17,7 @@ import type { SummaryScope } from "@/lib/types";
 export function ExportStatementSheet({
   open,
   onClose,
-  initialScope
+  initialScope,
 }: {
   open: boolean;
   onClose: () => void;
@@ -29,7 +29,7 @@ export function ExportStatementSheet({
 
 function ExportStatementBody({
   onClose,
-  initialScope
+  initialScope,
 }: {
   onClose: () => void;
   initialScope: SummaryScope;
@@ -52,7 +52,7 @@ function ExportStatementBody({
         year,
         month,
         movements: balanceMovements,
-        rates
+        rates,
       });
       await downloadStatement(statement, format);
       onClose();
@@ -65,7 +65,7 @@ function ExportStatementBody({
   return (
     <DetailSheet open onClose={onClose} title="Descargar">
       <div className="space-y-6 pb-2">
-        <p className="text-sm leading-relaxed text-zinc-500">
+        <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
           Un archivo con el resumen de {periodLabel}: ingresos, gastos y cada
           movimiento. Para imprimir, Excel o Google Sheets.
         </p>

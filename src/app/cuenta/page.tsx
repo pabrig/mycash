@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AccountIdentity } from "@/components/AccountIdentity";
+import { ColorModeToggle } from "@/components/ColorModeToggle";
 import { SharedAccountCard } from "@/components/SharedAccountCard";
 import { MoneySettings } from "@/components/MoneySettings";
 import { ExportStatementSheet } from "@/components/ExportStatementSheet";
@@ -47,13 +48,13 @@ export default function CuentaPage() {
       exportedAt: new Date().toISOString(),
       email: user?.email ?? null,
       movements,
-      rates
+      rates,
     };
     downloadBlob(
       new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json"
+        type: "application/json",
       }),
-      `mycash-export-${new Date().toISOString().slice(0, 10)}.json`
+      `mycash-export-${new Date().toISOString().slice(0, 10)}.json`,
     );
     setMessage("Listo, se descargó");
   }
@@ -70,12 +71,13 @@ export default function CuentaPage() {
         <h1 className="text-lg font-bold md:text-2xl">Cuenta</h1>
       </div>
       <AccountIdentity />
+      <ColorModeToggle />
       <MoneySettings />
       <SharedAccountCard />
 
       <section className="bento space-y-3 p-4">
         <p className="text-sm font-semibold">Tus datos</p>
-        <p className="text-xs leading-relaxed text-zinc-500">
+        <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
           {isAuthenticated
             ? "El resumen es para imprimir o abrir en Excel. La copia JSON guarda todo, por las dudas."
             : "Un archivo para imprimir o abrir en Excel, con el mes o el año."}
@@ -83,7 +85,7 @@ export default function CuentaPage() {
         <button
           type="button"
           onClick={() => setExportOpen(true)}
-          className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
+          className="w-full rounded-xl border border-[var(--card-border)] py-2.5 text-sm dark:border-[var(--card-border)]"
         >
           Descargar resumen
         </button>
@@ -92,7 +94,7 @@ export default function CuentaPage() {
             <button
               type="button"
               onClick={handleBackup}
-              className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm dark:border-zinc-700"
+              className="w-full rounded-xl border border-[var(--card-border)] py-2.5 text-sm dark:border-[var(--card-border)]"
             >
               Descargar copia JSON
             </button>
@@ -108,7 +110,7 @@ export default function CuentaPage() {
         )}
       </section>
 
-      {message && <p className="text-sm text-teal-600">{message}</p>}
+      {message && <p className="text-sm text-primary">{message}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <ExportStatementSheet

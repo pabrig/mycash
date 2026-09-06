@@ -5,15 +5,18 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { FinanceProvider, useFinance } from "@/context/FinanceContext";
 import { BottomNav } from "@/components/BottomNav";
+import { ColorModeSync } from "@/components/ColorModeToggle";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { UserNotices } from "@/components/UserNotices";
-import {
-  LoadingScreen,
-  variantFromPath,
-} from "@/components/ui/LoadingScreen";
+import { LoadingScreen, variantFromPath } from "@/components/ui/LoadingScreen";
 import { useIsClient } from "@/hooks/useIsClient";
-import { isAuthShellPath, isGuideRequest, isLocalDevHost, isOnboardingPath } from "@/lib/auth-routes";
+import {
+  isAuthShellPath,
+  isGuideRequest,
+  isLocalDevHost,
+  isOnboardingPath,
+} from "@/lib/auth-routes";
 
 function isStandaloneDisplay() {
   const nav = navigator as Navigator & { standalone?: boolean };
@@ -43,12 +46,14 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <FinanceProvider>
-        {/* iOS PWA: theme-color no pinta el notch; esta franja sí. */}
+        {/* Notch: pinta el safe-area con el fondo (Safari/PWA con viewport-fit=cover). */}
         <div
-          className="h-[env(safe-area-inset-top,0px)] shrink-0 bg-[var(--primary)] md:hidden"
+          className="pointer-events-none fixed inset-x-0 top-0 z-[100] bg-[var(--background)] md:hidden"
+          style={{ height: "env(safe-area-inset-top, 0px)" }}
           aria-hidden
         />
         <Suspense fallback={null}>
+          <ColorModeSync />
           <AppFrame pathname={pathname} hydrated={hydrated}>
             {children}
           </AppFrame>
@@ -77,7 +82,11 @@ function AppFrame({
   const onOnboarding = isOnboardingPath(pathname);
   const onJoin = pathname.startsWith("/join/");
   const needsOnboarding =
-    configured && isAuthenticated && ready && !onboardingCompleted && !guideOnly;
+    configured &&
+    isAuthenticated &&
+    ready &&
+    !onboardingCompleted &&
+    !guideOnly;
   const blockApp = needsOnboarding && !onOnboarding && !onJoin;
   const hideChrome = isAuthShellPath(pathname) || blockApp;
 
@@ -109,11 +118,7 @@ function AppFrame({
       {hydrated && !hideChrome ? <DesktopSidebar /> : null}
       <div className={`min-h-full w-full ${hideChrome ? "" : "md:pl-64"}`}>
         <div
-          className={`mx-auto flex min-h-full w-full max-w-lg flex-col px-5 ${
-            hideChrome
-              ? "pb-12 pt-8"
-              : "pb-44 pt-4 md:max-w-7xl md:px-8 md:pb-12 md:pt-8 lg:px-10"
-          }`}
+          className={`mx-auto flex min-h-full w-full max-w-lg flex-col px-5 ${ hideChrome ? "pb-12 pt-8" : "pb-44 pt-4 md:max-w-7xl md:px-8 md:pb-12 md:pt-8 lg:px-10" }`}
         >
           <main className="mx-auto w-full flex-1 md:mx-0">
             {!hydrated ? (

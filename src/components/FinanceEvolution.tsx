@@ -25,16 +25,16 @@ export function FinanceEvolution({
   return (
     <div className="bento space-y-4 !px-4 !py-5 sm:!px-6">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        <h2 className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
           {copy.title}
         </h2>
-        <p className="mt-0.5 text-xs leading-relaxed text-zinc-400">
+        <p className="mt-0.5 text-xs leading-relaxed text-[var(--muted-fg)]">
           {copy.subtitle}
         </p>
       </div>
 
       {!hasAny ? (
-        <p className="text-sm text-zinc-400">{copy.empty}</p>
+        <p className="text-sm text-[var(--muted-fg)]">{copy.empty}</p>
       ) : (
         <>
           <div
@@ -49,21 +49,17 @@ export function FinanceEvolution({
               const selected = point.month === selectedMonth;
               const positive = point.disponible >= 0;
               const barColor = !active
-                ? "bg-zinc-100 dark:bg-zinc-800"
+                ? "bg-[var(--card-muted)]"
                 : positive
-                  ? "bg-teal-500"
-                  : "bg-rose-400";
+                  ? "bg-income"
+                  : "bg-[var(--expense)]";
 
               return (
                 <button
                   key={point.month}
                   type="button"
                   onClick={() => onSelectMonth(point.month)}
-                  className={`flex min-w-0 flex-1 flex-col items-center gap-1.5 rounded-xl px-0.5 py-1 transition ${
-                    selected
-                      ? "bg-[var(--card-muted)]"
-                      : "active:bg-[var(--card-muted)]"
-                  }`}
+                  className={`flex min-w-0 flex-1 flex-col items-center gap-1.5 rounded-xl px-0.5 py-1 transition ${selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"}`}
                   aria-label={
                     active
                       ? `${evolutionAxisLabel(point.month)}: ${formatArs(point.disponible)}`
@@ -84,11 +80,7 @@ export function FinanceEvolution({
                     />
                   </div>
                   <span
-                    className={`text-[10px] font-semibold tracking-wide uppercase ${
-                      selected
-                        ? "text-teal-700 dark:text-teal-300"
-                        : "text-zinc-400"
-                    }`}
+                    className={`text-[10px] font-semibold tracking-wide uppercase ${selected ? "text-primary" : "text-[var(--muted-fg)]"}`}
                   >
                     {evolutionAxisLabel(point.month)}
                   </span>
@@ -97,16 +89,21 @@ export function FinanceEvolution({
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-zinc-400">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted-fg)]">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-teal-500" aria-hidden />
+              <span className="h-2 w-2 rounded-full bg-income" aria-hidden />
               Te quedó
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-rose-400" aria-hidden />
+              <span
+                className="h-2 w-2 rounded-full bg-[var(--expense)]"
+                aria-hidden
+              />
               Gastaste de más
             </span>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
+            <span className="text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
+              ·
+            </span>
             <span>Tocá un mes para verlo</span>
           </div>
         </>

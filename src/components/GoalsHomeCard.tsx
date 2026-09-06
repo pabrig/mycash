@@ -55,14 +55,11 @@ export function GoalsHomeCard() {
     ? splitMonthBalance.vida.totalDisponible
     : monthBalance.totalDisponible;
   const freeArs = baseDisponible - goalsReservedArs;
-  const reserved = goalsReservedCopy(
-    goalsReservedArs,
-    freeArs,
-    formatArs,
-    { split: isSplit },
-  );
+  const reserved = goalsReservedCopy(goalsReservedArs, freeArs, formatArs, {
+    split: isSplit,
+  });
   const activeGoal = activeId
-    ? savingsGoals.find((g) => g.id === activeId) ?? null
+    ? (savingsGoals.find((g) => g.id === activeId) ?? null)
     : null;
 
   const summaryLine = !hasGoals
@@ -89,51 +86,49 @@ export function GoalsHomeCard() {
             className="flex min-w-0 flex-1 items-center gap-3 px-4 py-4 text-left sm:px-5"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+              <p className="text-sm font-semibold tracking-tight text-[var(--foreground)] dark:text-[var(--foreground)]">
                 {copy.title}
                 {hasGoals ? (
-                  <span className="ml-1.5 font-normal text-zinc-400">
+                  <span className="ml-1.5 font-normal text-[var(--muted-fg)]">
                     · {active.length + done.length}
                   </span>
                 ) : null}
               </p>
-              <p className="mt-0.5 truncate text-xs text-zinc-400">
+              <p className="mt-0.5 truncate text-xs text-[var(--muted-fg)]">
                 {summaryLine}
               </p>
             </div>
             <IconChevronDown
-              className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
-                open ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 shrink-0 text-[var(--muted-fg)] transition-transform ${open ? "rotate-180" : ""}`}
             />
           </button>
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="shrink-0 border-l border-zinc-100 px-4 text-xs font-semibold text-teal-700 dark:border-zinc-800 dark:text-teal-400"
+            className="shrink-0 border-l border-[var(--card-border)] px-4 text-xs font-semibold text-primary dark:border-[var(--card-border)]"
           >
             {copy.add}
           </button>
         </div>
 
         {open ? (
-          <div className="space-y-3 border-t border-zinc-100 px-4 py-4 dark:border-zinc-800 sm:px-5">
+          <div className="space-y-3 border-t border-[var(--card-border)] px-4 py-4 dark:border-[var(--card-border)] sm:px-5">
             {reserved ? (
-              <p className="text-[11px] leading-snug text-zinc-400">
+              <p className="text-[11px] leading-snug text-[var(--muted-fg)]">
                 {reserved.reserved}. {reserved.hint}
               </p>
             ) : null}
 
             {!hasGoals ? (
               <div className="py-1">
-                <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                <p className="text-sm text-[var(--muted-fg)]">
                   {copy.emptyBody}
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {active.length > 0 ? (
-                  <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <ul className="divide-y divide-[var(--card-border)]">
                     {active.map((goal) => (
                       <GoalRow
                         key={goal.id}
@@ -147,10 +142,10 @@ export function GoalsHomeCard() {
 
                 {done.length > 0 ? (
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
                       {copy.doneSection}
                     </p>
-                    <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <ul className="divide-y divide-[var(--card-border)]">
                       {done.map((goal) => (
                         <GoalRow
                           key={goal.id}
@@ -169,11 +164,7 @@ export function GoalsHomeCard() {
       </section>
 
       {creating ? (
-        <DetailSheet
-          open
-          onClose={() => setCreating(false)}
-          title="Nueva meta"
-        >
+        <DetailSheet open onClose={() => setCreating(false)} title="Nueva meta">
           <GoalEditor
             mode="create"
             onDone={() => setCreating(false)}
@@ -187,7 +178,9 @@ export function GoalsHomeCard() {
           open
           onClose={() => setActiveId(null)}
           title={
-            sheetMode === "contribute" ? `Apartar · ${activeGoal.name}` : activeGoal.name
+            sheetMode === "contribute"
+              ? `Apartar · ${activeGoal.name}`
+              : activeGoal.name
           }
         >
           <GoalEditor
@@ -232,39 +225,41 @@ function GoalRow({
         className="w-full py-3 text-left transition first:pt-0 last:pb-0 active:opacity-80"
       >
         <div className="flex items-baseline justify-between gap-3">
-          <p className="min-w-0 truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+          <p className="min-w-0 truncate text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
             {goal.name}
             {showPlace ? (
-              <span className="ml-1.5 font-normal text-zinc-400">
+              <span className="ml-1.5 font-normal text-[var(--muted-fg)]">
                 · {goalPlaceLabel(place)}
               </span>
             ) : null}
           </p>
-          <p className="shrink-0 text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
+          <p className="shrink-0 text-sm font-semibold tabular-nums text-[var(--foreground)] dark:text-[var(--foreground)]">
             {done ? copy.status : fmt(goal.savedAmount)}
           </p>
         </div>
-        <p className="mt-0.5 text-xs text-zinc-400">
+        <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
           {done ? copy.detail : `${copy.status} · ${copy.detail}`}
         </p>
         {!done ? (
           <div
-            className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700"
+            className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--card-muted)]"
             aria-hidden
           >
             <div
-              className="h-full rounded-full bg-teal-600"
+              className="h-full rounded-full bg-primary"
               style={{ width: `${barWidth}%` }}
             />
           </div>
         ) : null}
         {!done && copy.planModeLabel ? (
-          <p className="mt-1.5 text-[11px] text-zinc-400">
+          <p className="mt-1.5 text-[11px] text-[var(--muted-fg)]">
             {copy.planModeLabel}
             {copy.plan ? ` · ${copy.plan}` : ""}
           </p>
         ) : !done && copy.plan ? (
-          <p className="mt-1.5 text-[11px] text-zinc-400">{copy.plan}</p>
+          <p className="mt-1.5 text-[11px] text-[var(--muted-fg)]">
+            {copy.plan}
+          </p>
         ) : null}
       </button>
     </li>
