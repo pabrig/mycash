@@ -16,9 +16,7 @@ import {
   yearListCopy,
 } from "@/lib/annual-copy";
 import { goalsYearNoteCopy } from "@/lib/goals-copy";
-import {
-  projectedYearReserved,
-} from "@/lib/goals";
+import { projectedYearReserved } from "@/lib/goals";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import {
   buildFinanceInsights,
@@ -77,7 +75,10 @@ export function YearReview({
   const monthsShown = visibleMonthCount(year);
   const breakdown = useMemo(
     () =>
-      computeMonthlyBreakdown(balanceMovements, year, rates).slice(0, monthsShown),
+      computeMonthlyBreakdown(balanceMovements, year, rates).slice(
+        0,
+        monthsShown,
+      ),
     [balanceMovements, year, rates, monthsShown],
   );
 
@@ -139,46 +140,44 @@ export function YearReview({
     <section className="animate-slide-up mx-auto grid w-full max-w-5xl gap-4 md:gap-6">
       <div className="bento overflow-hidden !p-0">
         <div className="px-6 pt-7 pb-6">
-          <p className="text-sm font-medium text-zinc-400">{copy.label}</p>
+          <p className="text-sm font-medium text-[var(--muted-fg)]">
+            {copy.label}
+          </p>
           <p
-            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
-              positive ? "text-zinc-900 dark:text-white" : "amount-negative"
-            }`}
+            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${positive ? "text-[var(--foreground)]" : "amount-negative"}`}
           >
             {formatArs(annualSummaryArs.disponible)}
           </p>
           <p
-            className={`mt-2 text-xl font-semibold tabular-nums ${
-              positive ? "text-zinc-500 dark:text-zinc-400" : "amount-negative"
-            }`}
+            className={`mt-2 text-xl font-semibold tabular-nums ${positive ? "text-[var(--muted-fg)] dark:text-[var(--muted-fg)]" : "amount-negative"}`}
           >
             {formatUsd(annualSummary.disponible)}
           </p>
           <p className="meta mt-2">{copy.asOf}</p>
           <p className="meta mt-0.5">{copy.fx}</p>
-          <p className="mt-3 text-xs leading-relaxed text-zinc-400">
+          <p className="mt-3 text-xs leading-relaxed text-[var(--muted-fg)]">
             {copy.hint}
           </p>
 
           <div className="mt-6 space-y-2">
             <div
-              className="flex h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+              className="flex h-1.5 overflow-hidden rounded-full bg-[var(--card-muted)]"
               aria-hidden
             >
               {rate.savedShare > 0 && (
                 <div
-                  className="bg-teal-500 transition-all"
+                  className="bg-income transition-all"
                   style={{ width: `${rate.savedShare}%` }}
                 />
               )}
               {rate.spentShare > 0 && (
                 <div
-                  className="bg-rose-400/80 transition-all"
+                  className="bg-[var(--expense)]/80 transition-all"
                   style={{ width: `${rate.spentShare}%` }}
                 />
               )}
             </div>
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            <p className="text-sm font-medium text-[var(--muted-fg)]">
               {rate.line}
             </p>
           </div>
@@ -207,7 +206,7 @@ export function YearReview({
         </div>
 
         {(mix || shared || goalsYear) && (
-          <div className="space-y-5 border-t border-zinc-100 px-4 py-5 dark:border-zinc-800/80 sm:px-6">
+          <div className="space-y-5 border-t border-[var(--card-border)] px-4 py-5 dark:border-[var(--card-border)]/80 sm:px-6">
             {mix && (
               <ShareBlock
                 title="De dónde entra"
@@ -219,7 +218,7 @@ export function YearReview({
                 right={{
                   label: "Trabajo",
                   share: mix.activeShare,
-                  swatch: "bg-teal-600",
+                  swatch: "bg-primary",
                 }}
               />
             )}
@@ -230,34 +229,34 @@ export function YearReview({
                 left={{
                   label: "Con otros",
                   share: shared.sharedShare,
-                  swatch: "bg-rose-500",
+                  swatch: "bg-[var(--expense)]",
                 }}
                 right={{
                   label: "Solo tuyo",
                   share: shared.personalShare,
-                  swatch: "bg-rose-300",
+                  swatch: "bg-[var(--expense)]/70",
                 }}
               />
             )}
             {goalsYear ? (
               <div>
-                <p className="text-[11px] font-medium text-zinc-400">
+                <p className="text-[11px] font-medium text-[var(--muted-fg)]">
                   {goalsYear.title}
                 </p>
-                <p className="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                <p className="mt-1 text-sm font-medium text-[var(--muted-fg)]">
                   {goalsYear.progress}
                 </p>
                 {goalsYear.planLine ? (
-                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+                  <p className="mt-1.5 text-xs leading-relaxed text-[var(--muted-fg)]">
                     {goalsYear.planLine}
                   </p>
                 ) : null}
                 {goalsYear.freeLine ? (
-                  <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
+                  <p className="mt-0.5 text-xs leading-relaxed text-[var(--muted-fg)]">
                     {goalsYear.freeLine}
                   </p>
                 ) : null}
-                <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">
+                <p className="mt-1.5 text-[11px] leading-snug text-[var(--muted-fg)]">
                   {goalsYear.hint}
                 </p>
               </div>
@@ -288,21 +287,21 @@ export function YearReview({
       )}
 
       <div>
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        <h2 className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
           {list.title}
         </h2>
-        <p className="mt-0.5 text-xs text-zinc-400">{list.subtitle}</p>
+        <p className="mt-0.5 text-xs text-[var(--muted-fg)]">{list.subtitle}</p>
       </div>
 
       <div className="bento overflow-hidden !p-0">
-        <div className="grid grid-cols-[minmax(4.5rem,1fr)_1fr_1fr_1fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+        <div className="grid grid-cols-[minmax(4.5rem,1fr)_1fr_1fr_1fr] gap-x-2 px-4 py-3 text-[10px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
           <span>Mes</span>
           <span className="text-right">Ingreso</span>
           <span className="text-right">Gasto</span>
           <span className="text-right">Ahorro</span>
         </div>
 
-        <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+        <ul className="divide-y divide-[var(--card-border)]/80">
           {breakdown.map((snap) => {
             const isCurrent =
               snap.year === now.year &&
@@ -322,37 +321,29 @@ export function YearReview({
                 <button
                   type="button"
                   onClick={() => openMonth(snap.month)}
-                  className={`w-full px-4 py-3.5 text-left transition ${
-                    isSelected
-                      ? "bg-[var(--card-muted)]"
-                      : "active:bg-[var(--card-muted)]"
-                  }`}
+                  className={`w-full px-4 py-3.5 text-left transition ${isSelected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"}`}
                 >
                   <div className="grid grid-cols-[minmax(4.5rem,1fr)_1fr_1fr_1fr] items-start gap-x-2">
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold">
                         {MONTH_NAMES[snap.month - 1].slice(0, 3)}
                         {isCurrent && (
-                          <span className="ml-1.5 text-[10px] font-medium text-teal-600">
+                          <span className="ml-1.5 text-[10px] font-medium text-primary">
                             hoy
                           </span>
                         )}
                       </span>
                       {hasActivity && delta && (
                         <span
-                          className={`mt-0.5 block text-[10px] font-medium tabular-nums ${
-                            deltaTone === "positive"
-                              ? "text-teal-600 dark:text-teal-400"
-                              : deltaTone === "warning"
-                                ? "text-rose-500"
-                                : "text-zinc-400"
-                          }`}
+                          className={`mt-0.5 block text-[10px] font-medium tabular-nums ${deltaTone === "positive" ? "text-primary" : deltaTone === "warning" ? "text-[var(--expense)]" : "text-[var(--muted-fg)]"}`}
                         >
-                          {delta === "Igual" ? "Igual al mes ant." : `Vs ant. ${delta}`}
+                          {delta === "Igual"
+                            ? "Igual al mes ant."
+                            : `Vs ant. ${delta}`}
                         </span>
                       )}
                       {hasActivity && !delta && (
-                        <span className="mt-0.5 block text-[10px] tabular-nums text-zinc-400">
+                        <span className="mt-0.5 block text-[10px] tabular-nums text-[var(--muted-fg)]">
                           {isCurrent ? "dólar" : "cierre"}{" "}
                           {formatMoney(monthRate.usdToArs)}
                         </span>
@@ -379,7 +370,7 @@ export function YearReview({
                         />
                       </>
                     ) : (
-                      <span className="col-span-3 self-center text-right text-xs text-zinc-300 dark:text-zinc-600">
+                      <span className="col-span-3 self-center text-right text-xs text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
                         Sin nada
                       </span>
                     )}
@@ -391,7 +382,7 @@ export function YearReview({
         </ul>
       </div>
 
-      <p className="text-center text-xs text-zinc-400">
+      <p className="text-center text-xs text-[var(--muted-fg)]">
         Tocá un mes para ver el día a día
       </p>
     </section>
@@ -411,7 +402,7 @@ function ShareBlock({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+      <p className="text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
         {title}
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -423,7 +414,7 @@ function ShareBlock({
         />
       </div>
       <div
-        className="flex h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+        className="flex h-2 overflow-hidden rounded-full bg-[var(--card-muted)]"
         aria-hidden
       >
         {left.share > 0 && (
@@ -439,7 +430,7 @@ function ShareBlock({
           />
         )}
       </div>
-      {caption && <p className="text-xs text-zinc-400">{caption}</p>}
+      {caption && <p className="text-xs text-[var(--muted-fg)]">{caption}</p>}
     </div>
   );
 }
@@ -455,11 +446,11 @@ function ShareStat({
 }) {
   return (
     <div>
-      <p className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
+      <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted-fg)]">
         <span className={`h-2 w-2 shrink-0 rounded-full ${swatch}`} />
         {label}
       </p>
-      <p className="mt-0.5 text-3xl font-extrabold tracking-tight tabular-nums text-zinc-900 dark:text-white">
+      <p className="mt-0.5 text-3xl font-extrabold tracking-tight tabular-nums text-[var(--foreground)]">
         {share.toFixed(0)}%
       </p>
     </div>
@@ -483,19 +474,15 @@ function Pillar({
 
   return (
     <div
-      className={`rounded-2xl px-2.5 py-3 sm:px-3.5 ${
-        emphasis
-          ? "bg-teal-50 ring-1 ring-teal-500/15 dark:bg-teal-950/40 dark:ring-teal-400/20"
-          : "bg-[var(--card)]"
-      }`}
+      className={`rounded-2xl px-2.5 py-3 sm:px-3.5 ${emphasis ? "bg-income/10 ring-1 ring-income/20" : "bg-[var(--card)]"}`}
     >
-      <p className="text-[11px] font-medium text-zinc-400">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--muted-fg)]">{label}</p>
       <p
         className={`mt-1 truncate text-sm font-bold tabular-nums sm:text-base ${color}`}
       >
         {ars}
       </p>
-      <p className="mt-0.5 truncate text-[10px] tabular-nums text-zinc-400">
+      <p className="mt-0.5 truncate text-[10px] tabular-nums text-[var(--muted-fg)]">
         {usd}
       </p>
     </div>
@@ -518,13 +505,11 @@ function MiniFlow({
   return (
     <span className="min-w-0 text-right">
       <span
-        className={`block truncate tabular-nums ${
-          emphasis ? "text-sm font-bold" : "text-sm font-semibold"
-        } ${color}`}
+        className={`block truncate tabular-nums ${emphasis ? "text-sm font-bold" : "text-sm font-semibold"} ${color}`}
       >
         {ars}
       </span>
-      <span className="mt-0.5 block truncate text-[10px] tabular-nums text-zinc-400">
+      <span className="mt-0.5 block truncate text-[10px] tabular-nums text-[var(--muted-fg)]">
         {usd}
       </span>
     </span>

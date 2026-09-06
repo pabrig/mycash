@@ -12,7 +12,7 @@ import { IconArrowDown, IconArrowUp, IconShared } from "@/components/ui/Icons";
 import {
   canManageMovement,
   matchesMovementFilter,
-  type MovementListFilter
+  type MovementListFilter,
 } from "@/lib/movement-access";
 import { expenseCategoryLabel, incomeSourceLabel } from "@/lib/labels";
 import type { Movement } from "@/lib/types";
@@ -23,13 +23,13 @@ const ALL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
   { id: "income", label: "Ingresos" },
   { id: "personal", label: "Gastos" },
-  { id: "shared", label: "Compartido" }
+  { id: "shared", label: "Compartido" },
 ];
 
 const PERSONAL_FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "Todos" },
   { id: "income", label: "Ingresos" },
-  { id: "personal", label: "Gastos" }
+  { id: "personal", label: "Gastos" },
 ];
 
 function formatDayLabel(date: string): string {
@@ -43,7 +43,7 @@ function formatDayLabel(date: string): string {
   return d.toLocaleDateString("es-AR", {
     weekday: "short",
     day: "numeric",
-    month: "short"
+    month: "short",
   });
 }
 
@@ -52,7 +52,7 @@ function formatFullDate(date: string): string {
     weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric"
+    year: "numeric",
   });
 }
 
@@ -91,7 +91,7 @@ function MovementRow({
   arsAmount,
   selected,
   onSelect,
-  dense
+  dense,
 }: {
   movement: Movement;
   arsAmount: number;
@@ -109,21 +109,11 @@ function MovementRow({
       <button
         type="button"
         onClick={onSelect}
-        className={`flex w-full items-center gap-3 rounded-2xl px-3 text-left transition md:grid md:grid-cols-[minmax(0,1fr)_7rem_6rem_auto] md:items-center ${
-          dense ? "py-2.5" : "py-3"
-        } ${selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"}`}
+        className={`flex w-full items-center gap-3 rounded-2xl px-3 text-left transition md:grid md:grid-cols-[minmax(0,1fr)_7rem_6rem_auto] md:items-center ${ dense ? "py-2.5" : "py-3" } ${selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div
-            className={`flex shrink-0 items-center justify-center rounded-2xl ${
-              dense ? "h-9 w-9" : "h-11 w-11"
-            } ${
-              isIncome
-                ? "bg-teal-500/10 text-teal-600"
-                : isShared
-                  ? "bg-teal-500/10 text-teal-600"
-                  : "bg-rose-500/10 text-rose-500"
-            }`}
+            className={`flex shrink-0 items-center justify-center rounded-2xl ${ dense ? "h-9 w-9" : "h-11 w-11" } ${ isIncome ? "bg-income/10 text-income" : isShared ? "bg-income/10 text-income" : "bg-[var(--expense)]/10 text-[var(--expense)]" }`}
           >
             {isIncome ? (
               <IconArrowUp className="h-4 w-4" />
@@ -153,15 +143,13 @@ function MovementRow({
 
         <div className="shrink-0 text-right">
           <p
-            className={`font-bold tabular-nums tracking-tight ${
-              isIncome ? "amount-positive" : "text-zinc-900 dark:text-white"
-            }`}
+            className={`font-bold tabular-nums tracking-tight ${ isIncome ? "amount-positive" : "text-[var(--foreground)]" }`}
           >
             {isIncome ? "+" : "−"}
             {fmt(arsAmount)}
           </p>
           {movement.currency !== "ARS" && !amountsHidden && (
-            <p className="mt-0.5 text-[10px] text-zinc-400">
+            <p className="mt-0.5 text-[10px] text-[var(--muted-fg)]">
               {movement.amount} {movement.currency}
             </p>
           )}
@@ -176,7 +164,7 @@ function MovementDetail({
   arsAmount,
   canManage,
   onDelete,
-  onClose
+  onClose,
 }: {
   movement: Movement;
   arsAmount: number;
@@ -204,14 +192,12 @@ function MovementDetail({
   return (
     <div className="space-y-6 pb-4">
       <div>
-        <p className="text-sm font-medium text-zinc-400">
+        <p className="text-sm font-medium text-[var(--muted-fg)]">
           {isIncome ? "Ingreso" : "Gasto"}
           {movement.scope === "shared" ? " · Compartido" : ""}
         </p>
         <p
-          className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${
-            isIncome ? "amount-positive" : "text-zinc-900 dark:text-white"
-          }`}
+          className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${ isIncome ? "amount-positive" : "text-[var(--foreground)]" }`}
         >
           {isIncome ? "+" : "−"}
           {fmt(arsAmount)}
@@ -225,20 +211,20 @@ function MovementDetail({
 
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
-          <dt className="text-zinc-400">Qué fue</dt>
+          <dt className="text-[var(--muted-fg)]">Qué fue</dt>
           <dd className="max-w-[60%] text-right font-semibold">
             {movement.description}
           </dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt className="text-zinc-400">Fecha</dt>
+          <dt className="text-[var(--muted-fg)]">Fecha</dt>
           <dd className="text-right font-medium capitalize">
             {formatFullDate(movement.date)}
           </dd>
         </div>
         {(movement.category || movement.source) && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">
+            <dt className="text-[var(--muted-fg)]">
               {movement.type === "income" ? "De dónde" : "Tipo"}
             </dt>
             <dd className="text-right font-medium">{kindLabel(movement)}</dd>
@@ -246,7 +232,7 @@ function MovementDetail({
         )}
         {movement.createdByName && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Lo cargó</dt>
+            <dt className="text-[var(--muted-fg)]">Lo cargó</dt>
             <dd className="text-right font-medium">{movement.createdByName}</dd>
           </div>
         )}
@@ -265,7 +251,7 @@ function MovementDetail({
             type="button"
             onClick={() => void handleDelete()}
             disabled={deleting}
-            className="flex flex-1 items-center justify-center rounded-2xl bg-rose-500/10 py-3.5 text-sm font-semibold text-rose-600 disabled:opacity-40"
+            className="flex flex-1 items-center justify-center rounded-2xl bg-[var(--expense)]/10 py-3.5 text-sm font-semibold text-[var(--expense)] disabled:opacity-40"
           >
             {deleting ? "…" : "Eliminar"}
           </button>
@@ -276,7 +262,7 @@ function MovementDetail({
 }
 
 export function MovementList({
-  variant = "default"
+  variant = "default",
 }: {
   /** feed: columna sticky desktop con tipografía más densa */
   variant?: "default" | "feed";
@@ -300,7 +286,7 @@ export function MovementList({
   if (monthMovements.length === 0) {
     return (
       <section className="bento animate-slide-up-delay-2 py-12 text-center">
-        <p className="text-sm font-semibold text-zinc-400">
+        <p className="text-sm font-semibold text-[var(--muted-fg)]">
           Todavía no hay nada
         </p>
         <p className="meta mt-1">Cargá un gasto o un ingreso para empezar</p>
@@ -324,7 +310,7 @@ export function MovementList({
         >
           {dense ? "Últimos" : "Este mes"}
         </h2>
-        <span className="text-xs font-medium text-zinc-400">
+        <span className="text-xs font-medium text-[var(--muted-fg)]">
           {filtered.length}
         </span>
       </div>
@@ -343,7 +329,7 @@ export function MovementList({
       </div>
 
       {/* Header columnas desktop */}
-      <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
+      <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase md:grid">
         <span>Qué fue</span>
         <span>Fecha</span>
         <span>Tipo</span>
@@ -351,14 +337,14 @@ export function MovementList({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-zinc-400">
+        <p className="py-10 text-center text-sm text-[var(--muted-fg)]">
           No hay nada de este tipo
         </p>
       ) : (
         <div className="bento space-y-5 !px-2 !py-3">
           {[...groups.entries()].map(([date, items]) => (
             <div key={date}>
-              <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase md:hidden">
+              <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase md:hidden">
                 {formatDayLabel(date)}
               </p>
               <ul className="space-y-0.5">

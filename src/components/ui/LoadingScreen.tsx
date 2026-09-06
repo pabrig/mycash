@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 
 export type LoadingVariant =
-  | "dashboard"
-  | "form"
-  | "shared"
-  | "account"
-  | "auth";
+  "dashboard" | "form" | "shared" | "account" | "auth";
 
 export function variantFromPath(pathname: string): LoadingVariant {
   if (

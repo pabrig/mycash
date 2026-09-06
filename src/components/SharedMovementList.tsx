@@ -77,9 +77,7 @@ function SharedRow({
       <button
         type="button"
         onClick={onSelect}
-        className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition md:grid md:grid-cols-[minmax(0,1fr)_7rem_6rem_auto] md:items-center ${
-          selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"
-        }`}
+        className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition md:grid md:grid-cols-[minmax(0,1fr)_7rem_6rem_auto] md:items-center ${selected ? "bg-[var(--card-muted)]" : "active:bg-[var(--card-muted)]"}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <UserAvatar name={name} />
@@ -87,7 +85,7 @@ function SharedRow({
             <p className="truncate font-semibold tracking-tight">
               {movement.description}
             </p>
-        <p className="meta mt-0.5 text-xs md:hidden">
+            <p className="meta mt-0.5 text-xs md:hidden">
               {movement.createdByName ? `${movement.createdByName} · ` : ""}
               {movement.householdName
                 ? `${movement.householdName}`
@@ -104,9 +102,7 @@ function SharedRow({
             : expenseCategoryLabel(movement.category) || "—"}
         </p>
         <p
-          className={`shrink-0 text-right font-bold tabular-nums tracking-tight ${
-            movement.type === "income" ? "amount-positive" : ""
-          }`}
+          className={`shrink-0 text-right font-bold tabular-nums tracking-tight ${movement.type === "income" ? "amount-positive" : ""}`}
         >
           {movement.type === "income" ? "+" : "−"}
           {fmt(arsAmount)}
@@ -152,37 +148,35 @@ function SharedDetail({
   return (
     <div className="space-y-6 pb-4">
       <div>
-        <p className="text-sm font-medium text-zinc-400">
-          {movement.type === "income" ? "Ingreso del grupo" : "Gasto compartido"}
+        <p className="text-sm font-medium text-[var(--muted-fg)]">
+          {movement.type === "income"
+            ? "Ingreso del grupo"
+            : "Gasto compartido"}
         </p>
         <p
-          className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${
-            movement.type === "income" ? "amount-positive" : ""
-          }`}
+          className={`mt-2 text-4xl font-extrabold tracking-tighter tabular-nums ${movement.type === "income" ? "amount-positive" : ""}`}
         >
           {movement.type === "income" ? "+" : "−"}
           {fmt(arsAmount)}
         </p>
-        {!canManage && (
-          <p className="meta mt-2 text-xs">{partnerHint}</p>
-        )}
+        {!canManage && <p className="meta mt-2 text-xs">{partnerHint}</p>}
       </div>
       <dl className="space-y-3 text-sm">
         <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Qué fue</dt>
+          <dt className="text-[var(--muted-fg)]">Qué fue</dt>
           <dd className="max-w-[60%] text-right font-semibold">
             {movement.description}
           </dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt className="text-zinc-400">Fecha</dt>
+          <dt className="text-[var(--muted-fg)]">Fecha</dt>
           <dd className="text-right font-medium capitalize">
             {formatFullDate(movement.date)}
           </dd>
         </div>
         {movement.category && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Tipo</dt>
+            <dt className="text-[var(--muted-fg)]">Tipo</dt>
             <dd className="text-right font-medium">
               {expenseCategoryLabel(movement.category)}
             </dd>
@@ -190,19 +184,21 @@ function SharedDetail({
         )}
         {movement.householdName && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Grupo</dt>
+            <dt className="text-[var(--muted-fg)]">Grupo</dt>
             <dd className="text-right font-medium">{movement.householdName}</dd>
           </div>
         )}
         {movement.createdByName && (
           <div className="flex justify-between gap-4">
-            <dt className="text-zinc-400">Lo cargó</dt>
+            <dt className="text-[var(--muted-fg)]">Lo cargó</dt>
             <dd className="text-right font-medium">{movement.createdByName}</dd>
           </div>
         )}
       </dl>
       {!canManage && (
-        <p className="text-xs leading-relaxed text-zinc-400">{partnerHint}</p>
+        <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
+          {partnerHint}
+        </p>
       )}
       {canManage && (
         <div className="flex gap-2 pt-2">
@@ -217,7 +213,7 @@ function SharedDetail({
             type="button"
             onClick={() => void handleDelete()}
             disabled={deleting}
-            className="flex flex-1 items-center justify-center rounded-2xl bg-rose-500/10 py-3.5 text-sm font-semibold text-rose-600 disabled:opacity-40"
+            className="flex flex-1 items-center justify-center rounded-2xl bg-[var(--expense)]/10 py-3.5 text-sm font-semibold text-[var(--expense)] disabled:opacity-40"
           >
             {deleting ? "…" : "Eliminar"}
           </button>
@@ -281,7 +277,7 @@ export function SharedMovementList() {
   if (monthShared.length === 0) {
     return (
       <section className="bento animate-slide-up mx-auto max-w-5xl py-12 text-center">
-        <p className="text-sm font-semibold text-zinc-400">
+        <p className="text-sm font-semibold text-[var(--muted-fg)]">
           {sharedFunding === "pool"
             ? "Todavía no hay nada del grupo"
             : "Todavía no hay gastos del grupo"}
@@ -317,20 +313,20 @@ export function SharedMovementList() {
       >
         {contributions.length > 0 && total > 0 ? (
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+            <p className="text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
               Quién cargó
             </p>
-            <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div className="flex h-2 overflow-hidden rounded-full bg-[var(--card-muted)]">
               {contributions.map((c, i) => (
                 <div
                   key={c.name + i}
                   className={
                     i % 2 === 0
-                      ? "bg-teal-500 transition-all duration-700"
-                      : "bg-zinc-400 transition-all duration-700 dark:bg-zinc-500"
+                      ? "bg-income transition-all duration-700"
+                      : "bg-[var(--muted-fg)]/55 transition-all duration-700"
                   }
-                      style={{ width: `${(c.amount / total) * 100}%` }}
-                      title={`${c.name}: ${formatArs(c.amount)}`}
+                  style={{ width: `${(c.amount / total) * 100}%` }}
+                  title={`${c.name}: ${formatArs(c.amount)}`}
                 />
               ))}
             </div>
@@ -344,12 +340,12 @@ export function SharedMovementList() {
                     <UserAvatar name={c.name} size="sm" tone={i} />
                     <span className="truncate font-medium">{c.name}</span>
                   </span>
-                      <span className="shrink-0 font-bold tabular-nums">
-                        {formatArs(c.amount)}
-                        <span className="ml-1.5 text-xs font-medium text-zinc-400">
-                          {Math.round((c.amount / total) * 100)}%
-                        </span>
-                      </span>
+                  <span className="shrink-0 font-bold tabular-nums">
+                    {formatArs(c.amount)}
+                    <span className="ml-1.5 text-xs font-medium text-[var(--muted-fg)]">
+                      {Math.round((c.amount / total) * 100)}%
+                    </span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -358,17 +354,17 @@ export function SharedMovementList() {
       </SharedSpendHero>
 
       <div>
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        <h2 className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
           Gastos
         </h2>
-        <p className="mt-0.5 text-xs text-zinc-400">
+        <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
           {monthShared.length === 1
             ? "1 movimiento"
             : `${monthShared.length} movimientos`}
         </p>
       </div>
 
-      <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase md:grid">
+      <div className="mb-2 hidden grid-cols-[1fr_7rem_6rem_auto] gap-3 px-5 text-[10px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase md:grid">
         <span>Qué fue</span>
         <span>Fecha</span>
         <span>Tipo</span>
@@ -378,7 +374,7 @@ export function SharedMovementList() {
       <div className="bento space-y-5 !px-2 !py-3">
         {[...groups.entries()].map(([date, items]) => (
           <div key={date}>
-            <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase md:hidden">
+            <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase md:hidden">
               {formatDayLabel(date)}
             </p>
             <ul className="space-y-0.5">
@@ -405,11 +401,7 @@ export function SharedMovementList() {
           <SharedDetail
             movement={selected}
             arsAmount={toArs(selected.amount, selected.currency, rate)}
-            canManage={canManageMovement(
-              selected,
-              cloudEnabled,
-              user?.id,
-            )}
+            canManage={canManageMovement(selected, cloudEnabled, user?.id)}
             onClose={() => setSelectedId(null)}
             onDelete={async () => {
               await deleteMovement(selected.id);

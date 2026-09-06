@@ -22,32 +22,32 @@ export function SharedSpendHero({
   return (
     <div className="bento overflow-hidden !p-0">
       <div className="px-6 pt-7 pb-6">
-        <p className="text-sm font-medium text-zinc-400">{copy.label}</p>
+        <p className="text-sm font-medium text-[var(--muted-fg)]">
+          {copy.label}
+        </p>
         <p
-          className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
-            totalArs > 0
-              ? "amount-negative"
-              : "text-zinc-900 dark:text-white"
-          }`}
+          className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${ totalArs > 0 ? "amount-negative" : "text-[var(--foreground)]" }`}
         >
           {formatArs(totalArs)}
         </p>
-        <p className="mt-2 text-xl font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-xl font-semibold tabular-nums text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
           {formatUsd(totalUsd)}
         </p>
         <p className="meta mt-2">{copy.asOf}</p>
         <p className="meta mt-0.5">{copy.fx}</p>
-        <p className="mt-3 text-xs leading-relaxed text-zinc-400">{copy.hint}</p>
+        <p className="mt-3 text-xs leading-relaxed text-[var(--muted-fg)]">
+          {copy.hint}
+        </p>
       </div>
 
-      <div className="space-y-5 border-t border-zinc-100 px-4 py-5 dark:border-zinc-800/80 sm:px-6">
+      <div className="space-y-5 border-t border-[var(--card-border)] px-4 py-5 dark:border-[var(--card-border)]/80 sm:px-6">
         <SharedCategoryMix
           categories={categories}
           formatArs={formatArs}
           formatUsd={formatUsd}
         />
         {children ? (
-          <div className="border-t border-zinc-100 pt-5 dark:border-zinc-800/80">
+          <div className="border-t border-[var(--card-border)] pt-5 dark:border-[var(--card-border)]/80">
             {children}
           </div>
         ) : null}

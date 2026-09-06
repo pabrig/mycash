@@ -54,7 +54,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => setExportOpen(true)}
-          className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-zinc-500 transition active:scale-95"
+          className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-[var(--muted-fg)] transition active:scale-95"
         >
           <IconDownload className="h-4 w-4" />
           Descargar

@@ -4,7 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fab } from "@/components/Fab";
 import { useFinance } from "@/context/FinanceContext";
-import { formatMoney, formatMonth, formatRateUpdatedAt, isCurrentPeriod } from "@/lib/format";
+import {
+  formatMoney,
+  formatMonth,
+  formatRateUpdatedAt,
+  isCurrentPeriod,
+} from "@/lib/format";
 import { showOfficialRate } from "@/lib/money-profile";
 import { IconHome, IconSplit, IconUsers } from "@/components/ui/Icons";
 
@@ -53,10 +58,10 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 pb-[var(--app-bottom-gap)] md:hidden">
+    <nav className="pointer-events-none fixed bottom-0 inset-x-0 z-50 bg-gradient-to-t from-[var(--background-deep)] via-[var(--background)] to-transparent pb-[var(--app-bottom-gap)] md:hidden">
       <div className="pointer-events-auto relative mx-auto max-w-lg px-4">
         {showOfficialRate(usdEnabled, walletMode) && <RatePill />}
-        <div className="relative mt-5 rounded-[1.75rem] bg-[var(--card)]/95 shadow-[var(--surface-elevated)] backdrop-blur-xl dark:bg-zinc-950/90">
+        <div className="relative mt-5 rounded-[1.75rem] border border-[var(--card-border)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] shadow-[var(--surface-elevated)] backdrop-blur-xl">
           <Fab />
           <ul className="grid grid-cols-3 items-end px-2 pt-3.5 pb-3.5">
             <li className="flex justify-center">
@@ -83,10 +88,10 @@ function RatePill() {
   return (
     <div className="mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl bg-[var(--card)]/90 px-4 py-2 text-[11px] shadow-[var(--surface-elevated)] backdrop-blur-md">
       <div className="min-w-0">
-        <p className="font-semibold text-zinc-500">
+        <p className="font-semibold text-[var(--muted-fg)]">
           Dólar oficial
           {!isCurrent && (
-            <span className="font-normal text-zinc-400">
+            <span className="font-normal opacity-80">
               {" "}
               · {formatMonth(year, month)}
             </span>
@@ -94,19 +99,22 @@ function RatePill() {
         </p>
         {ready ? (
           updatedLabel ? (
-            <p className="truncate text-zinc-400" suppressHydrationWarning>
+            <p
+              className="truncate text-[var(--muted-fg)] opacity-80"
+              suppressHydrationWarning
+            >
               {updatedLabel}
             </p>
           ) : (
-            <p className="text-zinc-400">
+            <p className="text-[var(--muted-fg)] opacity-80">
               {isCurrent ? "Todavía no hay cotización" : "Dólar de ese mes"}
             </p>
           )
         ) : (
-          <p className="text-zinc-400">…</p>
+          <p className="text-[var(--muted-fg)] opacity-80">…</p>
         )}
       </div>
-      <p className="shrink-0 text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
+      <p className="shrink-0 text-sm font-bold tabular-nums text-[var(--foreground)]">
         {ready ? formatMoney(rate.usdToArs) : "—"}
       </p>
     </div>
@@ -114,17 +122,15 @@ function RatePill() {
 }
 
 function NavLink({ href, label, active, icon }: NavItem) {
-  const color = active ? "text-zinc-900 dark:text-white" : "text-zinc-400";
-  const Icon = icon === "home" ? IconHome : icon === "shared" ? IconUsers : IconSplit;
+  const Icon =
+    icon === "home" ? IconHome : icon === "shared" ? IconUsers : IconSplit;
 
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold whitespace-nowrap ${
-        active ? "text-zinc-900 dark:text-white" : "text-zinc-400"
-      }`}
+      className={`flex flex-col items-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors ${ active ? "text-[var(--primary)]" : "text-[var(--muted-fg)] hover:text-[var(--primary-soft)]" }`}
     >
-      <Icon className={`h-6 w-6 ${color}`} />
+      <Icon className="h-6 w-6" />
       <span>{label}</span>
     </Link>
   );

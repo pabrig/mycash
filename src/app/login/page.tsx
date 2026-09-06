@@ -38,7 +38,9 @@ function LoginForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState(loginQueryError(searchParams.get("error")) ?? "");
+  const [error, setError] = useState(
+    loginQueryError(searchParams.get("error")) ?? "",
+  );
   const [loading, setLoading] = useState(false);
   const skipAuth = isFeatureEnabled("skipAuth");
 
@@ -78,13 +80,13 @@ function LoginForm() {
       <div className="text-center">
         <IconMyCash className="mx-auto h-12 w-12" />
         <h1 className="mt-4 text-xl font-bold">{copy.title}</h1>
-        <p className="mt-1 text-sm text-zinc-500">{copy.sub}</p>
+        <p className="mt-1 text-sm text-[var(--muted-fg)]">{copy.sub}</p>
       </div>
 
       {sent ? (
         <div className="card space-y-3 p-5 text-center">
           <p className="font-medium">Revisá tu email</p>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-[var(--muted-fg)]">
             Te enviamos un link a <strong>{email}</strong>. Abrilo en este
             celular.
           </p>
@@ -92,7 +94,7 @@ function LoginForm() {
       ) : (
         <form onSubmit={handleSubmit} className="card space-y-4 p-5">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">
+            <label className="mb-1 block text-xs font-medium text-[var(--muted-fg)]">
               Tu nombre
             </label>
             <input
@@ -106,7 +108,7 @@ function LoginForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">
+            <label className="mb-1 block text-xs font-medium text-[var(--muted-fg)]">
               Email
             </label>
             <input
@@ -120,7 +122,11 @@ function LoginForm() {
             />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <button type="submit" disabled={loading} className="btn-primary w-full">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full"
+          >
             {loading ? "Enviando…" : "Enviar link al mail"}
           </button>
         </form>

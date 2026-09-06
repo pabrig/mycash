@@ -31,18 +31,18 @@ export function AppHeader() {
       {/* Mobile: fecha a la izquierda, acciones cortas a la derecha */}
       <div className="flex items-center justify-between gap-3 md:hidden">
         <div className="flex min-w-0 items-center gap-2.5">
-          <IconMyCash className="h-8 w-8 shrink-0" />
+          <IconMyCash className="h-8 w-8 shrink-0 text-[var(--foreground)]" />
           <button
             type="button"
             onClick={() => setPeriodOpen(true)}
-            className="flex min-w-0 items-center gap-1 rounded-full py-1 pr-1.5 transition active:scale-[0.98] active:bg-zinc-200/60 dark:active:bg-zinc-800"
+            className="flex min-w-0 items-center gap-1 rounded-full py-1 pr-1.5 transition active:scale-[0.98] active:bg-[var(--card-muted)]"
             aria-haspopup="dialog"
             aria-label={`Mes ${formatMonth(year, month)}. Cambiar`}
           >
             <h1 className="truncate text-xl font-bold tracking-tight">
               {formatMonth(year, month)}
             </h1>
-            <IconChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
+            <IconChevronDown className="h-4 w-4 shrink-0 text-[var(--muted-fg)]" />
           </button>
         </div>
 
@@ -50,7 +50,7 @@ export function AppHeader() {
           <AmountsToggle />
           <Link
             href="/cuenta"
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-zinc-500 transition active:scale-95"
+            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-[var(--muted-fg)] transition active:scale-95"
             aria-label={
               isAuthenticated
                 ? `Cuenta de ${profile?.displayName ?? "tu usuario"}`
@@ -70,12 +70,12 @@ export function AppHeader() {
 
       {/* Desktop — stepper centrado */}
       <div className="hidden md:flex md:flex-col md:items-center md:gap-1">
-        <p className="text-xs font-medium text-zinc-400">Mes</p>
+        <p className="text-xs font-medium text-[var(--muted-fg)]">Mes</p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => shift(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition hover:text-zinc-900 active:scale-95 dark:hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card)] text-[var(--muted-fg)] transition hover:text-[var(--foreground)] active:scale-95"
             aria-label="Mes anterior"
           >
             <IconChevronLeft className="h-5 w-5" />
@@ -86,7 +86,7 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => shift(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card)] text-zinc-500 transition hover:text-zinc-900 active:scale-95 dark:hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card)] text-[var(--muted-fg)] transition hover:text-[var(--foreground)] active:scale-95"
             aria-label="Mes siguiente"
           >
             <IconChevronRight className="h-5 w-5" />

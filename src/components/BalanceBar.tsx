@@ -6,8 +6,8 @@ import { useDisplayAmount } from "@/hooks/useDisplayAmount";
 
 const BAR = {
   rentas: "bg-cyan-400",
-  trabajo: "bg-teal-600",
-  gastos: "bg-rose-400/80"
+  trabajo: "bg-primary",
+  gastos: "bg-[var(--expense)]/80",
 } as const;
 
 export function BalanceBar() {
@@ -29,16 +29,16 @@ export function BalanceBar() {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between text-left"
       >
-        <span className="text-sm font-semibold text-zinc-500">
+        <span className="text-sm font-semibold text-[var(--muted-fg)]">
           Entró y salió
         </span>
-        <span className="text-xs font-medium text-zinc-400">
+        <span className="text-xs font-medium text-[var(--muted-fg)]">
           {open ? "Ocultar" : "Ver más"}
         </span>
       </button>
 
       <div
-        className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+        className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-[var(--card-muted)]"
         role="img"
         aria-label={`Ingresos por rentas ${fmt(summary.passiveIncome)}, por trabajo ${fmt(summary.activeIncome)}. Gastos ${fmt(summary.totalExpenses)}`}
       >
@@ -109,7 +109,7 @@ function Detail({
   value,
   fmt,
   tone,
-  swatch
+  swatch,
 }: {
   label: string;
   value: number;
@@ -120,12 +120,12 @@ function Detail({
   const colors = {
     income: "amount-positive",
     expense: "amount-negative",
-    shared: "text-teal-600 dark:text-teal-400"
+    shared: "text-shared",
   };
 
   return (
     <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
-      <p className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
+      <p className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted-fg)]">
         {swatch && (
           <span
             className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${swatch}`}
@@ -134,9 +134,7 @@ function Detail({
         {label}
       </p>
       <p
-        className={`mt-0.5 text-sm font-bold tabular-nums ${
-          tone ? colors[tone] : "text-zinc-900 dark:text-white"
-        }`}
+        className={`mt-0.5 text-sm font-bold tabular-nums ${ tone ? colors[tone] : "text-[var(--foreground)]" }`}
       >
         {fmt(value)}
       </p>

@@ -19,7 +19,10 @@ export default function EditarPage() {
     return (
       <div className="bento mx-auto max-w-lg space-y-4 p-6 text-center">
         <p className="font-medium">No encontramos esto</p>
-        <Link href="/" className="text-sm font-semibold text-zinc-900 dark:text-white">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-[var(--foreground)]"
+        >
           Volver al inicio
         </Link>
       </div>

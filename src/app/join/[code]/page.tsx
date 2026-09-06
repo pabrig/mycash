@@ -44,9 +44,9 @@ export default function JoinPage() {
 
   if (!configured) {
     return (
-      <div className="card space-y-4 p-6 text-center text-sm text-zinc-500">
+      <div className="card space-y-4 p-6 text-center text-sm text-[var(--muted-fg)]">
         Esto no está disponible ahora.
-        <Link href="/" className="block text-teal-600">
+        <Link href="/" className="block text-primary">
           Volver
         </Link>
       </div>
@@ -62,11 +62,11 @@ export default function JoinPage() {
       <div className="space-y-6 py-8">
         <div className="card space-y-3 p-6 text-center">
           <h1 className="text-lg font-bold">Te invitaron al grupo</h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-[var(--muted-fg)]">
             Código:{" "}
-            <span className="font-mono font-semibold text-teal-600">{code}</span>
+            <span className="font-mono font-semibold text-primary">{code}</span>
           </p>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-[var(--muted-fg)]">
             Entrá con tu email para unirte. Vas a ver los gastos de todos. Cada
             uno sigue con su plata.
           </p>
@@ -85,7 +85,7 @@ export default function JoinPage() {
     return (
       <div className="card space-y-4 p-6 text-center">
         <p className="font-medium text-red-500">{error}</p>
-        <Link href="/cuenta" className="text-sm text-teal-600">
+        <Link href="/cuenta" className="text-sm text-primary">
           Ir a Cuenta
         </Link>
       </div>

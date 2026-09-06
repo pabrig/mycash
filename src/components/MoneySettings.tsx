@@ -17,18 +17,9 @@ import {
   type MoneyProfile,
 } from "@/lib/money-profile";
 
-function HelpLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: ReactNode;
-}) {
+function HelpLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link
-      href={href}
-      className="text-left text-xs font-semibold text-teal-700 dark:text-teal-400"
-    >
+    <Link href={href} className="text-left text-xs font-semibold text-primary">
       {children}
     </Link>
   );
@@ -54,7 +45,9 @@ export function MoneySettings() {
     await setWalletMode(settings.walletMode);
   }
 
-  const selectedHint = MONEY_PROFILE_OPTIONS.find((o) => o.id === profile)?.hint;
+  const selectedHint = MONEY_PROFILE_OPTIONS.find(
+    (o) => o.id === profile,
+  )?.hint;
   const goalsCopy = goalsSettingsCopy();
   const showGoalsFeature = isFeatureEnabled("savingsGoals");
 
@@ -63,7 +56,9 @@ export function MoneySettings() {
       <section className="bento space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold tracking-tight">Arrastre anual</p>
+            <p className="text-sm font-semibold tracking-tight">
+              Arrastre anual
+            </p>
             <p className="meta mt-1 text-xs leading-relaxed">
               En la vista mes suma lo que te fue quedando desde enero. Apagado,
               solo ves el mes actual.
@@ -75,15 +70,11 @@ export function MoneySettings() {
             aria-checked={carryoverEnabled}
             onClick={() => void setCarryoverEnabled(!carryoverEnabled)}
             className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
-              carryoverEnabled
-                ? "bg-zinc-900 dark:bg-white"
-                : "bg-zinc-200 dark:bg-zinc-700"
+              carryoverEnabled ? "bg-[var(--cta)]" : "bg-[var(--card-muted)]"
             }`}
           >
             <span
-              className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
-                carryoverEnabled ? "translate-x-5" : "translate-x-0"
-              }`}
+              className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-[var(--card)] shadow transition-transform dark:bg-[var(--card)] ${carryoverEnabled ? "translate-x-5" : "translate-x-0"}`}
             />
           </button>
         </div>
@@ -107,15 +98,11 @@ export function MoneySettings() {
               aria-checked={goalsEnabled}
               onClick={() => void setGoalsEnabled(!goalsEnabled)}
               className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
-                goalsEnabled
-                  ? "bg-zinc-900 dark:bg-white"
-                  : "bg-zinc-200 dark:bg-zinc-700"
+                goalsEnabled ? "bg-[var(--cta)]" : "bg-[var(--card-muted)]"
               }`}
             >
               <span
-                className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
-                  goalsEnabled ? "translate-x-5" : "translate-x-0"
-                }`}
+                className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-[var(--card)] shadow transition-transform dark:bg-[var(--card)] ${goalsEnabled ? "translate-x-5" : "translate-x-0"}`}
               />
             </button>
           </div>
@@ -125,14 +112,20 @@ export function MoneySettings() {
 
       <section className="bento space-y-4">
         <div>
-          <p className="text-sm font-semibold tracking-tight">¿Cómo es tu plata?</p>
+          <p className="text-sm font-semibold tracking-tight">
+            ¿Cómo es tu plata?
+          </p>
           <p className="meta mt-1 text-xs">
             Elegí cómo cobrás y si apartás dólares. Lo podés cambiar cuando
             quieras.
           </p>
         </div>
 
-        <div className="space-y-2" role="radiogroup" aria-label="Cómo es tu plata">
+        <div
+          className="space-y-2"
+          role="radiogroup"
+          aria-label="Cómo es tu plata"
+        >
           {MONEY_PROFILE_OPTIONS.map((option) => (
             <ChoiceOption
               key={option.id}
@@ -145,7 +138,9 @@ export function MoneySettings() {
         </div>
 
         {selectedHint ? (
-          <p className="text-xs leading-relaxed text-zinc-400">{selectedHint}</p>
+          <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
+            {selectedHint}
+          </p>
         ) : null}
 
         <HelpLink href={guideHref("plata")}>¿Qué cambia cada opción?</HelpLink>
@@ -162,7 +157,11 @@ export function MoneySettings() {
             </p>
           </div>
 
-          <div className="space-y-2" role="radiogroup" aria-label="Cómo querés verla">
+          <div
+            className="space-y-2"
+            role="radiogroup"
+            aria-label="Cómo querés verla"
+          >
             {WALLET_VIEW_OPTIONS.map((option) => (
               <ChoiceOption
                 key={option.id}
@@ -175,7 +174,7 @@ export function MoneySettings() {
           </div>
 
           {walletMode === "split" && (
-            <p className="text-xs leading-relaxed text-zinc-400">
+            <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
               Lo que entra en pesos va a Diario. Lo que entra en dólares, a
               Ahorro.
               {sharedEnabled

@@ -4,7 +4,13 @@ import { useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChoiceOption } from "@/components/ChoiceOption";
 import { GuideFaq } from "@/components/GuideFaq";
-import { IconCheck, IconChevronLeft, IconMyCash, IconPlus, IconSplit } from "@/components/ui/Icons";
+import {
+  IconCheck,
+  IconChevronLeft,
+  IconMyCash,
+  IconPlus,
+  IconSplit,
+} from "@/components/ui/Icons";
 import { useAuth } from "@/context/AuthContext";
 import { useFinance } from "@/context/FinanceContext";
 import {
@@ -57,7 +63,9 @@ function SetupWizard() {
   const [sharedEnabled, setSharedEnabled] = useState<boolean | null>(
     joinedGroup ? true : null,
   );
-  const [sharedFunding, setSharedFunding] = useState<SharedFunding | null>(null);
+  const [sharedFunding, setSharedFunding] = useState<SharedFunding | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -146,13 +154,13 @@ function SetupWizard() {
           ) : (
             <span className="h-11 w-11" />
           )}
-          <p className="text-sm font-semibold text-zinc-500">
+          <p className="text-sm font-semibold text-[var(--muted-fg)]">
             Paso {index + 1} de {total}
           </p>
           <span className="h-11 w-11" />
         </div>
         <div
-          className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+          className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--card-muted)] dark:bg-[var(--card-muted)]"
           role="progressbar"
           aria-valuemin={1}
           aria-valuemax={total}
@@ -160,7 +168,7 @@ function SetupWizard() {
           aria-label={`Paso ${index + 1} de ${total}`}
         >
           <div
-            className="h-full rounded-full bg-teal-600 transition-[width] duration-300 ease-out dark:bg-teal-400"
+            className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
             style={{ width: `${Math.round(progress * 100)}%` }}
           />
         </div>
@@ -239,11 +247,13 @@ function SetupWizard() {
 
       <div className="sticky bottom-0 mt-8 space-y-3 bg-[var(--background)] pb-2 pt-3">
         {isSetupQuestionStep(current) ? (
-          <p className="text-center text-sm text-zinc-400">
+          <p className="text-center text-sm text-[var(--muted-fg)]">
             Después lo podés cambiar en Cuenta.
           </p>
         ) : null}
-        {error ? <p className="text-center text-sm text-red-500">{error}</p> : null}
+        {error ? (
+          <p className="text-center text-sm text-red-500">{error}</p>
+        ) : null}
         <button
           type="button"
           disabled={!canContinue || busy}
@@ -265,15 +275,16 @@ function WelcomeStep({ name }: { name: string }) {
         <h1 className="text-2xl font-bold tracking-tight">
           {name ? `Hola, ${name}` : "Armemos tu cuenta"}
         </h1>
-        <p className="mx-auto max-w-sm text-base leading-relaxed text-zinc-500">
+        <p className="mx-auto max-w-sm text-base leading-relaxed text-[var(--muted-fg)]">
           Primero acomodamos la app a cómo usás la plata. Después te mostramos
           cómo anotar, cómo mirar el mes y el año, las metas y cómo dividir una
           cuenta.
         </p>
       </div>
-      <p className="text-sm leading-relaxed text-zinc-400">
-        No hay respuestas incorrectas. Si más adelante cambia tu forma de manejar
-        la plata, lo cambiás en Cuenta. Ahí también está la ayuda, tema por tema.
+      <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
+        No hay respuestas incorrectas. Si más adelante cambia tu forma de
+        manejar la plata, lo cambiás en Cuenta. Ahí también está la ayuda, tema
+        por tema.
       </p>
     </div>
   );
@@ -289,12 +300,18 @@ function MoneyStep({
   return (
     <section className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">¿Cómo usás la plata?</h1>
-        <p className="mt-2 text-base leading-relaxed text-zinc-500">
+        <h1 className="text-2xl font-bold tracking-tight">
+          ¿Cómo usás la plata?
+        </h1>
+        <p className="mt-2 text-base leading-relaxed text-[var(--muted-fg)]">
           Elegí lo que más se parece a tu día a día.
         </p>
       </div>
-      <div className="space-y-2.5" role="radiogroup" aria-label="Cómo usás la plata">
+      <div
+        className="space-y-2.5"
+        role="radiogroup"
+        aria-label="Cómo usás la plata"
+      >
         {MONEY_PROFILE_OPTIONS.map((option) => (
           <ChoiceOption
             key={option.id}
@@ -321,12 +338,18 @@ function ViewStep({
   return (
     <section className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">¿Cómo querés verla?</h1>
-        <p className="mt-2 text-base leading-relaxed text-zinc-500">
+        <h1 className="text-2xl font-bold tracking-tight">
+          ¿Cómo querés verla?
+        </h1>
+        <p className="mt-2 text-base leading-relaxed text-[var(--muted-fg)]">
           Esto no cambia tu plata. Solo cómo la ves en la pantalla.
         </p>
       </div>
-      <div className="space-y-2.5" role="radiogroup" aria-label="Cómo querés verla">
+      <div
+        className="space-y-2.5"
+        role="radiogroup"
+        aria-label="Cómo querés verla"
+      >
         {WALLET_VIEW_OPTIONS.map((option) => (
           <ChoiceOption
             key={option.id}
@@ -355,7 +378,7 @@ function SharedFundingStep({
         <h1 className="text-2xl font-bold tracking-tight">
           ¿De dónde salen los gastos del grupo?
         </h1>
-        <p className="mt-2 text-base leading-relaxed text-zinc-500">
+        <p className="mt-2 text-base leading-relaxed text-[var(--muted-fg)]">
           Esto entra en tu mes, solo. Si después tenés más de un grupo, en
           Cuenta cada uno puede ser distinto.
         </p>
@@ -394,9 +417,9 @@ function SharedStep({
         <h1 className="text-2xl font-bold tracking-tight">
           ¿Anotás gastos con otras personas?
         </h1>
-        <p className="mt-2 text-base leading-relaxed text-zinc-500">
-          Por ejemplo la casa, la pareja o un alquiler. Cada uno sigue viendo
-          lo suyo.
+        <p className="mt-2 text-base leading-relaxed text-[var(--muted-fg)]">
+          Por ejemplo la casa, la pareja o un alquiler. Cada uno sigue viendo lo
+          suyo.
         </p>
       </div>
       <div
@@ -419,23 +442,17 @@ function SharedStep({
   );
 }
 
-function DoneStep({
-  name,
-  lines,
-}: {
-  name: string;
-  lines: string[];
-}) {
+function DoneStep({ name, lines }: { name: string; lines: string[] }) {
   return (
     <section className="space-y-6 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary">
         <IconCheck className="h-8 w-8" />
       </div>
       <div className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight">
           {name ? `Listo, ${name}` : "Listo"}
         </h1>
-        <p className="mx-auto max-w-sm text-base leading-relaxed text-zinc-500">
+        <p className="mx-auto max-w-sm text-base leading-relaxed text-[var(--muted-fg)]">
           Ya podés anotar lo que entra y lo que sale.
         </p>
       </div>
@@ -443,13 +460,13 @@ function DoneStep({
         {lines.map((line) => (
           <li
             key={line}
-            className="rounded-2xl bg-[var(--card)] px-4 py-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300"
+            className="rounded-2xl bg-[var(--card)] px-4 py-3 text-sm leading-relaxed text-[var(--muted-fg)]"
           >
             {line}
           </li>
         ))}
       </ul>
-      <p className="text-sm leading-relaxed text-zinc-400">
+      <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
         Si cambia cómo manejás la plata, andá a Cuenta y lo cambiás. Ahí también
         está la ayuda, tema por tema.
       </p>
@@ -472,14 +489,20 @@ function HowToStep({
     <section className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 text-base leading-relaxed text-zinc-500">{sub}</p>
+        <p className="mt-2 text-base leading-relaxed text-[var(--muted-fg)]">
+          {sub}
+        </p>
       </div>
       {preview}
       <ul className="space-y-2.5">
         {items.map((item) => (
           <li key={item.title} className="rounded-2xl bg-[var(--card)] p-4">
-            <p className="text-base font-semibold tracking-tight">{item.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500">{item.body}</p>
+            <p className="text-base font-semibold tracking-tight">
+              {item.title}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
+              {item.body}
+            </p>
           </li>
         ))}
       </ul>
@@ -493,10 +516,12 @@ function PlusPreview() {
       className="flex items-center justify-center gap-3 rounded-2xl bg-[var(--card)] px-4 py-5"
       aria-hidden
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--cta)] text-[var(--cta-fg)]">
         <IconPlus className="h-6 w-6" />
       </span>
-      <p className="text-sm font-semibold text-zinc-500">Cargar un movimiento</p>
+      <p className="text-sm font-semibold text-[var(--muted-fg)]">
+        Cargar un movimiento
+      </p>
     </div>
   );
 }
@@ -507,10 +532,10 @@ function SplitPreview() {
       className="flex items-center justify-center gap-3 rounded-2xl bg-[var(--card)] px-4 py-5"
       aria-hidden
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--cta)] text-[var(--cta-fg)]">
         <IconSplit className="h-6 w-6" />
       </span>
-      <p className="text-sm font-semibold text-zinc-500">Dividir</p>
+      <p className="text-sm font-semibold text-[var(--muted-fg)]">Dividir</p>
     </div>
   );
 }
@@ -530,14 +555,11 @@ function GroupsPreview() {
 
 function PeriodPreview() {
   return (
-    <div
-      className="flex rounded-full bg-[var(--card-muted)] p-1"
-      aria-hidden
-    >
-      <span className="flex-1 rounded-full bg-[var(--card)] px-4 py-2 text-center text-sm font-semibold text-zinc-900 shadow-sm dark:text-white">
+    <div className="flex rounded-full bg-[var(--card-muted)] p-1" aria-hidden>
+      <span className="flex-1 rounded-full bg-[var(--card)] px-4 py-2 text-center text-sm font-semibold text-[var(--foreground)] shadow-sm dark:text-white">
         Mes
       </span>
-      <span className="flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold text-zinc-400">
+      <span className="flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold text-[var(--muted-fg)]">
         Año
       </span>
     </div>

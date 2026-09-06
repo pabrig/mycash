@@ -49,13 +49,7 @@ export function GoalEditor({
     );
   }
 
-  return (
-    <GoalConfigForm
-      goal={goal}
-      onDone={onDone}
-      onCancel={onCancel}
-    />
-  );
+  return <GoalConfigForm goal={goal} onDone={onDone} onCancel={onCancel} />;
 }
 
 function ContributeForm({
@@ -106,12 +100,14 @@ function ContributeForm({
   return (
     <div className="space-y-6 pb-4">
       <div className="space-y-1">
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-[var(--muted-fg)]">
           {moneyLabel(goal.savedAmount)} de {moneyLabel(goal.targetAmount)}
-          <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">·</span>
+          <span className="mx-1.5 text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
+            ·
+          </span>
           {goalPlaceLabel(place)}
         </p>
-        <p className="text-xs leading-relaxed text-zinc-400">
+        <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
           {place === "ahorro" ? copy.contributeHintAhorro : copy.contributeHint}
         </p>
       </div>
@@ -132,14 +128,14 @@ function ContributeForm({
         <button
           type="button"
           onClick={() => setContribute(String(planAmount))}
-          className="text-sm font-semibold text-teal-700 dark:text-teal-400"
+          className="text-sm font-semibold text-primary"
         >
           {copy.contributeUsePlan} ({moneyLabel(planAmount)})
         </button>
       ) : null}
 
       {error ? (
-        <p className="text-sm text-rose-500" role="alert">
+        <p className="text-sm text-[var(--expense)]" role="alert">
           {error}
         </p>
       ) : null}
@@ -158,7 +154,7 @@ function ContributeForm({
             type="button"
             disabled={saving}
             onClick={onEditRequest}
-            className="w-full py-3 text-sm font-semibold text-zinc-600 dark:text-zinc-300"
+            className="w-full py-3 text-sm font-semibold text-[var(--muted-fg)]"
           >
             {copy.editMeta}
           </button>
@@ -167,7 +163,7 @@ function ContributeForm({
           type="button"
           disabled={saving}
           onClick={onCancel}
-          className="w-full py-3 text-sm font-semibold text-zinc-500"
+          className="w-full py-3 text-sm font-semibold text-[var(--muted-fg)]"
         >
           {copy.cancel}
         </button>
@@ -198,9 +194,7 @@ function GoalConfigForm({
   const showPlacePicker = walletMode === "split";
 
   const [name, setName] = useState(goal?.name ?? "");
-  const [target, setTarget] = useState(
-    goal ? String(goal.targetAmount) : "",
-  );
+  const [target, setTarget] = useState(goal ? String(goal.targetAmount) : "");
   const [saved, setSaved] = useState(
     goal && goal.savedAmount > 0 ? String(goal.savedAmount) : "",
   );
@@ -225,9 +219,9 @@ function GoalConfigForm({
   const [moreOpen, setMoreOpen] = useState(
     Boolean(
       goal &&
-        (goal.targetDate ||
-          (goal.monthlyPlan != null && goal.monthlyPlan > 0) ||
-          goal.savedAmount > 0),
+      (goal.targetDate ||
+        (goal.monthlyPlan != null && goal.monthlyPlan > 0) ||
+        goal.savedAmount > 0),
     ),
   );
 
@@ -358,7 +352,7 @@ function GoalConfigForm({
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="w-[4.75rem] shrink-0 rounded-2xl bg-[var(--card-muted)] px-2 py-3.5 text-center text-sm font-semibold outline-none transition focus:ring-2 focus:ring-teal-500/30 dark:bg-zinc-900"
+                className="w-[4.75rem] shrink-0 rounded-2xl bg-[var(--card-muted)] px-2 py-3.5 text-center text-sm font-semibold outline-none transition focus:ring-2 focus:ring-[var(--ring)] dark:bg-[var(--card)]"
                 aria-label="Moneda"
               >
                 <option value="ARS">ARS</option>
@@ -370,7 +364,7 @@ function GoalConfigForm({
 
         {showPlacePicker ? (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            <p className="text-sm font-medium text-[var(--muted-fg)]">
               {copy.placeLabel}
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -385,7 +379,7 @@ function GoalConfigForm({
                 />
               ))}
             </div>
-            <p className="text-xs leading-relaxed text-zinc-400">
+            <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
               {place === "ahorro" ? copy.placeAhorroHint : copy.placeDiarioHint}
             </p>
           </div>
@@ -397,16 +391,16 @@ function GoalConfigForm({
           type="button"
           onClick={() => setMoreOpen((v) => !v)}
           aria-expanded={moreOpen}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition active:opacity-70"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--muted-fg)] transition active:opacity-70"
         >
           {moreOpen ? "Ocultar opciones" : copy.moreOptions}
           <IconChevronDown
-            className={`h-4 w-4 transition-transform ${
-              moreOpen ? "rotate-180" : ""
-            }`}
+            className={`h-4 w-4 transition-transform ${ moreOpen ? "rotate-180" : "" }`}
           />
         </button>
-        <p className="mt-1 text-xs text-zinc-400">{copy.moreOptionsHint}</p>
+        <p className="mt-1 text-xs text-[var(--muted-fg)]">
+          {copy.moreOptionsHint}
+        </p>
 
         {moreOpen ? (
           <div className="mt-4 space-y-4">
@@ -443,7 +437,7 @@ function GoalConfigForm({
                 className="input-field"
               />
               {suggestedLabel ? (
-                <p className="mt-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
+                <p className="mt-1.5 text-xs font-medium text-primary">
                   {suggestedLabel}
                 </p>
               ) : null}
@@ -461,7 +455,7 @@ function GoalConfigForm({
 
             {goalCanReserveDisponible(place) ? (
               <div className="space-y-2">
-                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                <p className="text-sm font-medium text-[var(--muted-fg)]">
                   {copy.planModeLabel}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -476,14 +470,14 @@ function GoalConfigForm({
                     onSelect={() => setDeductFromDisponible(true)}
                   />
                 </div>
-                <p className="text-xs leading-relaxed text-zinc-400">
+                <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
                   {deductFromDisponible
                     ? copy.planModeDeductHint
                     : copy.planModeGuideHint}
                 </p>
               </div>
             ) : (
-              <p className="text-xs leading-relaxed text-zinc-400">
+              <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
                 {copy.planModeAhorroHint}
               </p>
             )}
@@ -492,7 +486,7 @@ function GoalConfigForm({
       </div>
 
       {error ? (
-        <p className="text-sm text-rose-500" role="alert">
+        <p className="text-sm text-[var(--expense)]" role="alert">
           {error}
         </p>
       ) : null}
@@ -510,7 +504,7 @@ function GoalConfigForm({
           type="button"
           disabled={saving}
           onClick={onCancel}
-          className="w-full py-3 text-sm font-semibold text-zinc-500"
+          className="w-full py-3 text-sm font-semibold text-[var(--muted-fg)]"
         >
           {copy.cancel}
         </button>
@@ -519,7 +513,7 @@ function GoalConfigForm({
             type="button"
             disabled={saving}
             onClick={() => void handleDelete()}
-            className="w-full py-3 text-sm font-semibold text-rose-500"
+            className="w-full py-3 text-sm font-semibold text-[var(--expense)]"
           >
             {copy.delete}
           </button>
@@ -540,12 +534,12 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+      <span className="text-sm font-medium text-[var(--muted-fg)]">
         {label}
       </span>
       {children}
       {hint ? (
-        <span className="block text-xs leading-relaxed text-zinc-400">
+        <span className="block text-xs leading-relaxed text-[var(--muted-fg)]">
           {hint}
         </span>
       ) : null}
@@ -567,9 +561,7 @@ function ModeChip({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`rounded-2xl px-3 py-3 text-center text-sm font-semibold transition ${
-        selected ? "chip-active" : "chip chip-inactive"
-      }`}
+      className={`rounded-2xl px-3 py-3 text-center text-sm font-semibold transition ${ selected ? "chip-active" : "chip chip-inactive" }`}
     >
       {title}
     </button>

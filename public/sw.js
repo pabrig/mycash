@@ -1,9 +1,10 @@
-const CACHE = "mycash-v6";
+const CACHE = "mycash-v12";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icon.svg",
   "/icon-192.png",
   "/icon-512.png",
+  "/icon-maskable-512.png",
   "/apple-touch-icon.png",
   "/favicon-32.png",
 ];
