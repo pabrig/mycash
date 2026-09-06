@@ -43,8 +43,13 @@ export function SharedAccountCard() {
     leaveGroup,
     closeGroup,
   } = useAuth();
-  const { sharedEnabled, setSharedEnabled, sharedFunding, setSharedFunding, refreshData } =
-    useFinance();
+  const {
+    sharedEnabled,
+    setSharedEnabled,
+    sharedFunding,
+    setSharedFunding,
+    refreshData,
+  } = useFinance();
 
   const [setupOpen, setSetupOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -60,9 +65,7 @@ export function SharedAccountCard() {
   const isOwner = household?.role === "owner";
   const canCreateGroup = households.length < MAX_HOUSEHOLDS_PER_USER;
   const canInvite =
-    Boolean(household) &&
-    isOwner &&
-    members.length < MAX_MEMBERS_PER_HOUSEHOLD;
+    Boolean(household) && isOwner && members.length < MAX_MEMBERS_PER_HOUSEHOLD;
   const otherNames = members
     .filter((m) => m.userId !== user?.id)
     .map((m) => m.displayName)
@@ -188,7 +191,9 @@ export function SharedAccountCard() {
 
   async function handleClose() {
     if (!household) return;
-    const ok = confirm(closeHouseholdConfirmMessage(household.name, otherNames));
+    const ok = confirm(
+      closeHouseholdConfirmMessage(household.name, otherNames),
+    );
     if (!ok) return;
     setBusy(true);
     setError("");
@@ -202,7 +207,9 @@ export function SharedAccountCard() {
     setInviteCode(null);
     setEditingName(false);
     setMessage(
-      otherNames.length > 0 ? "Grupo cerrado. Ya les avisamos." : "Grupo borrado",
+      otherNames.length > 0
+        ? "Grupo cerrado. Ya les avisamos."
+        : "Grupo borrado",
     );
     setBusy(false);
   }
@@ -215,7 +222,9 @@ export function SharedAccountCard() {
       <section className="bento space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold tracking-tight">Gastos con otros</p>
+            <p className="text-sm font-semibold tracking-tight">
+              Gastos con otros
+            </p>
             <p className="meta mt-1 text-xs leading-relaxed">
               {households.length > 1
                 ? "Cada grupo tiene su lista y cómo cuenta en tu mes."
@@ -230,21 +239,17 @@ export function SharedAccountCard() {
             aria-checked={sharedEnabled}
             onClick={() => void handleToggle()}
             className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
-              sharedEnabled
-                ? "bg-zinc-900 dark:bg-white"
-                : "bg-zinc-200 dark:bg-zinc-700"
+              sharedEnabled ? "bg-[var(--cta)]" : "bg-[var(--card-muted)]"
             }`}
           >
             <span
-              className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${
-                sharedEnabled ? "translate-x-5" : "translate-x-0"
-              }`}
+              className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-[var(--card)] shadow transition-transform dark:bg-[var(--card)] ${sharedEnabled ? "translate-x-5" : "translate-x-0"}`}
             />
           </button>
         </div>
         <Link
           href={guideHref("compartido")}
-          className="text-left text-xs font-semibold text-teal-700 dark:text-teal-400"
+          className="text-left text-xs font-semibold text-primary"
         >
           ¿Cómo funciona Compartido?
         </Link>
@@ -258,9 +263,7 @@ export function SharedAccountCard() {
                   type="button"
                   onClick={() => void handleSelectGroup(h.id)}
                   disabled={busy}
-                  className={`chip ${
-                    h.id === household?.id ? "chip-active" : "chip-inactive"
-                  }`}
+                  className={`chip ${h.id === household?.id ? "chip-active" : "chip-inactive"}`}
                 >
                   {h.name}
                 </button>
@@ -268,7 +271,10 @@ export function SharedAccountCard() {
             </div>
             {household && isOwner ? (
               editingName ? (
-                <form onSubmit={(e) => void handleRename(e)} className="space-y-2">
+                <form
+                  onSubmit={(e) => void handleRename(e)}
+                  className="space-y-2"
+                >
                   <p className="text-sm font-semibold">Nombre de este grupo</p>
                   <div className="flex gap-2">
                     <input
@@ -293,7 +299,7 @@ export function SharedAccountCard() {
                       setEditingName(false);
                       setError("");
                     }}
-                    className="text-xs font-semibold text-zinc-500"
+                    className="text-xs font-semibold text-[var(--muted-fg)]"
                   >
                     Cancelar
                   </button>
@@ -302,7 +308,7 @@ export function SharedAccountCard() {
                 <button
                   type="button"
                   onClick={startRename}
-                  className="text-xs font-semibold text-teal-700 dark:text-teal-400"
+                  className="text-xs font-semibold text-primary"
                 >
                   Cambiar nombre
                 </button>
@@ -312,8 +318,12 @@ export function SharedAccountCard() {
         )}
 
         {sharedEnabled && (
-          <div className="space-y-2" role="radiogroup" aria-label="De dónde salen los gastos del grupo">
-            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <div
+            className="space-y-2"
+            role="radiogroup"
+            aria-label="De dónde salen los gastos del grupo"
+          >
+            <p className="text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
               {household ? `En tu mes · ${household.name}` : "En tu mes"}
             </p>
             {SHARED_FUNDING_OPTIONS.map((option) => (
@@ -356,13 +366,16 @@ export function SharedAccountCard() {
         )}
 
         {sharedEnabled && configured && (
-          <div className="space-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+          <div className="space-y-4 border-t border-[var(--card-border)] pt-4 dark:border-[var(--card-border)]">
             {canCreateGroup && (
-              <form onSubmit={(e) => void handleCreateGroup(e)} className="space-y-2">
+              <form
+                onSubmit={(e) => void handleCreateGroup(e)}
+                className="space-y-2"
+              >
                 <p className="text-sm font-semibold">
                   {households.length === 0 ? "Crear un grupo" : "Otro grupo"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-[var(--muted-fg)]">
                   Casa, amigos, un viaje. Hasta {MAX_HOUSEHOLDS_PER_USER}.
                 </p>
                 <div className="flex gap-2">
@@ -373,7 +386,11 @@ export function SharedAccountCard() {
                     placeholder="Ej: Casa"
                     maxLength={HOUSEHOLD_NAME_MAX}
                   />
-                  <button type="submit" disabled={busy} className="btn-primary px-4">
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="btn-primary px-4"
+                  >
                     Crear
                   </button>
                 </div>
@@ -383,9 +400,9 @@ export function SharedAccountCard() {
             {canInvite && (
               <div className="space-y-3">
                 <p className="text-sm font-semibold">Invitar</p>
-                <p className="text-xs text-zinc-500">
-                  El código dura 7 días. Hasta {MAX_MEMBERS_PER_HOUSEHOLD} personas
-                  en el grupo.
+                <p className="text-xs text-[var(--muted-fg)]">
+                  El código dura 7 días. Hasta {MAX_MEMBERS_PER_HOUSEHOLD}{" "}
+                  personas en el grupo.
                 </p>
                 <button
                   type="button"
@@ -397,11 +414,11 @@ export function SharedAccountCard() {
                 </button>
                 {inviteCode && (
                   <div className="rounded-2xl bg-[var(--card-muted)] p-3 text-center">
-                    <p className="text-xl font-bold tracking-widest text-teal-600 sm:text-2xl">
+                    <p className="text-xl font-bold tracking-widest text-primary sm:text-2xl">
                       {inviteCode}
                     </p>
                     {inviteLink && (
-                      <p className="mt-2 break-all text-xs text-zinc-500">
+                      <p className="mt-2 break-all text-xs text-[var(--muted-fg)]">
                         {inviteLink}
                       </p>
                     )}
@@ -416,7 +433,7 @@ export function SharedAccountCard() {
                       >
                         <div className="min-w-0">
                           <p className="font-mono tracking-wider">{inv.code}</p>
-                          <p className="text-xs text-zinc-400">
+                          <p className="text-xs text-[var(--muted-fg)]">
                             vence {formatExpiry(inv.expiresAt)}
                           </p>
                         </div>
@@ -446,7 +463,11 @@ export function SharedAccountCard() {
                   maxLength={12}
                   autoComplete="off"
                 />
-                <button type="submit" disabled={busy} className="btn-primary px-4">
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="btn-primary px-4"
+                >
                   Unirme
                 </button>
               </form>
@@ -461,7 +482,7 @@ export function SharedAccountCard() {
                 type="button"
                 onClick={() => void handleLeave()}
                 disabled={busy}
-                className="w-full rounded-xl border border-zinc-200 py-2.5 text-sm text-zinc-600 dark:border-zinc-700"
+                className="w-full rounded-xl border border-[var(--card-border)] py-2.5 text-sm text-[var(--muted-fg)] dark:border-[var(--card-border)]"
               >
                 Salir de este grupo
               </button>
@@ -473,13 +494,15 @@ export function SharedAccountCard() {
                 disabled={busy}
                 className="w-full rounded-xl border border-red-200 py-2.5 text-sm text-red-600 dark:border-red-900/50"
               >
-                {members.length <= 1 ? "Borrar este grupo" : "Cerrar este grupo"}
+                {members.length <= 1
+                  ? "Borrar este grupo"
+                  : "Cerrar este grupo"}
               </button>
             ) : null}
           </div>
         )}
 
-        {message && <p className="text-sm text-teal-600">{message}</p>}
+        {message && <p className="text-sm text-primary">{message}</p>}
         {error && <p className="text-sm text-red-500">{error}</p>}
       </section>
 
@@ -505,7 +528,7 @@ function SharedStatus({
 }) {
   if (!configured) {
     return (
-      <p className="text-xs leading-relaxed text-zinc-400">
+      <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
         Vas a ver la pestaña Compartido. Para invitar a alguien, primero entrá
         con tu email.
       </p>
@@ -516,7 +539,7 @@ function SharedStatus({
     return (
       <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
         <p className="text-sm font-semibold">Todavía no hay grupo</p>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+        <p className="mt-1 text-xs leading-relaxed text-[var(--muted-fg)]">
           Creá uno o usá un código para unirte.
         </p>
       </div>
@@ -527,9 +550,11 @@ function SharedStatus({
     return (
       <div className="rounded-2xl bg-[var(--card-muted)] px-3.5 py-3">
         <p className="text-sm font-semibold">
-          {householdName ? `${householdName}: falta alguien más` : "Falta alguien más"}
+          {householdName
+            ? `${householdName}: falta alguien más`
+            : "Falta alguien más"}
         </p>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+        <p className="mt-1 text-xs leading-relaxed text-[var(--muted-fg)]">
           Invitá o usá un código para compartir la lista.
         </p>
       </div>
@@ -541,7 +566,12 @@ function SharedStatus({
       <div className="flex items-center gap-2">
         <div className="flex -space-x-2">
           {members.slice(0, 4).map((m, i) => (
-            <UserAvatar key={m.userId} name={m.displayName} size="sm" tone={i} />
+            <UserAvatar
+              key={m.userId}
+              name={m.displayName}
+              size="sm"
+              tone={i}
+            />
           ))}
         </div>
         <p className="text-sm font-semibold">
@@ -549,12 +579,15 @@ function SharedStatus({
           Con {otherNames.filter(Boolean).join(", ") || "el grupo"}
         </p>
       </div>
-      <ul className="space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
+      <ul className="space-y-1 text-sm text-[var(--muted-fg)]">
         {members.map((m) => (
-          <li key={m.userId} className="flex items-center justify-between gap-2">
+          <li
+            key={m.userId}
+            className="flex items-center justify-between gap-2"
+          >
             <span>{m.displayName}</span>
             {m.role === "owner" && (
-              <span className="text-xs text-zinc-400">admin</span>
+              <span className="text-xs text-[var(--muted-fg)]">admin</span>
             )}
           </li>
         ))}

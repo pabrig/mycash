@@ -2,9 +2,9 @@ import type { FinanceInsight } from "@/lib/finance-analysis";
 import { financeInsightsCopy } from "@/lib/finance-analysis";
 
 const TONE_DOT: Record<FinanceInsight["tone"], string> = {
-  positive: "bg-teal-500",
-  warning: "bg-rose-400",
-  neutral: "bg-zinc-300 dark:bg-zinc-500",
+  positive: "bg-income",
+  warning: "bg-[var(--expense)]",
+  neutral: "bg-[var(--muted-fg)]/45",
 };
 
 export function FinanceInsights({ insights }: { insights: FinanceInsight[] }) {
@@ -14,7 +14,7 @@ export function FinanceInsights({ insights }: { insights: FinanceInsight[] }) {
 
   return (
     <div className="bento space-y-3 !px-4 !py-5 sm:!px-6">
-      <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+      <h2 className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
         {copy.title}
       </h2>
       <ul className="space-y-3">
@@ -24,7 +24,7 @@ export function FinanceInsights({ insights }: { insights: FinanceInsight[] }) {
               className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TONE_DOT[insight.tone]}`}
               aria-hidden
             />
-            <p className="text-sm leading-snug text-zinc-700 dark:text-zinc-200">
+            <p className="text-sm leading-snug text-[var(--foreground)] dark:text-[var(--foreground)]">
               {insight.text}
             </p>
           </li>

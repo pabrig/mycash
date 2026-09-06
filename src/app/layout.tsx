@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
+import { THEME_BOOTSTRAP, brandThemeBackground } from "@/lib/brand-theme";
 import "./globals.css";
 
 const sans = Plus_Jakarta_Sans({
@@ -30,13 +32,23 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // default en light; el bootstrap/JS pasa a black-translucent en dark.
+    statusBarStyle: "default",
     title: "Myca$h",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d9488",
+  themeColor: [
+    {
+      media: "(prefers-color-scheme: light)",
+      color: brandThemeBackground(false),
+    },
+    {
+      media: "(prefers-color-scheme: dark)",
+      color: brandThemeBackground(true),
+    },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -49,12 +61,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       className={`${sans.variable} ${mono.variable} h-full antialiased`}
+      data-theme="indigo"
       suppressHydrationWarning
     >
       <body
-        className="min-h-full bg-[var(--background)] text-zinc-900 dark:text-zinc-50"
+        className="min-h-full text-[var(--foreground)]"
         suppressHydrationWarning
       >
+        <Script
+          id="theme-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

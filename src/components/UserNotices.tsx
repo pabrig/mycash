@@ -15,15 +15,17 @@ export function UserNotices() {
           className="bento flex items-start justify-between gap-3 animate-fade-in"
         >
           <div className="min-w-0">
-            <p className="text-sm font-semibold tracking-tight">{notice.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+            <p className="text-sm font-semibold tracking-tight">
+              {notice.title}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
               {notice.body}
             </p>
           </div>
           <button
             type="button"
             onClick={() => void dismissNotice(notice.id)}
-            className="shrink-0 text-xs font-semibold text-teal-700 dark:text-teal-400"
+            className="shrink-0 text-xs font-semibold text-primary"
           >
             Listo
           </button>

@@ -29,10 +29,7 @@ function NuevoBody() {
           {prefill ? "Cargar mi parte" : "Cargar"}
         </h1>
       </div>
-      <MovementForm
-        prefill={prefill ?? undefined}
-        redirectTo="/"
-      />
+      <MovementForm prefill={prefill ?? undefined} redirectTo="/" />
     </div>
   );
 }

@@ -30,7 +30,8 @@ export function DisponibleHero() {
     return <SplitHero />;
   }
 
-  const { monthDisponible, carryoverDisponible, totalDisponible } = monthBalance;
+  const { monthDisponible, carryoverDisponible, totalDisponible } =
+    monthBalance;
   const hasCarryover = carryoverDisponible !== 0;
   const positive = totalDisponible >= 0;
   const income = summary.totalIncome;
@@ -38,33 +39,31 @@ export function DisponibleHero() {
   const shared = summary.sharedExpenses;
   const priorRange = priorMonthsRangeLabel(month);
   const showGoalsReserve =
-    isFeatureEnabled("savingsGoals") &&
-    goalsEnabled &&
-    goalsReservedArs > 0;
+    isFeatureEnabled("savingsGoals") && goalsEnabled && goalsReservedArs > 0;
   const freeAfterGoals = totalDisponible - goalsReservedArs;
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento overflow-hidden !p-0">
         <div className="px-6 pt-7 pb-6">
-          <p className="text-sm font-medium text-zinc-400">
+          <p className="text-sm font-medium text-[var(--muted-fg)]">
             {hasCarryover ? "Te queda acumulado" : "Te queda este mes"}
           </p>
           <p
-            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${
-              positive ? "text-zinc-900 dark:text-white" : "amount-negative"
-            }`}
+            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums md:text-6xl ${ positive ? "text-[var(--foreground)]" : "amount-negative" }`}
           >
             {fmt(totalDisponible)}
           </p>
           {hasCarryover && priorRange && (
             <p className="meta mt-2 text-sm leading-relaxed">
-              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
                 {priorRange}:
               </span>{" "}
               {fmt(carryoverDisponible)}
-              <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">·</span>
-              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+              <span className="mx-1.5 text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
+                ·
+              </span>
+              <span className="font-medium text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
                 Este mes:
               </span>{" "}
               {fmt(monthDisponible)}
@@ -80,36 +79,30 @@ export function DisponibleHero() {
                 className="flex w-full items-center justify-between gap-3 rounded-2xl bg-[var(--card-muted)] px-3.5 py-3 text-left transition active:opacity-80"
               >
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium text-zinc-400">
+                  <p className="text-[11px] font-medium text-[var(--muted-fg)]">
                     Tras metas este mes
                   </p>
                   <p
-                    className={`mt-0.5 text-sm font-semibold tabular-nums ${
-                      freeAfterGoals >= 0
-                        ? "text-zinc-800 dark:text-zinc-100"
-                        : "amount-negative"
-                    }`}
+                    className={`mt-0.5 text-sm font-semibold tabular-nums ${ freeAfterGoals >= 0 ? "text-[var(--foreground)] dark:text-[var(--foreground)]" : "amount-negative" }`}
                   >
                     Libre {fmt(freeAfterGoals)}
                   </p>
                 </div>
                 <IconChevronDown
-                  className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
-                    goalsOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 shrink-0 text-[var(--muted-fg)] transition-transform ${ goalsOpen ? "rotate-180" : "" }`}
                 />
               </button>
               {goalsOpen ? (
                 <div className="mt-2 space-y-1 px-1">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-[var(--muted-fg)]">
                     Contado en metas:{" "}
-                    <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
+                    <span className="font-semibold tabular-nums text-[var(--foreground)] dark:text-[var(--foreground)]">
                       {fmt(goalsReservedArs)}
                     </span>
                   </p>
-                  <p className="text-[11px] leading-snug text-zinc-400">
-                    Planes con “resta del libre”. El total de arriba no
-                    cambia; esto es lo que te queda libre para gastar.
+                  <p className="text-[11px] leading-snug text-[var(--muted-fg)]">
+                    Planes con “resta del libre”. El total de arriba no cambia;
+                    esto es lo que te queda libre para gastar.
                   </p>
                 </div>
               ) : null}
@@ -119,7 +112,7 @@ export function DisponibleHero() {
           <button
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
-            className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition active:opacity-70"
+            className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--muted-fg)] transition active:opacity-70"
           >
             {detailsOpen ? "Ocultar" : "Ver de dónde sale"}
             <IconChevronDown
@@ -138,16 +131,8 @@ export function DisponibleHero() {
                 className="col-span-2 sm:col-span-3"
               />
             )}
-            <MacroStat
-              label="Ingresos"
-              value={fmt(income)}
-              tone="income"
-            />
-            <MacroStat
-              label="Gastos"
-              value={fmt(expenses)}
-              tone="expense"
-            />
+            <MacroStat label="Ingresos" value={fmt(income)} tone="income" />
+            <MacroStat label="Gastos" value={fmt(expenses)} tone="expense" />
             {sharedEnabled && (
               <MacroStat
                 label="Compartido"
@@ -195,16 +180,18 @@ function MacroStat({
       ? "amount-positive"
       : tone === "expense"
         ? "amount-negative"
-        : "text-teal-600 dark:text-teal-400";
+        : "text-shared";
 
   return (
     <div className={`rounded-2xl bg-[var(--card)] px-3.5 py-3 ${className}`}>
-      <p className="text-[11px] font-medium text-zinc-400">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--muted-fg)]">{label}</p>
       <p className={`mt-1 text-base font-bold tabular-nums ${color}`}>
         {value}
       </p>
       {detail && (
-        <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">{detail}</p>
+        <p className="mt-0.5 text-[10px] tabular-nums text-[var(--muted-fg)]">
+          {detail}
+        </p>
       )}
     </div>
   );
@@ -235,33 +222,31 @@ function SplitHero() {
   const ahorroArs = ahorro.disponible * rate.usdToArs;
   const positive = vidaBalance.totalDisponible >= 0;
   const showGoalsReserve =
-    isFeatureEnabled("savingsGoals") &&
-    goalsEnabled &&
-    goalsReservedArs > 0;
+    isFeatureEnabled("savingsGoals") && goalsEnabled && goalsReservedArs > 0;
   const freeAfterGoals = vidaBalance.totalDisponible - goalsReservedArs;
 
   return (
     <section className="animate-slide-up space-y-3">
       <div className="bento !p-0 overflow-hidden">
         <div className="px-6 pt-7 pb-5">
-          <p className="text-sm font-medium text-zinc-400">
+          <p className="text-sm font-medium text-[var(--muted-fg)]">
             {hasVidaCarryover ? "Diario acumulado · ARS" : "Diario · ARS"}
           </p>
           <p
-            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums ${
-              positive ? "text-zinc-900 dark:text-white" : "amount-negative"
-            }`}
+            className={`mt-2 text-5xl font-extrabold tracking-tighter tabular-nums ${ positive ? "text-[var(--foreground)]" : "amount-negative" }`}
           >
             {formatArs(vidaBalance.totalDisponible)}
           </p>
           {hasVidaCarryover && priorRange ? (
             <p className="meta mt-2 text-sm leading-relaxed">
-              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
                 {priorRange}:
               </span>{" "}
               {formatArs(vidaBalance.carryoverDisponible)}
-              <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">·</span>
-              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+              <span className="mx-1.5 text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
+                ·
+              </span>
+              <span className="font-medium text-[var(--muted-fg)] dark:text-[var(--muted-fg)]">
                 Este mes:
               </span>{" "}
               {formatArs(vidaBalance.monthDisponible)}
@@ -279,36 +264,30 @@ function SplitHero() {
                 className="flex w-full items-center justify-between gap-3 rounded-2xl bg-[var(--card-muted)] px-3.5 py-3 text-left transition active:opacity-80"
               >
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium text-zinc-400">
+                  <p className="text-[11px] font-medium text-[var(--muted-fg)]">
                     Tras metas del Diario
                   </p>
                   <p
-                    className={`mt-0.5 text-sm font-semibold tabular-nums ${
-                      freeAfterGoals >= 0
-                        ? "text-zinc-800 dark:text-zinc-100"
-                        : "amount-negative"
-                    }`}
+                    className={`mt-0.5 text-sm font-semibold tabular-nums ${ freeAfterGoals >= 0 ? "text-[var(--foreground)] dark:text-[var(--foreground)]" : "amount-negative" }`}
                   >
                     Libre {formatArs(freeAfterGoals)}
                   </p>
                 </div>
                 <IconChevronDown
-                  className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
-                    goalsOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 shrink-0 text-[var(--muted-fg)] transition-transform ${ goalsOpen ? "rotate-180" : "" }`}
                 />
               </button>
               {goalsOpen ? (
                 <div className="mt-2 space-y-1 px-1">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-[var(--muted-fg)]">
                     Contado en metas:{" "}
-                    <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
+                    <span className="font-semibold tabular-nums text-[var(--foreground)] dark:text-[var(--foreground)]">
                       {formatArs(goalsReservedArs)}
                     </span>
                   </p>
-                  <p className="text-[11px] leading-snug text-zinc-400">
-                    Metas del Diario con “resta del libre”. El total de arriba no
-                    cambia; esto es lo que te queda libre para gastar.
+                  <p className="text-[11px] leading-snug text-[var(--muted-fg)]">
+                    Metas del Diario con “resta del libre”. El total de arriba
+                    no cambia; esto es lo que te queda libre para gastar.
                   </p>
                 </div>
               ) : null}
@@ -333,13 +312,13 @@ function SplitHero() {
         <button
           type="button"
           onClick={() => setAhorroOpen((v) => !v)}
-          className="flex w-full items-center gap-4 px-5 py-4 text-left transition active:bg-zinc-50 dark:active:bg-zinc-900/40"
+          className="flex w-full items-center gap-4 px-5 py-4 text-left transition active:bg-[var(--card-muted)] dark:active:bg-[var(--foreground)]/40"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--cta)] text-[var(--cta-fg)]">
             <span className="text-lg font-bold">$</span>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+            <p className="text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
               Ahorro USD
             </p>
             <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums">
@@ -347,15 +326,15 @@ function SplitHero() {
             </p>
             {hasAhorroCarryover && priorRange ? (
               <p className="meta text-xs leading-relaxed">
-                {priorRange}: {formatUsd(ahorroBalance.carryoverDisponible)} · Este
-                mes: {formatUsd(ahorroBalance.monthDisponible)}
+                {priorRange}: {formatUsd(ahorroBalance.carryoverDisponible)} ·
+                Este mes: {formatUsd(ahorroBalance.monthDisponible)}
               </p>
             ) : (
               <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
             )}
           </div>
           <IconChevronDown
-            className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform ${ahorroOpen ? "rotate-180" : ""}`}
+            className={`h-5 w-5 shrink-0 text-[var(--muted-fg)] transition-transform ${ahorroOpen ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -373,9 +352,9 @@ function SplitHero() {
                 tone="expense"
               />
             </div>
-            <p className="text-xs leading-relaxed text-zinc-400">
+            <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
               Reserva en dólares · oficial{" "}
-              <span className="font-semibold tabular-nums text-zinc-600 dark:text-zinc-300">
+              <span className="font-semibold tabular-nums text-[var(--muted-fg)]">
                 {formatMoney(rate.usdToArs)}
               </span>
             </p>
@@ -400,7 +379,7 @@ function SplitHero() {
                 setAhorroOpen(true);
                 setConvertOpen(true);
               }}
-              className="w-full text-center text-xs font-semibold text-zinc-400 transition active:text-zinc-700"
+              className="w-full text-center text-xs font-semibold text-[var(--muted-fg)] transition active:text-[var(--foreground)]"
             >
               Ahorrar o usar dólares
             </button>
@@ -485,9 +464,9 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
       onSubmit={handleSubmit}
       className="space-y-3 rounded-2xl bg-[var(--card)] p-4"
     >
-      <p className="text-xs leading-relaxed text-zinc-400">
-        Lo que te sobra va a dólares. Si un mes lo necesitás, lo volvés a pesos o
-        lo gastás del ahorro.
+      <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
+        Lo que te sobra va a dólares. Si un mes lo necesitás, lo volvés a pesos
+        o lo gastás del ahorro.
       </p>
 
       <div className="grid grid-cols-3 gap-1.5">
@@ -496,11 +475,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
             key={id}
             type="button"
             onClick={() => setAction(id)}
-            className={`rounded-2xl px-1 py-3 text-[11px] font-semibold leading-tight ${
-              action === id
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                : "bg-[var(--card-muted)] text-zinc-500"
-            }`}
+            className={`rounded-2xl px-1 py-3 text-[11px] font-semibold leading-tight ${ action === id ? "bg-[var(--cta)] text-[var(--cta-fg)]" : "bg-[var(--card-muted)] text-[var(--muted-fg)]" }`}
           >
             {label}
           </button>
@@ -508,7 +483,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+        <label className="mb-1.5 block text-[10px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
           {action === "to_usd" ? "Monto en ARS" : "Monto en USD"}
         </label>
         <input
@@ -525,7 +500,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
 
       {action === "spend_usd" && (
         <div>
-          <label className="mb-1.5 block text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <label className="mb-1.5 block text-[10px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
             ¿Qué fue?
           </label>
           <input
@@ -538,7 +513,7 @@ function WalletConvertForm({ onDone }: { onDone: () => void }) {
         </div>
       )}
 
-      {error && <p className="text-xs text-rose-500">{error}</p>}
+      {error && <p className="text-xs text-[var(--expense)]">{error}</p>}
 
       <button
         type="submit"

@@ -4,8 +4,8 @@
   "description": "Anotá lo que entra y lo que sale. Vemos cuánto te queda.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f2f2f3",
-  "theme_color": "#0d9488",
+  "background_color": "#f7f4fc",
+  "theme_color": "#f7f4fc",
   "orientation": "portrait",
   "lang": "es-AR",
   "icons": [
@@ -22,7 +22,7 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

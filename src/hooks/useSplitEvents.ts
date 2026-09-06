@@ -41,11 +41,18 @@ function commit(next: SplitEvent[]) {
 
 export function useSplitEvents() {
   const ready = useIsClient();
-  const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const events = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
-  const replace = useCallback((updater: (prev: SplitEvent[]) => SplitEvent[]) => {
-    commit(updater(getSnapshot()));
-  }, []);
+  const replace = useCallback(
+    (updater: (prev: SplitEvent[]) => SplitEvent[]) => {
+      commit(updater(getSnapshot()));
+    },
+    [],
+  );
 
   const createEvent = useCallback(
     (input: {
@@ -84,7 +91,12 @@ export function useSplitEvents() {
   const addExpense = useCallback(
     (
       eventId: string,
-      input: { date: string; description: string; amount: number; paidById: string },
+      input: {
+        date: string;
+        description: string;
+        amount: number;
+        paidById: string;
+      },
     ) => {
       const expense: SplitExpense = {
         id: newId(),
@@ -111,7 +123,9 @@ export function useSplitEvents() {
           event.id === eventId
             ? {
                 ...event,
-                expenses: event.expenses.filter((item) => item.id !== expenseId),
+                expenses: event.expenses.filter(
+                  (item) => item.id !== expenseId,
+                ),
               }
             : event,
         ),
@@ -135,6 +149,14 @@ export function useSplitEvents() {
       removeExpense,
       getEvent,
     }),
-    [events, ready, createEvent, deleteEvent, addExpense, removeExpense, getEvent],
+    [
+      events,
+      ready,
+      createEvent,
+      deleteEvent,
+      addExpense,
+      removeExpense,
+      getEvent,
+    ],
   );
 }

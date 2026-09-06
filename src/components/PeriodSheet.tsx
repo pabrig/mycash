@@ -5,10 +5,7 @@ import { useFinance } from "@/context/FinanceContext";
 import { currentPeriod, isCurrentPeriod } from "@/lib/format";
 import { MONTH_NAMES } from "@/lib/types";
 import { DetailSheet } from "@/components/ui/DetailSheet";
-import {
-  IconChevronLeft,
-  IconChevronRight,
-} from "@/components/ui/Icons";
+import { IconChevronLeft, IconChevronRight } from "@/components/ui/Icons";
 
 function monthsWithActivity(dates: string[], year: number): Set<number> {
   const set = new Set<number>();
@@ -47,8 +44,7 @@ export function PeriodSheet({
     if (open) setDraftYear(year);
   }
 
-  const showEsteMes =
-    !isCurrentPeriod(year, month) || draftYear !== now.year;
+  const showEsteMes = !isCurrentPeriod(year, month) || draftYear !== now.year;
 
   function selectMonth(m: number) {
     setPeriod(draftYear, m);
@@ -66,16 +62,18 @@ export function PeriodSheet({
         <button
           type="button"
           onClick={() => setDraftYear((y) => y - 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card-muted)] text-zinc-500 transition active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card-muted)] text-[var(--muted-fg)] transition active:scale-95"
           aria-label="Año anterior"
         >
           <IconChevronLeft className="h-5 w-5" />
         </button>
-        <p className="text-lg font-bold tabular-nums tracking-tight">{draftYear}</p>
+        <p className="text-lg font-bold tabular-nums tracking-tight">
+          {draftYear}
+        </p>
         <button
           type="button"
           onClick={() => setDraftYear((y) => y + 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card-muted)] text-zinc-500 transition active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--card-muted)] text-[var(--muted-fg)] transition active:scale-95"
           aria-label="Año siguiente"
         >
           <IconChevronRight className="h-5 w-5" />
@@ -86,7 +84,7 @@ export function PeriodSheet({
         <button
           type="button"
           onClick={goThisMonth}
-          className="mb-3 w-full rounded-2xl py-2.5 text-center text-sm font-semibold text-teal-700 dark:text-teal-400"
+          className="mb-3 w-full rounded-2xl py-2.5 text-center text-sm font-semibold text-primary"
         >
           Este mes
         </button>
@@ -104,22 +102,12 @@ export function PeriodSheet({
               key={name}
               type="button"
               onClick={() => selectMonth(m)}
-              className={`relative flex flex-col items-center justify-center rounded-2xl py-3.5 text-sm transition-all active:scale-[0.97] ${
-                selected
-                  ? "bg-zinc-900 font-semibold text-white dark:bg-white dark:text-zinc-900"
-                  : hasActivity
-                    ? "bg-[var(--card-muted)] font-semibold text-zinc-800 dark:text-zinc-100"
-                    : "bg-[var(--card-muted)] text-zinc-400"
-              }`}
+              className={`relative flex flex-col items-center justify-center rounded-2xl py-3.5 text-sm transition-all active:scale-[0.97] ${ selected ? "bg-[var(--cta)] font-semibold text-[var(--cta-fg)]" : hasActivity ? "bg-[var(--card-muted)] font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]" : "bg-[var(--card-muted)] text-[var(--muted-fg)]" }`}
             >
               {name.slice(0, 3)}
               {isNow && (
                 <span
-                  className={`absolute bottom-1.5 h-1 w-1 rounded-full ${
-                    selected
-                      ? "bg-teal-400 dark:bg-teal-600"
-                      : "bg-teal-600 dark:bg-teal-400"
-                  }`}
+                  className={`absolute bottom-1.5 h-1 w-1 rounded-full ${ selected ? "bg-primary/70" : "bg-primary" }`}
                 />
               )}
             </button>

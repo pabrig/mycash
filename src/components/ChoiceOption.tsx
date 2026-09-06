@@ -25,30 +25,24 @@ export function ChoiceOption({
       role="radio"
       aria-checked={selected}
       onClick={onSelect}
-      className={`flex w-full items-start gap-3 rounded-2xl text-left transition-all active:scale-[0.99] ${
-        comfortable ? "p-4" : "p-3.5"
-      } ${
-        selected
-          ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-          : "bg-[var(--card-muted)]"
-      }`}
+      className={`flex w-full items-start gap-3 rounded-2xl text-left transition-all active:scale-[0.99] ${comfortable ? "p-4" : "p-3.5"} ${selected ? "bg-[var(--cta)] text-[var(--cta-fg)]" : "bg-[var(--card-muted)]"}`}
     >
       <span className="min-w-0 flex-1">
-        <p className={comfortable ? "text-base font-semibold" : "text-sm font-semibold"}>
+        <p
+          className={
+            comfortable ? "text-base font-semibold" : "text-sm font-semibold"
+          }
+        >
           {title}
         </p>
         <p
-          className={`mt-0.5 leading-relaxed ${
-            comfortable ? "text-sm" : "text-xs"
-          } ${selected ? "text-white/70 dark:text-zinc-600" : "text-zinc-400"}`}
+          className={`mt-0.5 leading-relaxed ${comfortable ? "text-sm" : "text-xs"} ${selected ? "opacity-70" : "text-[var(--muted-fg)]"}`}
         >
           {description}
         </p>
         {example ? (
           <p
-            className={`mt-1.5 leading-relaxed ${
-              comfortable ? "text-sm" : "text-xs"
-            } ${selected ? "text-white/55 dark:text-zinc-500" : "text-zinc-400"}`}
+            className={`mt-1.5 leading-relaxed ${comfortable ? "text-sm" : "text-xs"} ${selected ? "opacity-55" : "text-[var(--muted-fg)]"}`}
           >
             {example}
           </p>
@@ -57,8 +51,8 @@ export function ChoiceOption({
       <span
         className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
           selected
-            ? "border-white bg-white text-zinc-900 dark:border-zinc-900 dark:bg-zinc-900 dark:text-white"
-            : "border-zinc-300 dark:border-zinc-600"
+            ? "border-[var(--cta-fg)] bg-[var(--cta-fg)] text-[var(--cta)]"
+            : "border-[var(--card-border)]"
         }`}
         aria-hidden
       >

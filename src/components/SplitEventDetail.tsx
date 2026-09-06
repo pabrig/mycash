@@ -78,8 +78,8 @@ export function SplitEventDetail({
   return (
     <div className="space-y-5">
       <div>
-        {dates && <p className="text-sm text-zinc-400">{dates}</p>}
-        <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+        {dates && <p className="text-sm text-[var(--muted-fg)]">{dates}</p>}
+        <p className="mt-1 text-sm leading-relaxed text-[var(--muted-fg)]">
           {event.people.length}{" "}
           {event.people.length === 1 ? "persona" : "personas"}. Cada gasto se
           parte entre todos.
@@ -89,13 +89,15 @@ export function SplitEventDetail({
       <section className="bento space-y-4">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-zinc-400">Total</p>
+            <p className="text-sm font-medium text-[var(--muted-fg)]">Total</p>
             <p className="mt-1 text-3xl font-extrabold tracking-tighter tabular-nums">
               {formatArs(result.total)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-zinc-400">Cada uno</p>
+            <p className="text-sm font-medium text-[var(--muted-fg)]">
+              Cada uno
+            </p>
             <p className="mt-1 text-xl font-bold tabular-nums">
               {formatArs(result.share)}
             </p>
@@ -103,11 +105,11 @@ export function SplitEventDetail({
         </div>
 
         {!canSettle ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-[var(--muted-fg)]">
             Cargá el primer gasto para ver quién le debe a quién.
           </p>
         ) : result.transfers.length === 0 ? (
-          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+          <p className="text-sm font-medium text-[var(--muted-fg)]">
             Quedaron a mano. Nadie se debe nada.
           </p>
         ) : (
@@ -119,7 +121,7 @@ export function SplitEventDetail({
               >
                 <span className="min-w-0 font-medium">
                   <span className="truncate">{t.fromName}</span>
-                  <span className="mx-1.5 text-zinc-400">→</span>
+                  <span className="mx-1.5 text-[var(--muted-fg)]">→</span>
                   <span className="truncate">{t.toName}</span>
                 </span>
                 <span className="shrink-0 font-bold tabular-nums">
@@ -141,7 +143,7 @@ export function SplitEventDetail({
             <button
               type="button"
               onClick={() => void copySummary()}
-              className="w-full rounded-2xl py-3 text-sm font-semibold text-zinc-600 dark:text-zinc-300"
+              className="w-full rounded-2xl py-3 text-sm font-semibold text-[var(--muted-fg)]"
             >
               {copied ? "Copiado" : "Copiar para WhatsApp"}
             </button>
@@ -151,7 +153,7 @@ export function SplitEventDetail({
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+          <p className="text-xs font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
             Gastos
           </p>
           <button
@@ -171,7 +173,7 @@ export function SplitEventDetail({
             className="bento w-full space-y-2 py-8 text-center"
           >
             <p className="text-sm font-semibold">Todavía no hay gastos</p>
-            <p className="text-sm leading-relaxed text-zinc-500">
+            <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
               Cuando alguien pague algo, cargalo acá.
             </p>
           </button>
@@ -179,7 +181,7 @@ export function SplitEventDetail({
           <div className="space-y-5">
             {groups.map((group) => (
               <div key={group.date} className="space-y-2">
-                <p className="px-1 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+                <p className="px-1 text-[11px] font-semibold tracking-wide text-[var(--muted-fg)] uppercase">
                   {group.date === today ? "Hoy" : formatIsoDay(group.date)}
                 </p>
                 <ul className="space-y-2">
@@ -192,7 +194,7 @@ export function SplitEventDetail({
                         <p className="truncate text-sm font-semibold">
                           {expense.description.trim() || "Gasto"}
                         </p>
-                        <p className="truncate text-xs text-zinc-400">
+                        <p className="truncate text-xs text-[var(--muted-fg)]">
                           Pagó {personName(event, expense.paidById)}
                         </p>
                       </div>
@@ -202,7 +204,7 @@ export function SplitEventDetail({
                       <button
                         type="button"
                         onClick={() => onRemoveExpense(expense.id)}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--muted-fg)]"
                         aria-label="Quitar gasto"
                       >
                         <IconClose className="h-4 w-4" />
@@ -219,7 +221,7 @@ export function SplitEventDetail({
       <button
         type="button"
         onClick={() => setConfirmingDelete(true)}
-        className="w-full py-2 text-center text-sm text-zinc-400"
+        className="w-full py-2 text-center text-sm text-[var(--muted-fg)]"
       >
         Borrar este evento
       </button>
@@ -230,7 +232,7 @@ export function SplitEventDetail({
         title="Borrar evento"
       >
         <div className="space-y-5 pb-2">
-          <p className="text-sm leading-relaxed text-zinc-500">
+          <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
             Se borra {event.title} y todos los gastos. No se puede deshacer.
           </p>
           <div className="flex gap-2">
@@ -244,7 +246,7 @@ export function SplitEventDetail({
             <button
               type="button"
               onClick={handleDelete}
-              className="flex-1 rounded-2xl bg-rose-600 py-3.5 text-sm font-semibold text-white transition active:scale-[0.99]"
+              className="flex-1 rounded-2xl bg-[var(--expense)] py-3.5 text-sm font-semibold text-white transition active:scale-[0.99]"
             >
               Borrar
             </button>
@@ -295,11 +297,7 @@ function AddExpenseSheet({
   const canSave = paid > 0;
 
   return (
-    <DetailSheet
-      open={open}
-      onClose={onClose}
-      title="Agregar gasto"
-    >
+    <DetailSheet open={open} onClose={onClose} title="Agregar gasto">
       <form
         className="space-y-4 pb-4"
         onSubmit={(e) => {
@@ -313,7 +311,7 @@ function AddExpenseSheet({
           });
         }}
       >
-        <p className="text-sm leading-relaxed text-zinc-500">
+        <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
           ¿Qué se pagó, cuánto y quién puso la plata?
         </p>
         <input
@@ -332,7 +330,9 @@ function AddExpenseSheet({
           placeholder="0"
         />
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-zinc-500">Pagó</span>
+          <span className="text-xs font-medium text-[var(--muted-fg)]">
+            Pagó
+          </span>
           <select
             value={paidById}
             onChange={(e) => setPaidById(e.target.value)}
@@ -340,13 +340,16 @@ function AddExpenseSheet({
           >
             {event.people.map((person, i) => (
               <option key={person.id} value={person.id}>
-                {person.name.trim() || (person.isMe ? "Yo" : `Persona ${i + 1}`)}
+                {person.name.trim() ||
+                  (person.isMe ? "Yo" : `Persona ${i + 1}`)}
               </option>
             ))}
           </select>
         </label>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-zinc-500">Cuándo</span>
+          <span className="text-xs font-medium text-[var(--muted-fg)]">
+            Cuándo
+          </span>
           <input
             type="date"
             value={date}
@@ -354,7 +357,11 @@ function AddExpenseSheet({
             className="input-field"
           />
         </label>
-        <button type="submit" disabled={!canSave} className="btn-primary w-full text-sm">
+        <button
+          type="submit"
+          disabled={!canSave}
+          className="btn-primary w-full text-sm"
+        >
           Sumar al evento
         </button>
       </form>

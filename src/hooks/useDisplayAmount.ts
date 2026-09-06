@@ -29,7 +29,8 @@ export function useDisplayAmount() {
 export function useFormatMoney() {
   const { amountsHidden } = useFinance();
   return useCallback(
-    (amount: number) => (amountsHidden ? HIDDEN_AMOUNT_ARS : formatMoney(amount)),
+    (amount: number) =>
+      amountsHidden ? HIDDEN_AMOUNT_ARS : formatMoney(amount),
     [amountsHidden],
   );
 }

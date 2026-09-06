@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useFormatMoney } from "@/hooks/useDisplayAmount";
-import { formatEventDates, settleEvent, type SplitEvent } from "@/lib/split-bill";
+import {
+  formatEventDates,
+  settleEvent,
+  type SplitEvent,
+} from "@/lib/split-bill";
 import { IconPlus } from "@/components/ui/Icons";
 
 export function SplitEventList({ events }: { events: SplitEvent[] }) {
@@ -11,12 +15,17 @@ export function SplitEventList({ events }: { events: SplitEvent[] }) {
   if (events.length === 0) {
     return (
       <div className="bento space-y-4 py-10 text-center">
-        <p className="text-lg font-bold tracking-tight">¿Un asado o un viaje?</p>
-        <p className="mx-auto max-w-xs text-sm leading-relaxed text-zinc-500">
-          Creá un evento, sumá a la gente y cargá lo que vayan pagando. Al final,
-          partes iguales.
+        <p className="text-lg font-bold tracking-tight">
+          ¿Un asado o un viaje?
         </p>
-        <Link href="/dividir/nuevo" className="btn-primary mx-auto block max-w-xs text-sm">
+        <p className="mx-auto max-w-xs text-sm leading-relaxed text-[var(--muted-fg)]">
+          Creá un evento, sumá a la gente y cargá lo que vayan pagando. Al
+          final, partes iguales.
+        </p>
+        <Link
+          href="/dividir/nuevo"
+          className="btn-primary mx-auto block max-w-xs text-sm"
+        >
           Nuevo evento
         </Link>
       </div>
@@ -63,8 +72,10 @@ function EventCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-lg font-bold tracking-tight">{event.title}</p>
-          <p className="mt-0.5 text-xs text-zinc-400">
+          <p className="truncate text-lg font-bold tracking-tight">
+            {event.title}
+          </p>
+          <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
             {dates ? `${dates} · ${countLabel}` : countLabel}
           </p>
         </div>
@@ -72,12 +83,15 @@ function EventCard({
           {formatArs(result.total)}
         </p>
       </div>
-      <div className="flex items-center justify-between text-sm text-zinc-500">
+      <div className="flex items-center justify-between text-sm text-[var(--muted-fg)]">
         <span>
-          {event.people.length} {event.people.length === 1 ? "persona" : "personas"}
+          {event.people.length}{" "}
+          {event.people.length === 1 ? "persona" : "personas"}
         </span>
         <span>
-          {result.total > 0 ? `${formatArs(result.share)} cada uno` : "Todavía nada"}
+          {result.total > 0
+            ? `${formatArs(result.share)} cada uno`
+            : "Todavía nada"}
         </span>
       </div>
     </Link>

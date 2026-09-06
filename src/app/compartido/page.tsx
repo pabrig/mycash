@@ -64,9 +64,7 @@ export default function CompartidoPage() {
               key={h.id}
               type="button"
               onClick={() => void setActiveHousehold(h.id)}
-              className={`chip ${
-                h.id === household?.id ? "chip-active" : "chip-inactive"
-              }`}
+              className={`chip ${ h.id === household?.id ? "chip-active" : "chip-inactive" }`}
             >
               {h.name}
             </button>
@@ -83,10 +81,13 @@ export default function CompartidoPage() {
       {!paired && (
         <div className="bento space-y-3 md:max-w-md">
           <p className="text-sm font-semibold">Todavía no hay nadie más</p>
-          <p className="text-sm leading-relaxed text-zinc-500">
+          <p className="text-sm leading-relaxed text-[var(--muted-fg)]">
             Invitá a alguien o usá un código para compartir la lista.
           </p>
-          <Link href="/cuenta" className="btn-primary inline-block px-6 text-sm">
+          <Link
+            href="/cuenta"
+            className="btn-primary inline-block px-6 text-sm"
+          >
             Invitar o unirme
           </Link>
         </div>
