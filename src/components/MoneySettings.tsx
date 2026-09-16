@@ -36,6 +36,8 @@ export function MoneySettings() {
     setCarryoverEnabled,
     goalsEnabled,
     setGoalsEnabled,
+    savingsLocationsEnabled,
+    setSavingsLocationsEnabled,
   } = useFinance();
   const profile = resolveMoneyProfile(usdEnabled, walletMode);
 
@@ -50,6 +52,7 @@ export function MoneySettings() {
   )?.hint;
   const goalsCopy = goalsSettingsCopy();
   const showGoalsFeature = isFeatureEnabled("savingsGoals");
+  const showLocationsFeature = isFeatureEnabled("savingsLocations");
 
   return (
     <>
@@ -107,6 +110,41 @@ export function MoneySettings() {
             </button>
           </div>
           <HelpLink href={guideHref("metas")}>{goalsCopy.guideCta}</HelpLink>
+        </section>
+      ) : null}
+
+      {showLocationsFeature ? (
+        <section className="bento space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold tracking-tight">
+                Dónde está el Ahorro
+              </p>
+              <p className="meta mt-1 text-xs leading-relaxed">
+                El total no cambia. Solo ves en qué cuentas o lugares está.
+                {walletMode !== "split"
+                  ? " Se muestra en Inicio cuando usás dos lugares (Diario y Ahorro)."
+                  : " Se muestra al abrir Ahorro USD."}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={savingsLocationsEnabled}
+              onClick={() =>
+                void setSavingsLocationsEnabled(!savingsLocationsEnabled)
+              }
+              className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors ${
+                savingsLocationsEnabled
+                  ? "bg-[var(--cta)]"
+                  : "bg-[var(--card-muted)]"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-[var(--card)] shadow transition-transform dark:bg-[var(--card)] ${savingsLocationsEnabled ? "translate-x-5" : "translate-x-0"}`}
+              />
+            </button>
+          </div>
         </section>
       ) : null}
 

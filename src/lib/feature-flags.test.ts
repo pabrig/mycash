@@ -32,5 +32,8 @@ describe("featureFlagEnvKey", () => {
     expect(featureFlagEnvKey("savingsGoals")).toBe(
       "NEXT_PUBLIC_FF_SAVINGS_GOALS",
     );
+    expect(featureFlagEnvKey("savingsLocations")).toBe(
+      "NEXT_PUBLIC_FF_SAVINGS_LOCATIONS",
+    );
   });
 });

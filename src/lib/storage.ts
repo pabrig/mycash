@@ -1,5 +1,6 @@
 import type { DisplayCurrency, MonthlyRate, Movement, SharedFunding, WalletMode } from "./types";
 import type { SavingsGoal } from "./goals";
+import type { SavingsLocation } from "./savings-locations";
 import type { SplitEvent, SplitExpense, SplitPerson } from "./split-bill";
 import { getDefaultRate } from "./currency";
 
@@ -13,6 +14,8 @@ const USD_ENABLED_KEY = "mycash_usd_enabled";
 const CARRYOVER_ENABLED_KEY = "mycash_carryover_enabled";
 const GOALS_ENABLED_KEY = "mycash_goals_enabled";
 const SAVINGS_GOALS_KEY = "mycash_savings_goals";
+const SAVINGS_LOCATIONS_ENABLED_KEY = "mycash_savings_locations_enabled";
+const SAVINGS_LOCATIONS_KEY = "mycash_savings_locations";
 const AMOUNTS_HIDDEN_KEY = "mycash_amounts_hidden";
 const ONBOARDING_REPLAY_KEY = "mycash_onboarding_replay";
 
@@ -233,6 +236,49 @@ export function saveSavingsGoals(goals: SavingsGoal[]): void {
   writeJson(SAVINGS_GOALS_KEY, goals);
 }
 
+/** Default false: el desglose de Ahorro es opcional. */
+export function loadSavingsLocationsEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  migrateLegacyStorage();
+  return localStorage.getItem(SAVINGS_LOCATIONS_ENABLED_KEY) === "true";
+}
+
+export function saveSavingsLocationsEnabled(enabled: boolean): void {
+  localStorage.setItem(
+    SAVINGS_LOCATIONS_ENABLED_KEY,
+    enabled ? "true" : "false",
+  );
+}
+
+function parseSavingsLocation(raw: unknown): SavingsLocation | null {
+  if (!isRecord(raw) || typeof raw.id !== "string") return null;
+  const amount =
+    typeof raw.amount === "number" ? raw.amount : Number(raw.amount);
+  if (!Number.isFinite(amount)) return null;
+  const sortOrderRaw =
+    typeof raw.sortOrder === "number" ? raw.sortOrder : Number(raw.sortOrder ?? 0);
+  return {
+    id: raw.id,
+    name: typeof raw.name === "string" && raw.name.trim() ? raw.name : "Lugar",
+    amount: Math.max(0, amount),
+    sortOrder: Number.isFinite(sortOrderRaw) ? sortOrderRaw : 0,
+    updatedAt:
+      typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString(),
+  };
+}
+
+export function loadSavingsLocations(): SavingsLocation[] {
+  const raw = readJson<unknown>(SAVINGS_LOCATIONS_KEY, []);
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(parseSavingsLocation)
+    .filter((loc): loc is SavingsLocation => loc !== null);
+}
+
+export function saveSavingsLocations(locations: SavingsLocation[]): void {
+  writeJson(SAVINGS_LOCATIONS_KEY, locations);
+}
+
 /** Solo este dispositivo — útil en un lugar público. */
 export function loadAmountsHidden(): boolean {
   if (typeof window === "undefined") return false;
@@ -327,6 +373,8 @@ const SYNCED_KEYS = [
   CARRYOVER_ENABLED_KEY,
   GOALS_ENABLED_KEY,
   SAVINGS_GOALS_KEY,
+  SAVINGS_LOCATIONS_ENABLED_KEY,
+  SAVINGS_LOCATIONS_KEY,
 ] as const;
 
 /** Snapshot para migrar a la nube en el primer login. */
@@ -342,6 +390,8 @@ export function loadLocalSnapshot() {
     carryoverEnabled: loadCarryoverEnabled(),
     goalsEnabled: loadGoalsEnabled(),
     savingsGoals: loadSavingsGoals(),
+    savingsLocationsEnabled: loadSavingsLocationsEnabled(),
+    savingsLocations: loadSavingsLocations(),
   };
 }
 
