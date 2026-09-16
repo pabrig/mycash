@@ -58,6 +58,9 @@ describe("hasLocalToMigrate", () => {
     expect(hasLocalToMigrate(snapshot({ usdEnabled: false }))).toBe(true);
     expect(hasLocalToMigrate(snapshot({ carryoverEnabled: true }))).toBe(true);
     expect(
+      hasLocalToMigrate(snapshot({ savingsLocationsEnabled: true })),
+    ).toBe(true);
+    expect(
       hasLocalToMigrate(
         snapshot({
           rates: [{ year: 2026, month: 8, usdToArs: 1400 }],
@@ -97,6 +100,11 @@ describe("parseUserSettings", () => {
     );
     expect(parseUserSettings(null).goalsEnabled).toBe(false);
     expect(parseUserSettings({ goals_enabled: true }).goalsEnabled).toBe(true);
+    expect(parseUserSettings(null).savingsLocationsEnabled).toBe(false);
+    expect(
+      parseUserSettings({ savings_locations_enabled: true })
+        .savingsLocationsEnabled,
+    ).toBe(true);
   });
 });
 

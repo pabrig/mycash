@@ -4,6 +4,7 @@
  * Activá / apagá con variables NEXT_PUBLIC_FF_* en `.env.local`:
  *   NEXT_PUBLIC_FF_SKIP_AUTH=1
  *   NEXT_PUBLIC_FF_SAVINGS_GOALS=1
+ *   NEXT_PUBLIC_FF_SAVINGS_LOCATIONS=1
  *
  * Valores: 1/true/on/yes · 0/false/off/no
  * Sin variable: usa el default del flag.
@@ -12,6 +13,7 @@
 export const FEATURE_FLAG_NAMES = [
   "skipAuth",
   "savingsGoals",
+  "savingsLocations",
 ] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAG_NAMES)[number];
@@ -19,16 +21,19 @@ export type FeatureFlag = (typeof FEATURE_FLAG_NAMES)[number];
 const FLAG_ENV: Record<FeatureFlag, string> = {
   skipAuth: "NEXT_PUBLIC_FF_SKIP_AUTH",
   savingsGoals: "NEXT_PUBLIC_FF_SAVINGS_GOALS",
+  savingsLocations: "NEXT_PUBLIC_FF_SAVINGS_LOCATIONS",
 };
 
 /**
  * Defaults:
  * - skipAuth: off (solo a mano en local)
  * - savingsGoals: on (feature releaseada; apagá con NEXT_PUBLIC_FF_SAVINGS_GOALS=0)
+ * - savingsLocations: on (desglose Ahorro; apagá con NEXT_PUBLIC_FF_SAVINGS_LOCATIONS=0)
  */
 function defaultFor(flag: FeatureFlag): boolean {
   if (flag === "skipAuth") return false;
   if (flag === "savingsGoals") return true;
+  if (flag === "savingsLocations") return true;
   return process.env.NODE_ENV === "development";
 }
 
@@ -62,6 +67,7 @@ export function getFeatureFlags(): Record<FeatureFlag, boolean> {
   return {
     skipAuth: isFeatureEnabled("skipAuth"),
     savingsGoals: isFeatureEnabled("savingsGoals"),
+    savingsLocations: isFeatureEnabled("savingsLocations"),
   };
 }
 
