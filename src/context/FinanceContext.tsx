@@ -37,9 +37,11 @@ import { resolveOnboardingCompleted } from "@/lib/account-setup";
 import {
   deleteMovementById,
   deleteSavingsGoalRemote,
+  deleteSavingsLocationRemote,
   fetchAllMovementsForUser,
   fetchRates,
   fetchSavingsGoals,
+  fetchSavingsLocations,
   fetchUserSettings,
   insertMovement,
   migrateLocalIfEmpty,
@@ -47,6 +49,7 @@ import {
   saveCarryoverEnabledRemote,
   saveDisplayCurrencyRemote,
   saveGoalsEnabledRemote,
+  saveSavingsLocationsEnabledRemote,
   saveSharedEnabledRemote,
   saveSharedFundingRemote,
   saveUsdEnabledRemote,
@@ -54,6 +57,7 @@ import {
   updateMovementById,
   upsertRate,
   upsertSavingsGoalRemote,
+  upsertSavingsLocationRemote,
 } from "@/lib/supabase/data";
 import {
   applyGoalPatch,
@@ -63,6 +67,12 @@ import {
   type SavingsGoal,
   type SavingsGoalDraft,
 } from "@/lib/goals";
+import {
+  applyLocationPatch,
+  buildLocation,
+  type SavingsLocation,
+  type SavingsLocationDraft,
+} from "@/lib/savings-locations";
 import { toArs } from "@/lib/currency";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import type {
@@ -119,6 +129,15 @@ interface FinanceContextValue {
   contributeToGoal: (id: string, amount: number) => Promise<void>;
   /** Plata apartada del mes para metas (en ARS). */
   goalsReservedArs: number;
+  savingsLocationsEnabled: boolean;
+  setSavingsLocationsEnabled: (enabled: boolean) => void;
+  savingsLocations: SavingsLocation[];
+  addSavingsLocation: (draft: SavingsLocationDraft) => Promise<SavingsLocation>;
+  updateSavingsLocation: (
+    id: string,
+    patch: Partial<SavingsLocationDraft>,
+  ) => Promise<void>;
+  deleteSavingsLocation: (id: string) => Promise<void>;
   onboardingCompleted: boolean;
   replayOnboarding: () => void;
   /** Cierra la guía opcional sin tocar cómo está armada la cuenta. */
@@ -197,6 +216,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [carryoverEnabled, setCarryoverEnabledState] = useState(false);
   const [goalsEnabled, setGoalsEnabledState] = useState(false);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [savingsLocationsEnabled, setSavingsLocationsEnabledState] =
+    useState(false);
+  const [savingsLocations, setSavingsLocations] = useState<SavingsLocation[]>(
+    [],
+  );
   const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [amountsHidden, setAmountsHiddenState] = useState(false);
   const [period, setPeriodState] = useState({ year: 0, month: 0 });
@@ -219,6 +243,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setCarryoverEnabledState(storage.loadCarryoverEnabled());
     setGoalsEnabledState(storage.loadGoalsEnabled());
     setSavingsGoals(storage.loadSavingsGoals());
+    setSavingsLocationsEnabledState(storage.loadSavingsLocationsEnabled());
+    setSavingsLocations(storage.loadSavingsLocations());
     setOnboardingCompleted(!storage.loadOnboardingReplay());
     setAmountsHiddenState(storage.loadAmountsHidden());
   }, []);
@@ -228,12 +254,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
     await migrateLocalIfEmpty(supabase, user.id, storage.loadLocalSnapshot());
 
-    const [remoteMovements, remoteRates, remoteSettings, remoteGoals] =
+    const [remoteMovements, remoteRates, remoteSettings, remoteGoals, remoteLocations] =
       await Promise.all([
         fetchAllMovementsForUser(supabase),
         fetchRates(supabase, user.id),
         fetchUserSettings(supabase, user.id),
         fetchSavingsGoals(supabase, user.id),
+        fetchSavingsLocations(supabase, user.id),
       ]);
 
     setMovements(remoteMovements);
@@ -246,6 +273,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setCarryoverEnabledState(remoteSettings.carryoverEnabled);
     setGoalsEnabledState(remoteSettings.goalsEnabled);
     setSavingsGoals(remoteGoals);
+    setSavingsLocationsEnabledState(remoteSettings.savingsLocationsEnabled);
+    setSavingsLocations(remoteLocations);
     setOnboardingCompleted(
       resolveOnboardingCompleted({
         tracked: remoteSettings.onboardingTracked,
@@ -293,6 +322,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setCarryoverEnabledState(false);
         setGoalsEnabledState(false);
         setSavingsGoals([]);
+        setSavingsLocationsEnabledState(false);
+        setSavingsLocations([]);
         setOnboardingCompleted(true);
         if (!cancelled) setReady(true);
         return;
@@ -504,6 +535,64 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
     },
     [cloudEnabled, supabase, user, savingsGoals],
+  );
+
+  const setSavingsLocationsEnabled = useCallback(
+    async (enabled: boolean) => {
+      setSavingsLocationsEnabledState(enabled);
+      if (cloudEnabled && supabase && user) {
+        await saveSavingsLocationsEnabledRemote(supabase, user.id, enabled);
+      } else {
+        storage.saveSavingsLocationsEnabled(enabled);
+      }
+    },
+    [cloudEnabled, supabase, user],
+  );
+
+  const addSavingsLocation = useCallback(
+    async (draft: SavingsLocationDraft) => {
+      const location = buildLocation(draft, savingsLocations.length);
+      const next = [...savingsLocations, location];
+      setSavingsLocations(next);
+      if (cloudEnabled && supabase && user) {
+        await upsertSavingsLocationRemote(supabase, user.id, location);
+      } else {
+        storage.saveSavingsLocations(next);
+      }
+      return location;
+    },
+    [cloudEnabled, supabase, user, savingsLocations],
+  );
+
+  const updateSavingsLocation = useCallback(
+    async (id: string, patch: Partial<SavingsLocationDraft>) => {
+      const current = savingsLocations.find((loc) => loc.id === id);
+      if (!current) return;
+      const location = applyLocationPatch(current, patch);
+      const next = savingsLocations.map((loc) =>
+        loc.id === id ? location : loc,
+      );
+      setSavingsLocations(next);
+      if (cloudEnabled && supabase && user) {
+        await upsertSavingsLocationRemote(supabase, user.id, location);
+      } else {
+        storage.saveSavingsLocations(next);
+      }
+    },
+    [cloudEnabled, supabase, user, savingsLocations],
+  );
+
+  const deleteSavingsLocation = useCallback(
+    async (id: string) => {
+      const next = savingsLocations.filter((loc) => loc.id !== id);
+      setSavingsLocations(next);
+      if (cloudEnabled && supabase && user) {
+        await deleteSavingsLocationRemote(supabase, user.id, id);
+      } else {
+        storage.saveSavingsLocations(next);
+      }
+    },
+    [cloudEnabled, supabase, user, savingsLocations],
   );
 
   const completeAccountSetup = useCallback(
@@ -904,6 +993,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       deleteSavingsGoal,
       contributeToGoal,
       goalsReservedArs,
+      savingsLocationsEnabled,
+      setSavingsLocationsEnabled,
+      savingsLocations,
+      addSavingsLocation,
+      updateSavingsLocation,
+      deleteSavingsLocation,
       onboardingCompleted,
       replayOnboarding,
       dismissOnboardingGuide,
@@ -960,6 +1055,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       deleteSavingsGoal,
       contributeToGoal,
       goalsReservedArs,
+      savingsLocationsEnabled,
+      setSavingsLocationsEnabled,
+      savingsLocations,
+      addSavingsLocation,
+      updateSavingsLocation,
+      deleteSavingsLocation,
       onboardingCompleted,
       replayOnboarding,
       dismissOnboardingGuide,

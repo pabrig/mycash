@@ -11,6 +11,7 @@ import { formatMoney, todayIso } from "@/lib/format";
 import { priorMonthsRangeLabel } from "@/lib/carryover-copy";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { IconChevronDown } from "@/components/ui/Icons";
+import { SavingsLocationsBlock } from "@/components/SavingsLocationsBlock";
 
 export function DisponibleHero() {
   const {
@@ -205,6 +206,8 @@ function SplitHero() {
     month,
     goalsEnabled,
     goalsReservedArs,
+    savingsLocationsEnabled,
+    savingsLocations,
   } = useFinance();
   const formatArs = useFormatMoney();
   const formatUsd = useFormatUsd();
@@ -224,6 +227,10 @@ function SplitHero() {
   const showGoalsReserve =
     isFeatureEnabled("savingsGoals") && goalsEnabled && goalsReservedArs > 0;
   const freeAfterGoals = vidaBalance.totalDisponible - goalsReservedArs;
+  const showLocationsHint =
+    isFeatureEnabled("savingsLocations") &&
+    savingsLocationsEnabled &&
+    savingsLocations.length > 0;
 
   return (
     <section className="animate-slide-up space-y-3">
@@ -328,9 +335,17 @@ function SplitHero() {
               <p className="meta text-xs leading-relaxed">
                 {priorRange}: {formatUsd(ahorroBalance.carryoverDisponible)} ·
                 Este mes: {formatUsd(ahorroBalance.monthDisponible)}
+                {showLocationsHint
+                  ? ` · ${savingsLocations.length} ${savingsLocations.length === 1 ? "lugar" : "lugares"}`
+                  : ""}
               </p>
             ) : (
-              <p className="meta text-xs">≈ {formatArs(ahorroArs)}</p>
+              <p className="meta text-xs">
+                ≈ {formatArs(ahorroArs)}
+                {showLocationsHint
+                  ? ` · ${savingsLocations.length} ${savingsLocations.length === 1 ? "lugar" : "lugares"}`
+                  : ""}
+              </p>
             )}
           </div>
           <IconChevronDown
@@ -352,6 +367,9 @@ function SplitHero() {
                 tone="expense"
               />
             </div>
+            <SavingsLocationsBlock
+              ahorroTotal={ahorroBalance.totalDisponible}
+            />
             <p className="text-xs leading-relaxed text-[var(--muted-fg)]">
               Reserva en dólares · oficial{" "}
               <span className="font-semibold tabular-nums text-[var(--muted-fg)]">

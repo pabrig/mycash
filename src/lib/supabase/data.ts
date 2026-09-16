@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isOnboardingDone } from "@/lib/account-setup";
 import type { SavingsGoal } from "@/lib/goals";
+import type { SavingsLocation } from "@/lib/savings-locations";
 import { normalizeHouseholdName, parseSharedFunding } from "@/lib/household";
 import type {
   DisplayCurrency,
@@ -25,6 +26,8 @@ export type LocalSnapshot = {
   carryoverEnabled: boolean;
   goalsEnabled?: boolean;
   savingsGoals?: SavingsGoal[];
+  savingsLocationsEnabled?: boolean;
+  savingsLocations?: SavingsLocation[];
 };
 
 /** Hay algo local que vale la pena subir en el primer login. */
@@ -40,7 +43,9 @@ export function hasLocalToMigrate(local: LocalSnapshot): boolean {
     local.usdEnabled === false ||
     local.carryoverEnabled ||
     local.goalsEnabled === true ||
-    (local.savingsGoals?.length ?? 0) > 0
+    (local.savingsGoals?.length ?? 0) > 0 ||
+    local.savingsLocationsEnabled === true ||
+    (local.savingsLocations?.length ?? 0) > 0
   );
 }
 
@@ -453,6 +458,7 @@ export type UserSettings = {
   usdEnabled: boolean;
   carryoverEnabled: boolean;
   goalsEnabled: boolean;
+  savingsLocationsEnabled: boolean;
   onboardingCompleted: boolean;
   /** False si la columna todavía no existe en la base. */
   onboardingTracked: boolean;
@@ -486,6 +492,13 @@ export function isMissingGoalsEnabledColumn(error: {
   return isMissingColumn(error, "goals_enabled");
 }
 
+export function isMissingSavingsLocationsEnabledColumn(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  return isMissingColumn(error, "savings_locations_enabled");
+}
+
 export function isMissingGoalsTable(error: {
   code?: string;
   message?: string;
@@ -496,6 +509,19 @@ export function isMissingGoalsTable(error: {
     error.code === "42P01" ||
     error.code === "PGRST205" ||
     message.includes("savings_goals")
+  );
+}
+
+export function isMissingSavingsLocationsTable(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    message.includes("savings_locations")
   );
 }
 
@@ -535,6 +561,7 @@ export function parseUserSettings(
     usd_enabled?: boolean | null;
     carryover_enabled?: boolean | null;
     goals_enabled?: boolean | null;
+    savings_locations_enabled?: boolean | null;
     onboarding_completed?: boolean | null;
   } | null,
 ): UserSettings {
@@ -546,6 +573,7 @@ export function parseUserSettings(
     usdEnabled: data?.usd_enabled !== false,
     carryoverEnabled: data?.carryover_enabled === true,
     goalsEnabled: data?.goals_enabled === true,
+    savingsLocationsEnabled: data?.savings_locations_enabled === true,
     onboardingCompleted: isOnboardingDone(data?.onboarding_completed),
     onboardingTracked:
       data != null && Object.prototype.hasOwnProperty.call(data, "onboarding_completed"),
@@ -553,7 +581,7 @@ export function parseUserSettings(
 }
 
 const SETTINGS_CORE =
-  "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, goals_enabled";
+  "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, goals_enabled, savings_locations_enabled";
 
 export async function fetchUserSettings(
   supabase: SupabaseClient,
@@ -563,6 +591,8 @@ export async function fetchUserSettings(
     `${SETTINGS_CORE}, shared_funding, onboarding_completed`,
     `${SETTINGS_CORE}, onboarding_completed`,
     `${SETTINGS_CORE}, shared_funding`,
+    "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, goals_enabled, shared_funding, onboarding_completed",
+    "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, goals_enabled, onboarding_completed",
     "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, shared_funding, onboarding_completed",
     "display_currency, wallet_mode, shared_enabled, usd_enabled, carryover_enabled, onboarding_completed",
     "display_currency, wallet_mode, shared_enabled, usd_enabled, shared_funding, onboarding_completed",
@@ -587,7 +617,8 @@ export async function fetchUserSettings(
       !isMissingOnboardingColumn(result.error) &&
       !isMissingSharedFundingColumn(result.error) &&
       !isMissingCarryoverColumn(result.error) &&
-      !isMissingGoalsEnabledColumn(result.error)
+      !isMissingGoalsEnabledColumn(result.error) &&
+      !isMissingSavingsLocationsEnabledColumn(result.error)
     ) {
       throw result.error;
     }
@@ -665,6 +696,18 @@ export async function saveGoalsEnabledRemote(
     goals_enabled: enabled,
   });
   if (error && !isMissingGoalsEnabledColumn(error)) throw error;
+}
+
+export async function saveSavingsLocationsEnabledRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("user_settings").upsert({
+    user_id: userId,
+    savings_locations_enabled: enabled,
+  });
+  if (error && !isMissingSavingsLocationsEnabledColumn(error)) throw error;
 }
 
 type DbSavingsGoal = {
@@ -818,25 +861,98 @@ export async function replaceSavingsGoalsRemote(
     .from("savings_goals")
     .delete()
     .eq("user_id", userId);
-  if (delError) {
-    if (isMissingGoalsTable(delError)) return;
-    throw delError;
+  if (delError && !isMissingGoalsTable(delError)) throw delError;
+
+  for (const goal of goals) {
+    await upsertSavingsGoalRemote(supabase, userId, goal);
   }
-  if (goals.length === 0) return;
-  const rows = goals.map((goal) => goalToRow(goal, userId));
-  const { error } = await supabase.from("savings_goals").insert(rows);
-  if (!error) return;
-  if (isMissingGoalsTable(error)) return;
-  if (isMissingColumn(error, "place")) {
-    const withoutPlace = rows.map(({ place: _, ...rest }) => {
-      void _;
-      return rest;
-    });
-    const retry = await supabase.from("savings_goals").insert(withoutPlace);
-    if (retry.error && !isMissingGoalsTable(retry.error)) throw retry.error;
-    return;
+}
+
+type DbSavingsLocation = {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  sort_order: number;
+  updated_at: string;
+};
+
+function mapLocation(row: DbSavingsLocation): SavingsLocation {
+  return {
+    id: row.id,
+    name: row.name?.trim() ? row.name : "Lugar",
+    amount: Math.max(0, Number(row.amount)),
+    sortOrder: Number(row.sort_order) || 0,
+    updatedAt: row.updated_at,
+  };
+}
+
+function locationToRow(location: SavingsLocation, userId: string) {
+  return {
+    id: location.id,
+    user_id: userId,
+    name: location.name,
+    amount: location.amount,
+    sort_order: location.sortOrder,
+    updated_at: location.updatedAt,
+  };
+}
+
+export async function fetchSavingsLocations(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SavingsLocation[]> {
+  const { data, error } = await supabase
+    .from("savings_locations")
+    .select("id, user_id, name, amount, sort_order, updated_at")
+    .eq("user_id", userId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    if (isMissingSavingsLocationsTable(error)) return [];
+    throw error;
   }
-  throw error;
+  return ((data as DbSavingsLocation[] | null) ?? []).map(mapLocation);
+}
+
+export async function upsertSavingsLocationRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  location: SavingsLocation,
+): Promise<void> {
+  const { error } = await supabase
+    .from("savings_locations")
+    .upsert(locationToRow(location, userId), { onConflict: "id" });
+  if (error && !isMissingSavingsLocationsTable(error)) throw error;
+}
+
+export async function deleteSavingsLocationRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  locationId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("savings_locations")
+    .delete()
+    .eq("id", locationId)
+    .eq("user_id", userId);
+  if (error && !isMissingSavingsLocationsTable(error)) throw error;
+}
+
+export async function replaceSavingsLocationsRemote(
+  supabase: SupabaseClient,
+  userId: string,
+  locations: SavingsLocation[],
+): Promise<void> {
+  const { error: delError } = await supabase
+    .from("savings_locations")
+    .delete()
+    .eq("user_id", userId);
+  if (delError && !isMissingSavingsLocationsTable(delError)) throw delError;
+
+  for (const location of locations) {
+    await upsertSavingsLocationRemote(supabase, userId, location);
+  }
 }
 
 export async function fetchWalletMode(
@@ -1266,5 +1382,16 @@ export async function migrateLocalIfEmpty(
 
   if ((local.savingsGoals?.length ?? 0) > 0) {
     await replaceSavingsGoalsRemote(supabase, userId, local.savingsGoals ?? []);
+  }
+
+  if (local.savingsLocationsEnabled === true) {
+    await saveSavingsLocationsEnabledRemote(supabase, userId, true);
+  }
+  if ((local.savingsLocations?.length ?? 0) > 0) {
+    await replaceSavingsLocationsRemote(
+      supabase,
+      userId,
+      local.savingsLocations ?? [],
+    );
   }
 }
